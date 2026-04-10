@@ -8,6 +8,8 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Welcome from "./pages/Welcome";
 import Login from "./pages/Login";
 import Registro from "./pages/Registro";
+import OlvideContrasena from "./pages/OlvideContrasena";
+import ResetPassword from "./pages/ResetPassword";
 import Index from "./pages/Index";
 import Viajes from "./pages/Viajes";
 import Mensajes from "./pages/Mensajes";
@@ -27,6 +29,8 @@ const App = () => (
             <Route path="/welcome" element={<Welcome />} />
             <Route path="/login" element={<Login />} />
             <Route path="/registro" element={<Registro />} />
+            <Route path="/olvide-contrasena" element={<OlvideContrasena />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/viajes" element={<ProtectedRoute><Viajes /></ProtectedRoute>} />
             <Route path="/mensajes" element={<ProtectedRoute><Mensajes /></ProtectedRoute>} />

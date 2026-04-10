@@ -85,7 +85,11 @@ const Login = () => {
           {loading ? 'Ingresando...' : 'Ingresar'}
         </Button>
 
-        <p className="text-center text-sm text-muted-foreground mt-4">
+        <Link to="/olvide-contrasena" className="text-center text-sm text-accent font-semibold hover:underline mt-2 block">
+          ¿Olvidaste tu contraseña?
+        </Link>
+
+        <p className="text-center text-sm text-muted-foreground mt-2">
           ¿No tienes cuenta?{' '}
           <Link to="/registro" className="text-accent font-semibold hover:underline">
             Regístrate
