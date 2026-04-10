@@ -59,7 +59,7 @@ const Perfil = () => {
       </div>
 
       <div className="mx-4 mt-4">
-        <Button variant="outline" className="w-full rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10">
+        <Button onClick={handleSignOut} variant="outline" className="w-full rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10">
           <LogOut className="h-4 w-4 mr-2" />
           Cerrar sesión
         </Button>
