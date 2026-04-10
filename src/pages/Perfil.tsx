@@ -1,8 +1,21 @@
+import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Star, MapPin, Shield, ChevronRight, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Perfil = () => {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const nombre = user?.user_metadata?.nombre || user?.email || "Usuario";
+  const rol = user?.user_metadata?.rol || "pasajero";
+  const inicial = nombre.charAt(0).toUpperCase();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/welcome");
+  };
   return (
     <div className="min-h-screen bg-background pb-20">
       <header className="gradient-primary px-4 pt-12 pb-8">
