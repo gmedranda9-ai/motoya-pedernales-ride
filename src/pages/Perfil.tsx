@@ -21,11 +21,11 @@ const Perfil = () => {
       <header className="gradient-primary px-4 pt-12 pb-8">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-accent/20 border-2 border-accent flex items-center justify-center">
-            <span className="text-2xl font-bold text-accent">M</span>
+            <span className="text-2xl font-bold text-accent">{inicial}</span>
           </div>
           <div>
-            <h1 className="text-lg font-extrabold text-primary-foreground">María López</h1>
-            <p className="text-xs text-primary-foreground/70">Pasajera desde 2024</p>
+            <h1 className="text-lg font-extrabold text-primary-foreground">{nombre}</h1>
+            <p className="text-xs text-primary-foreground/70 capitalize">{rol}</p>
             <div className="flex items-center gap-1 mt-1">
               <Star className="h-3.5 w-3.5 fill-accent text-accent" />
               <span className="text-sm font-medium text-accent">4.9</span>
