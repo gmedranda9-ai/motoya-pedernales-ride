@@ -1,3 +1,5 @@
+import { useAuth } from "@/contexts/AuthContext";
+import PasajeroHome from "@/pages/PasajeroHome";
 import { MapPin, Shield, Zap } from "lucide-react";
 import RideRequestCard from "@/components/RideRequestCard";
 import BottomNav from "@/components/BottomNav";
@@ -5,9 +7,17 @@ import logoMotoya from "@/assets/logo-motoya.png";
 import heroImage from "@/assets/hero-mototaxi.jpg";
 
 const Index = () => {
+  const { user } = useAuth();
+  const role = user?.user_metadata?.rol;
+
+  // Passengers (or default logged-in users) see driver list
+  if (user && role !== "conductor") {
+    return <PasajeroHome />;
+  }
+
+  // Fallback / conductor placeholder / public landing
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
       <header className="gradient-primary px-4 pt-12 pb-8">
         <div className="flex items-center gap-3 mb-2">
           <img src={logoMotoya} alt="MotoYa" className="h-10 w-10" />
@@ -21,7 +31,6 @@ const Index = () => {
         </p>
       </header>
 
-      {/* Hero image */}
       <div className="relative -mt-4 mx-4 rounded-2xl overflow-hidden shadow-lg mb-6">
         <img
           src={heroImage}
@@ -37,10 +46,8 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Ride Request */}
       <RideRequestCard />
 
-      {/* Features */}
       <div className="grid grid-cols-3 gap-3 mx-4 mt-6">
         {[
           { icon: Zap, label: "Rápido", desc: "En minutos" },
