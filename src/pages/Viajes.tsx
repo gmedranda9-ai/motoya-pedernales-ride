@@ -34,12 +34,16 @@ const Viajes = () => {
       {/* Active ride mock */}
       <div className="mx-4 -mt-3 mb-4">
         <DriverCard
-          name="Juan Reyes"
-          photo="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
-          rating={4.8}
-          plate="ABC-1234"
-          model="Honda Wave"
-          eta="3 min"
+          driver={{
+            id: "active",
+            name: "Juan Reyes",
+            photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
+            rating: 4.8,
+            plate: "ABC-1234",
+            model: "Honda Wave",
+            available: true,
+          }}
+          onRequest={() => {}}
         />
       </div>
 
