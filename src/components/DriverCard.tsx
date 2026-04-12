@@ -10,6 +10,8 @@ export interface Driver {
   model: string;
   rating: number;
   available: boolean;
+  phone?: string;
+  color?: string;
 }
 
 interface DriverCardProps {
