@@ -1,13 +1,64 @@
-import { Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Loader2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Driver } from "@/components/DriverCard";
 
 interface WaitingScreenProps {
   driver: Driver;
+  destination: string;
   onCancel: () => void;
+  onTimeout: () => void;
+  onAccepted: () => void;
 }
 
-const WaitingScreen = ({ driver, onCancel }: WaitingScreenProps) => {
+const TIMEOUT_SECONDS = 30;
+
+const WaitingScreen = ({ driver, destination, onCancel, onTimeout, onAccepted }: WaitingScreenProps) => {
+  const [seconds, setSeconds] = useState(TIMEOUT_SECONDS);
+  const [timedOut, setTimedOut] = useState(false);
+
+  useEffect(() => {
+    if (seconds <= 0) {
+      setTimedOut(true);
+      return;
+    }
+    const timer = setTimeout(() => setSeconds((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [seconds]);
+
+  // Demo: simulate driver accepting after 10s (remove when real)
+  useEffect(() => {
+    const accept = setTimeout(() => {
+      if (!timedOut) onAccepted();
+    }, 12000);
+    return () => clearTimeout(accept);
+  }, []);
+
+  if (timedOut) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center px-6 animate-fade-in">
+        <div className="text-center space-y-6 max-w-sm">
+          <span className="text-5xl">⏰</span>
+          <h2 className="text-lg font-extrabold text-foreground">El conductor no respondió</h2>
+          <p className="text-sm text-muted-foreground">
+            {driver.name} no confirmó tu solicitud a tiempo. Puedes elegir otro conductor.
+          </p>
+          <div className="space-y-3">
+            <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={onTimeout}>
+              Elegir otro conductor
+            </Button>
+            <Button variant="outline" size="lg" className="w-full rounded-xl" onClick={onCancel}>
+              Cancelar viaje
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Si cancelaste por error, puedes volver a solicitar desde la lista de conductores.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center px-6 animate-fade-in">
       <div className="text-center space-y-6 max-w-sm">
@@ -32,9 +83,33 @@ const WaitingScreen = ({ driver, onCancel }: WaitingScreenProps) => {
           </p>
         </div>
 
+        {/* Destination */}
+        <div className="flex items-center justify-center gap-2 bg-muted rounded-xl px-4 py-2.5">
+          <MapPin className="h-4 w-4 text-accent flex-shrink-0" />
+          <span className="text-sm text-foreground font-medium">{destination}</span>
+        </div>
+
+        {/* Timer */}
+        <div className="relative w-20 h-20 mx-auto">
+          <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="34" fill="none" stroke="hsl(var(--muted))" strokeWidth="6" />
+            <circle
+              cx="40" cy="40" r="34" fill="none"
+              stroke="hsl(var(--accent))" strokeWidth="6"
+              strokeLinecap="round"
+              strokeDasharray={`${2 * Math.PI * 34}`}
+              strokeDashoffset={`${2 * Math.PI * 34 * (1 - seconds / TIMEOUT_SECONDS)}`}
+              className="transition-all duration-1000 ease-linear"
+            />
+          </svg>
+          <span className="absolute inset-0 flex items-center justify-center text-lg font-extrabold text-foreground">
+            {seconds}s
+          </span>
+        </div>
+
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <Loader2 className="h-3 w-3 animate-spin" />
-          <span>El conductor confirmará tu solicitud pronto</span>
+          <span>El conductor tiene {seconds}s para confirmar</span>
         </div>
 
         <Button
@@ -45,6 +120,10 @@ const WaitingScreen = ({ driver, onCancel }: WaitingScreenProps) => {
         >
           Cancelar solicitud
         </Button>
+
+        <p className="text-[10px] text-muted-foreground">
+          Si cancelas, podrás elegir otro conductor desde la lista.
+        </p>
       </div>
     </div>
   );

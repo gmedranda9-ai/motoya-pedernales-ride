@@ -1,4 +1,4 @@
-import { Star, Phone, ShieldCheck, X } from "lucide-react";
+import { Star, Phone, ShieldCheck, ArrowLeft, Clock, Route } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Driver } from "@/components/DriverCard";
@@ -15,7 +15,17 @@ const MOCK_COMMENTS = [
   { author: "Ana P.", text: "Llegó rápido. Todo bien.", rating: 5 },
 ];
 
+const MOCK_STATS: Record<string, { trips: number; months: number; cedula: string }> = {
+  "1": { trips: 342, months: 18, cedula: "080XXXXXXX01" },
+  "2": { trips: 215, months: 12, cedula: "080XXXXXXX02" },
+  "3": { trips: 189, months: 8, cedula: "080XXXXXXX03" },
+  "4": { trips: 410, months: 24, cedula: "080XXXXXXX04" },
+  "5": { trips: 98, months: 4, cedula: "080XXXXXXX05" },
+};
+
 const DriverProfile = ({ driver, onRequest, onClose }: DriverProfileProps) => {
+  const stats = MOCK_STATS[driver.id] || { trips: 0, months: 0, cedula: "---" };
+
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm animate-fade-in">
       <div className="fixed inset-x-0 bottom-0 top-0 overflow-y-auto bg-background animate-slide-up">
@@ -23,9 +33,9 @@ const DriverProfile = ({ driver, onRequest, onClose }: DriverProfileProps) => {
         <div className="gradient-primary px-4 pt-12 pb-8 text-center relative">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-primary-foreground/10 text-primary-foreground"
+            className="absolute top-4 left-4 p-2 rounded-full bg-primary-foreground/10 text-primary-foreground"
           >
-            <X className="h-5 w-5" />
+            <ArrowLeft className="h-5 w-5" />
           </button>
           <img
             src={driver.photo}
@@ -38,13 +48,32 @@ const DriverProfile = ({ driver, onRequest, onClose }: DriverProfileProps) => {
           <div className="flex items-center justify-center gap-1 mt-1">
             <ShieldCheck className="h-4 w-4 text-accent" />
             <span className="text-xs text-accent font-semibold">
-              Cédula verificada
+              Cédula verificada · {stats.cedula}
             </span>
           </div>
         </div>
 
         {/* Info */}
         <div className="px-4 py-5 space-y-4">
+          {/* Stats row */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-card rounded-xl border border-border p-3 text-center">
+              <Route className="h-4 w-4 text-accent mx-auto mb-1" />
+              <p className="text-lg font-extrabold text-foreground">{stats.trips}</p>
+              <p className="text-[10px] text-muted-foreground">Viajes</p>
+            </div>
+            <div className="bg-card rounded-xl border border-border p-3 text-center">
+              <Star className="h-4 w-4 text-accent mx-auto mb-1" />
+              <p className="text-lg font-extrabold text-foreground">{driver.rating.toFixed(1)}</p>
+              <p className="text-[10px] text-muted-foreground">Calificación</p>
+            </div>
+            <div className="bg-card rounded-xl border border-border p-3 text-center">
+              <Clock className="h-4 w-4 text-accent mx-auto mb-1" />
+              <p className="text-lg font-extrabold text-foreground">{stats.months}</p>
+              <p className="text-[10px] text-muted-foreground">Meses</p>
+            </div>
+          </div>
+
           {/* Status */}
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-foreground">Estado</span>
@@ -72,9 +101,7 @@ const DriverProfile = ({ driver, onRequest, onClose }: DriverProfileProps) => {
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">Placa</span>
-              <span className="text-sm font-bold text-foreground">
-                {driver.plate}
-              </span>
+              <span className="text-sm font-bold text-foreground">{driver.plate}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">Moto</span>
@@ -88,7 +115,7 @@ const DriverProfile = ({ driver, onRequest, onClose }: DriverProfileProps) => {
             )}
           </div>
 
-          {/* Rating */}
+          {/* Rating & comments */}
           <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center gap-2 mb-3">
               <div className="flex items-center gap-1">
@@ -127,9 +154,7 @@ const DriverProfile = ({ driver, onRequest, onClose }: DriverProfileProps) => {
                     ))}
                   </div>
                   <p className="text-xs text-foreground">{c.text}</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    — {c.author}
-                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-1">— {c.author}</p>
                 </div>
               ))}
             </div>
@@ -143,9 +168,7 @@ const DriverProfile = ({ driver, onRequest, onClose }: DriverProfileProps) => {
             disabled={!driver.available}
             onClick={() => onRequest(driver.id)}
           >
-            {driver.available
-              ? "Solicitar este conductor"
-              : "No disponible en este momento"}
+            {driver.available ? "Solicitar este conductor" : "No disponible en este momento"}
           </Button>
         </div>
       </div>
