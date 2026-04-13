@@ -186,15 +186,28 @@ const PasajeroHome = () => {
     setStep("home");
   };
 
+  // ── Rating Screen ──
+  if (step === "rating" && selectedDriver) {
+    return (
+      <RatingScreen
+        driver={selectedDriver}
+        destination={destination}
+        onSubmit={(rating, comment) => {
+          toast({ title: "⭐ Calificación enviada", description: `Calificaste a ${selectedDriver.name} con ${rating} estrella${rating > 1 ? "s" : ""}.` });
+          setTimeout(() => handleFinish(), 1500);
+        }}
+      />
+    );
+  }
+
   // ── Active Ride ──
   if (step === "active" && selectedDriver) {
-    return <ActiveRideScreen driver={selectedDriver} destination={destination} onFinish={handleFinish} />;
+    return <ActiveRideScreen driver={selectedDriver} destination={destination} onFinish={() => setStep("rating")} />;
   }
 
   // ── Waiting Screen ──
   if (step === "waiting" && selectedDriver) {
-    const driverDist = MOCK_DISTANCE[selectedDriver.id];
-    const estCost = driverDist ? calcEstimatedCost(driverDist.distKm) : undefined;
+    const costType = getCostType(destination);
     return (
       <WaitingScreen
         driver={selectedDriver}
@@ -202,21 +215,20 @@ const PasajeroHome = () => {
         onCancel={handleCancel}
         onTimeout={handleTimeout}
         onAccepted={handleAccepted}
-        estimatedCost={estCost}
+        estimatedCost={costType}
       />
     );
   }
 
   // ── Driver Profile ──
   if (step === "profile" && selectedDriver) {
-    const driverDist = MOCK_DISTANCE[selectedDriver.id];
-    const estCost = driverDist ? calcEstimatedCost(driverDist.distKm) : undefined;
+    const costType = getCostType(destination);
     return (
       <DriverProfile
         driver={selectedDriver}
         onRequest={handleRequest}
         onClose={() => setStep("drivers")}
-        estimatedCost={estCost}
+        estimatedCost={costType}
       />
     );
   }
