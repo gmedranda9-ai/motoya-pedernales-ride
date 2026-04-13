@@ -90,13 +90,17 @@ const WaitingScreen = ({ driver, destination, onCancel, onTimeout, onAccepted, e
           <span className="text-sm text-foreground font-medium">{destination}</span>
         </div>
 
-        {/* Estimated Cost */}
-        {estimatedCost && (
-          <div className="bg-accent/10 rounded-xl px-4 py-2.5 text-center">
-            <span className="text-xs text-muted-foreground">Costo estimado: </span>
-            <span className="text-sm font-extrabold text-accent">{estimatedCost}</span>
-          </div>
-        )}
+        {/* Pricing */}
+        <div className="bg-accent/10 rounded-xl px-4 py-2.5 text-center">
+          {estimatedCost === "city" ? (
+            <>
+              <span className="text-xs text-muted-foreground">Costo: </span>
+              <span className="text-sm font-extrabold text-accent">$1.00</span>
+            </>
+          ) : (
+            <span className="text-xs text-muted-foreground">El conductor te informará el costo</span>
+          )}
+        </div>
 
         {/* Timer */}
         <div className="relative w-20 h-20 mx-auto">

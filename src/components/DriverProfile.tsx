@@ -161,16 +161,20 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost }: DriverProf
             </div>
           </div>
 
-          {/* Estimated Cost */}
-          {estimatedCost && (
-            <div className="bg-accent/10 rounded-xl border border-accent/30 p-4 flex items-center justify-between">
-              <div>
-                <p className="text-sm font-bold text-foreground">💰 Costo estimado</p>
-                <p className="text-xs text-muted-foreground">Tarifa base $1.00 + $0.30/km</p>
+          {/* Pricing */}
+          <div className="bg-accent/10 rounded-xl border border-accent/30 p-4">
+            <p className="text-sm font-bold text-foreground mb-1">💰 Costo del viaje</p>
+            {estimatedCost === "city" ? (
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">Tarifa fija dentro de la ciudad</p>
+                <span className="text-lg font-extrabold text-accent">$1.00</span>
               </div>
-              <span className="text-lg font-extrabold text-accent">{estimatedCost}</span>
-            </div>
-          )}
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Depende la distancia, el conductor te informará el costo
+              </p>
+            )}
+          </div>
 
           {/* Request Button */}
           <Button

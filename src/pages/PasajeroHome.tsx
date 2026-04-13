@@ -5,6 +5,7 @@ import DriverCard, { type Driver } from "@/components/DriverCard";
 import DriverProfile from "@/components/DriverProfile";
 import WaitingScreen from "@/components/WaitingScreen";
 import ActiveRideScreen from "@/components/ActiveRideScreen";
+import RatingScreen from "@/components/RatingScreen";
 import BottomNav from "@/components/BottomNav";
 import logoMotoya from "@/assets/logo-motoya.png";
 import {
@@ -73,15 +74,13 @@ const MOCK_DISTANCE: Record<string, { dist: string; distKm: number; eta: string 
   "5": { dist: "3.0 km", distKm: 3.0, eta: "10 min" },
 };
 
-const calcEstimatedCost = (distKm: number): string => {
-  const base = 1.0;
-  const perKm = 0.3;
-  const low = base + perKm * distKm;
-  const high = low + 0.5;
-  return `$${low.toFixed(2)} - $${high.toFixed(2)}`;
+const CITY_DESTINATIONS = new Set(FREQUENT_DESTINATIONS);
+
+const getCostType = (dest: string): string => {
+  return CITY_DESTINATIONS.has(dest) ? "city" : "outside";
 };
 
-type Step = "home" | "drivers" | "profile" | "waiting" | "active";
+type Step = "home" | "drivers" | "profile" | "waiting" | "active" | "rating";
 
 const PasajeroHome = () => {
   const { user } = useAuth();
@@ -187,15 +186,28 @@ const PasajeroHome = () => {
     setStep("home");
   };
 
+  // ── Rating Screen ──
+  if (step === "rating" && selectedDriver) {
+    return (
+      <RatingScreen
+        driver={selectedDriver}
+        destination={destination}
+        onSubmit={(rating, comment) => {
+          toast({ title: "⭐ Calificación enviada", description: `Calificaste a ${selectedDriver.name} con ${rating} estrella${rating > 1 ? "s" : ""}.` });
+          setTimeout(() => handleFinish(), 1500);
+        }}
+      />
+    );
+  }
+
   // ── Active Ride ──
   if (step === "active" && selectedDriver) {
-    return <ActiveRideScreen driver={selectedDriver} destination={destination} onFinish={handleFinish} />;
+    return <ActiveRideScreen driver={selectedDriver} destination={destination} onFinish={() => setStep("rating")} />;
   }
 
   // ── Waiting Screen ──
   if (step === "waiting" && selectedDriver) {
-    const driverDist = MOCK_DISTANCE[selectedDriver.id];
-    const estCost = driverDist ? calcEstimatedCost(driverDist.distKm) : undefined;
+    const costType = getCostType(destination);
     return (
       <WaitingScreen
         driver={selectedDriver}
@@ -203,21 +215,20 @@ const PasajeroHome = () => {
         onCancel={handleCancel}
         onTimeout={handleTimeout}
         onAccepted={handleAccepted}
-        estimatedCost={estCost}
+        estimatedCost={costType}
       />
     );
   }
 
   // ── Driver Profile ──
   if (step === "profile" && selectedDriver) {
-    const driverDist = MOCK_DISTANCE[selectedDriver.id];
-    const estCost = driverDist ? calcEstimatedCost(driverDist.distKm) : undefined;
+    const costType = getCostType(destination);
     return (
       <DriverProfile
         driver={selectedDriver}
         onRequest={handleRequest}
         onClose={() => setStep("drivers")}
-        estimatedCost={estCost}
+        estimatedCost={costType}
       />
     );
   }

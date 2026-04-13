@@ -65,7 +65,7 @@ const ActiveRideScreen = ({ driver, destination, onFinish }: ActiveRideScreenPro
             </div>
           </div>
           <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={onFinish}>
-            Volver al inicio
+            Calificar viaje ⭐
           </Button>
         </div>
       </div>
