@@ -105,10 +105,21 @@ const PasajeroHome = () => {
     }
     setDetectingLocation(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        // In production, reverse geocode. For now show coords as address.
+      async (pos) => {
         const { latitude, longitude } = pos.coords;
-        setLocationAddress(`Pedernales (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1&accept-language=es`,
+            { headers: { "User-Agent": "MotoYa/1.0" } }
+          );
+          const data = await res.json();
+          const addr = data.address;
+          const street = addr?.road || addr?.pedestrian || addr?.neighbourhood || "";
+          const city = addr?.city || addr?.town || addr?.village || "Pedernales";
+          setLocationAddress(street ? `${street}, ${city}` : city);
+        } catch {
+          setLocationAddress(`Pedernales (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
+        }
         setDetectingLocation(false);
         toast({ title: "📍 Ubicación detectada", description: "Tu ubicación GPS ha sido registrada." });
       },
@@ -301,7 +312,7 @@ const PasajeroHome = () => {
                       disabled={!driver.available}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleRequest(driver.id);
+                        handleDriverTap(driver);
                       }}
                     >
                       {driver.available ? "Solicitar viaje" : "No disponible"}
