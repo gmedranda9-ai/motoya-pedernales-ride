@@ -7,6 +7,7 @@ interface DriverProfileProps {
   driver: Driver;
   onRequest: (driverId: string) => void;
   onClose: () => void;
+  estimatedCost?: string;
 }
 
 const MOCK_COMMENTS = [
@@ -23,7 +24,7 @@ const MOCK_STATS: Record<string, { trips: number; months: number; cedula: string
   "5": { trips: 98, months: 4, cedula: "080XXXXXXX05" },
 };
 
-const DriverProfile = ({ driver, onRequest, onClose }: DriverProfileProps) => {
+const DriverProfile = ({ driver, onRequest, onClose, estimatedCost }: DriverProfileProps) => {
   const stats = MOCK_STATS[driver.id] || { trips: 0, months: 0, cedula: "---" };
 
   return (
@@ -159,6 +160,17 @@ const DriverProfile = ({ driver, onRequest, onClose }: DriverProfileProps) => {
               ))}
             </div>
           </div>
+
+          {/* Estimated Cost */}
+          {estimatedCost && (
+            <div className="bg-accent/10 rounded-xl border border-accent/30 p-4 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold text-foreground">💰 Costo estimado</p>
+                <p className="text-xs text-muted-foreground">Tarifa base $1.00 + $0.30/km</p>
+              </div>
+              <span className="text-lg font-extrabold text-accent">{estimatedCost}</span>
+            </div>
+          )}
 
           {/* Request Button */}
           <Button

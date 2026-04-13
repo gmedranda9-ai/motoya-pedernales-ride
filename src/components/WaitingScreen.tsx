@@ -9,11 +9,12 @@ interface WaitingScreenProps {
   onCancel: () => void;
   onTimeout: () => void;
   onAccepted: () => void;
+  estimatedCost?: string;
 }
 
 const TIMEOUT_SECONDS = 30;
 
-const WaitingScreen = ({ driver, destination, onCancel, onTimeout, onAccepted }: WaitingScreenProps) => {
+const WaitingScreen = ({ driver, destination, onCancel, onTimeout, onAccepted, estimatedCost }: WaitingScreenProps) => {
   const [seconds, setSeconds] = useState(TIMEOUT_SECONDS);
   const [timedOut, setTimedOut] = useState(false);
 
@@ -88,6 +89,14 @@ const WaitingScreen = ({ driver, destination, onCancel, onTimeout, onAccepted }:
           <MapPin className="h-4 w-4 text-accent flex-shrink-0" />
           <span className="text-sm text-foreground font-medium">{destination}</span>
         </div>
+
+        {/* Estimated Cost */}
+        {estimatedCost && (
+          <div className="bg-accent/10 rounded-xl px-4 py-2.5 text-center">
+            <span className="text-xs text-muted-foreground">Costo estimado: </span>
+            <span className="text-sm font-extrabold text-accent">{estimatedCost}</span>
+          </div>
+        )}
 
         {/* Timer */}
         <div className="relative w-20 h-20 mx-auto">
