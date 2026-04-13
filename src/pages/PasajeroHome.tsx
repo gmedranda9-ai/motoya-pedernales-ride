@@ -65,12 +65,20 @@ const FREQUENT_DESTINATIONS = [
 ];
 
 // Mock distances/ETAs per driver
-const MOCK_DISTANCE: Record<string, { dist: string; eta: string }> = {
-  "1": { dist: "0.8 km", eta: "3 min" },
-  "2": { dist: "1.2 km", eta: "5 min" },
-  "3": { dist: "2.1 km", eta: "8 min" },
-  "4": { dist: "0.5 km", eta: "2 min" },
-  "5": { dist: "3.0 km", eta: "10 min" },
+const MOCK_DISTANCE: Record<string, { dist: string; distKm: number; eta: string }> = {
+  "1": { dist: "0.8 km", distKm: 0.8, eta: "3 min" },
+  "2": { dist: "1.2 km", distKm: 1.2, eta: "5 min" },
+  "3": { dist: "2.1 km", distKm: 2.1, eta: "8 min" },
+  "4": { dist: "0.5 km", distKm: 0.5, eta: "2 min" },
+  "5": { dist: "3.0 km", distKm: 3.0, eta: "10 min" },
+};
+
+const calcEstimatedCost = (distKm: number): string => {
+  const base = 1.0;
+  const perKm = 0.3;
+  const low = base + perKm * distKm;
+  const high = low + 0.5;
+  return `$${low.toFixed(2)} - $${high.toFixed(2)}`;
 };
 
 type Step = "home" | "drivers" | "profile" | "waiting" | "active";
@@ -186,6 +194,8 @@ const PasajeroHome = () => {
 
   // ── Waiting Screen ──
   if (step === "waiting" && selectedDriver) {
+    const driverDist = MOCK_DISTANCE[selectedDriver.id];
+    const estCost = driverDist ? calcEstimatedCost(driverDist.distKm) : undefined;
     return (
       <WaitingScreen
         driver={selectedDriver}
@@ -193,17 +203,21 @@ const PasajeroHome = () => {
         onCancel={handleCancel}
         onTimeout={handleTimeout}
         onAccepted={handleAccepted}
+        estimatedCost={estCost}
       />
     );
   }
 
   // ── Driver Profile ──
   if (step === "profile" && selectedDriver) {
+    const driverDist = MOCK_DISTANCE[selectedDriver.id];
+    const estCost = driverDist ? calcEstimatedCost(driverDist.distKm) : undefined;
     return (
       <DriverProfile
         driver={selectedDriver}
         onRequest={handleRequest}
         onClose={() => setStep("drivers")}
+        estimatedCost={estCost}
       />
     );
   }
