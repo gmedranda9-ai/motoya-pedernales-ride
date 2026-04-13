@@ -5,6 +5,7 @@ import DriverCard, { type Driver } from "@/components/DriverCard";
 import DriverProfile from "@/components/DriverProfile";
 import WaitingScreen from "@/components/WaitingScreen";
 import ActiveRideScreen from "@/components/ActiveRideScreen";
+import RatingScreen from "@/components/RatingScreen";
 import BottomNav from "@/components/BottomNav";
 import logoMotoya from "@/assets/logo-motoya.png";
 import {
@@ -73,15 +74,13 @@ const MOCK_DISTANCE: Record<string, { dist: string; distKm: number; eta: string 
   "5": { dist: "3.0 km", distKm: 3.0, eta: "10 min" },
 };
 
-const calcEstimatedCost = (distKm: number): string => {
-  const base = 1.0;
-  const perKm = 0.3;
-  const low = base + perKm * distKm;
-  const high = low + 0.5;
-  return `$${low.toFixed(2)} - $${high.toFixed(2)}`;
+const CITY_DESTINATIONS = new Set(FREQUENT_DESTINATIONS);
+
+const getCostType = (dest: string): string => {
+  return CITY_DESTINATIONS.has(dest) ? "city" : "outside";
 };
 
-type Step = "home" | "drivers" | "profile" | "waiting" | "active";
+type Step = "home" | "drivers" | "profile" | "waiting" | "active" | "rating";
 
 const PasajeroHome = () => {
   const { user } = useAuth();
