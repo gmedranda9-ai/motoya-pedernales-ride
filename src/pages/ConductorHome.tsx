@@ -107,7 +107,6 @@ const ConductorHome = () => {
     };
     loadStatus();
   }, [user]);
-  const [totalTrips] = useState(128);
 
   // Application form
   const [form, setForm] = useState<ApplicationForm>({
