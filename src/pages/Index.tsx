@@ -1,5 +1,6 @@
 import { useAuth } from "@/contexts/AuthContext";
 import PasajeroHome from "@/pages/PasajeroHome";
+import ConductorHome from "@/pages/ConductorHome";
 import { MapPin, Shield, Zap } from "lucide-react";
 import RideRequestCard from "@/components/RideRequestCard";
 import BottomNav from "@/components/BottomNav";
@@ -10,8 +11,13 @@ const Index = () => {
   const { user } = useAuth();
   const role = user?.user_metadata?.rol;
 
+  // Conductor view
+  if (user && role === "conductor") {
+    return <ConductorHome />;
+  }
+
   // Passengers (or default logged-in users) see driver list
-  if (user && role !== "conductor") {
+  if (user) {
     return <PasajeroHome />;
   }
 
