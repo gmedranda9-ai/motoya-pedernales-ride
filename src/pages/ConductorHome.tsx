@@ -226,24 +226,36 @@ const ConductorHome = () => {
 
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.from("conductores").insert({
+      const insertData = {
         user_id: user.id,
         nombre: user.user_metadata?.nombre || user.email?.split("@")[0] || "Sin nombre",
-        numero_cedula: form.cedula,
+        foto: form.photoUrl || null,
+        cedula: form.cedula,
         telefono: form.phone,
-        placa_moto: form.plate,
+        placa: form.plate,
         modelo_moto: form.motoModel,
-        color_moto: form.motoColor,
+        color: form.motoColor,
+        foto_cedula: form.cedulaPhotoUrl || null,
+        foto_moto: form.motoPhotoUrl || null,
         estado: "pendiente",
-      }).select();
+      };
+
+      console.log("📤 Datos enviados a Supabase (conductores):", JSON.stringify(insertData, null, 2));
+
+      const { data, error } = await supabase.from("conductores").insert(insertData).select();
 
       if (error) {
-        console.error("Error al guardar postulación:", error.message, error.details, error.hint);
+        console.error("❌ Error al guardar postulación:", {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+        });
         toast({ title: "Error al enviar", description: error.message, variant: "destructive" });
         return;
       }
 
-      console.log("Postulación guardada exitosamente:", data);
+      console.log("✅ Postulación guardada exitosamente:", data);
       setAppStatus("pending");
       setStep("panel");
       toast({ title: "📋 Postulación enviada", description: "Te notificaremos cuando sea revisada." });
