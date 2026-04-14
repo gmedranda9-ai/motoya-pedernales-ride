@@ -214,14 +214,45 @@ const ConductorHome = () => {
     input.click();
   };
 
-  const handleSubmitApplication = () => {
+  const handleSubmitApplication = async () => {
     if (!form.cedula || !form.phone || !form.plate || !form.motoModel || !form.motoColor) {
       toast({ title: "Campos incompletos", description: "Llena todos los campos obligatorios.", variant: "destructive" });
       return;
     }
-    setAppStatus("pending");
-    setStep("panel");
-    toast({ title: "📋 Postulación enviada", description: "Te notificaremos cuando sea revisada." });
+    if (!user) {
+      toast({ title: "Error", description: "Debes iniciar sesión.", variant: "destructive" });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const { data, error } = await supabase.from("conductores").insert({
+        user_id: user.id,
+        nombre: user.user_metadata?.nombre || user.email?.split("@")[0] || "Sin nombre",
+        numero_cedula: form.cedula,
+        telefono: form.phone,
+        placa_moto: form.plate,
+        modelo_moto: form.motoModel,
+        color_moto: form.motoColor,
+        estado: "pendiente",
+      }).select();
+
+      if (error) {
+        console.error("Error al guardar postulación:", error.message, error.details, error.hint);
+        toast({ title: "Error al enviar", description: error.message, variant: "destructive" });
+        return;
+      }
+
+      console.log("Postulación guardada exitosamente:", data);
+      setAppStatus("pending");
+      setStep("panel");
+      toast({ title: "📋 Postulación enviada", description: "Te notificaremos cuando sea revisada." });
+    } catch (err) {
+      console.error("Error inesperado al enviar postulación:", err);
+      toast({ title: "Error inesperado", description: "Intenta de nuevo.", variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // ── ACTIVE RIDE VIEW ──
