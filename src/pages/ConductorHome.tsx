@@ -1,36 +1,51 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import BottomNav from "@/components/BottomNav";
 import logoMotoya from "@/assets/logo-motoya.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Star,
   MapPin,
-  Phone,
   MessageCircle,
   Send,
   Share2,
-  Shield,
   CheckCircle,
   XCircle,
-  Clock,
   Loader2,
   ExternalLink,
+  ArrowLeft,
+  Camera,
+  Upload,
 } from "lucide-react";
 
 type ApplicationStatus = "none" | "pending" | "approved" | "rejected";
 type RideStatus = "en_camino" | "en_viaje" | "completado";
+type Step = "panel" | "apply";
 
 interface RideRequest {
   id: string;
   passengerName: string;
   passengerPhoto: string;
   origin: string;
+  originCoords?: { lat: number; lng: number };
   destination: string;
   costType: "city" | "outside";
-  timestamp: number;
+}
+
+interface ApplicationForm {
+  photoUrl: string;
+  cedula: string;
+  cedulaPhotoUrl: string;
+  phone: string;
+  plate: string;
+  motoModel: string;
+  motoColor: string;
+  motoPhotoUrl: string;
 }
 
 const MOCK_REQUEST: RideRequest = {
@@ -39,9 +54,9 @@ const MOCK_REQUEST: RideRequest = {
   passengerPhoto:
     "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face",
   origin: "Av. Eloy Alfaro, Pedernales",
+  originCoords: { lat: 0.0713, lng: -80.0548 },
   destination: "Terminal Terrestre",
   costType: "city",
-  timestamp: Date.now(),
 };
 
 const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: string }> = {
@@ -52,13 +67,26 @@ const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: st
 
 const ConductorHome = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const userName = user?.user_metadata?.nombre || user?.email?.split("@")[0] || "Conductor";
 
-  // States
-  const [appStatus, setAppStatus] = useState<ApplicationStatus>("approved"); // demo: approved
+  const [step, setStep] = useState<Step>("panel");
+  const [appStatus, setAppStatus] = useState<ApplicationStatus>("none");
   const [available, setAvailable] = useState(false);
   const [rating] = useState(4.7);
   const [totalTrips] = useState(128);
+
+  // Application form
+  const [form, setForm] = useState<ApplicationForm>({
+    photoUrl: "",
+    cedula: "",
+    cedulaPhotoUrl: "",
+    phone: "",
+    plate: "",
+    motoModel: "",
+    motoColor: "",
+    motoPhotoUrl: "",
+  });
 
   // Request states
   const [incomingRequest, setIncomingRequest] = useState<RideRequest | null>(null);
@@ -73,19 +101,20 @@ const ConductorHome = () => {
 
   // Simulate incoming request when available
   useEffect(() => {
-    if (!available || activeRide) return;
+    if (!available || activeRide || appStatus !== "approved") return;
     const timer = setTimeout(() => {
       setIncomingRequest(MOCK_REQUEST);
       setRequestTimer(30);
     }, 3000);
     return () => clearTimeout(timer);
-  }, [available, activeRide]);
+  }, [available, activeRide, appStatus]);
 
   // Request countdown
   useEffect(() => {
     if (!incomingRequest) return;
     if (requestTimer <= 0) {
       setIncomingRequest(null);
+      toast({ title: "Solicitud expirada", description: "No respondiste a tiempo." });
       return;
     }
     const t = setTimeout(() => setRequestTimer((s) => s - 1), 1000);
@@ -97,14 +126,17 @@ const ConductorHome = () => {
     setActiveRide(incomingRequest);
     setIncomingRequest(null);
     setRideStatus("en_camino");
+    toast({ title: "✅ Viaje aceptado", description: `Dirígete hacia ${incomingRequest.passengerName}` });
   };
 
   const handleRejectRequest = () => {
     setIncomingRequest(null);
+    toast({ title: "Solicitud rechazada", description: "Sigues disponible para otras solicitudes." });
   };
 
-  const openInMaps = (address: string) => {
-    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, "_blank");
+  const openInMaps = (address: string, coords?: { lat: number; lng: number }) => {
+    const query = coords ? `${coords.lat},${coords.lng}` : encodeURIComponent(address + " Pedernales Ecuador");
+    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank");
   };
 
   const handleShareWhatsApp = () => {
@@ -136,6 +168,30 @@ const ConductorHome = () => {
     setRideStatus("en_camino");
   };
 
+  const handleFileSelect = (field: keyof ApplicationForm) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const url = URL.createObjectURL(file);
+        setForm((prev) => ({ ...prev, [field]: url }));
+      }
+    };
+    input.click();
+  };
+
+  const handleSubmitApplication = () => {
+    if (!form.cedula || !form.phone || !form.plate || !form.motoModel || !form.motoColor) {
+      toast({ title: "Campos incompletos", description: "Llena todos los campos obligatorios.", variant: "destructive" });
+      return;
+    }
+    setAppStatus("pending");
+    setStep("panel");
+    toast({ title: "📋 Postulación enviada", description: "Te notificaremos cuando sea revisada." });
+  };
+
   // ── ACTIVE RIDE VIEW ──
   if (activeRide) {
     const currentStatus = STATUS_LABELS[rideStatus];
@@ -149,9 +205,7 @@ const ConductorHome = () => {
             <p className="text-sm text-muted-foreground">
               Pasajero: <span className="font-bold text-foreground">{activeRide.passengerName}</span>
             </p>
-            <p className="text-sm text-muted-foreground">
-              📍 {activeRide.destination}
-            </p>
+            <p className="text-sm text-muted-foreground">📍 {activeRide.destination}</p>
             <div className="bg-accent/10 rounded-xl px-4 py-3">
               <span className="text-sm font-bold text-accent">
                 {activeRide.costType === "city" ? "Cobro: $1.00" : "Cobro acordado con el pasajero"}
@@ -175,7 +229,7 @@ const ConductorHome = () => {
           <p className="text-xs text-primary-foreground/70">{currentStatus.desc}</p>
         </div>
 
-        {/* Progress */}
+        {/* Progress bar */}
         <div className="px-4 py-3 flex items-center gap-2">
           {(["en_camino", "en_viaje", "completado"] as RideStatus[]).map((s, i) => (
             <div key={s} className="flex-1">
@@ -244,7 +298,7 @@ const ConductorHome = () => {
         {/* Demo advance */}
         <div className="mt-auto px-4 pb-6 pt-4">
           <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={advanceStatus}>
-            {rideStatus === "en_camino" ? "Simular: Llegué al pasajero" : "Simular: Llegamos al destino"}
+            {rideStatus === "en_camino" ? "📍 Llegué al pasajero — Iniciar viaje" : "🏁 Completar viaje"}
           </Button>
         </div>
       </div>
@@ -259,7 +313,6 @@ const ConductorHome = () => {
           <span className="text-4xl">🔔</span>
           <h2 className="text-lg font-extrabold text-foreground">¡Nueva solicitud de viaje!</h2>
 
-          {/* Passenger info */}
           <div className="flex items-center justify-center gap-3">
             <img src={incomingRequest.passengerPhoto} alt={incomingRequest.passengerName} className="w-16 h-16 rounded-full object-cover border-2 border-accent" />
             <div className="text-left">
@@ -268,7 +321,6 @@ const ConductorHome = () => {
             </div>
           </div>
 
-          {/* Trip details */}
           <div className="bg-card rounded-2xl border border-border p-4 space-y-3 text-left">
             <div className="flex items-start gap-2">
               <div className="w-3 h-3 rounded-full bg-[hsl(var(--success))] mt-1 flex-shrink-0" />
@@ -291,11 +343,10 @@ const ConductorHome = () => {
             </div>
           </div>
 
-          {/* Maps button */}
           <Button
             variant="outline"
             className="w-full rounded-xl"
-            onClick={() => openInMaps(`${incomingRequest.origin} Pedernales Ecuador`)}
+            onClick={() => openInMaps(incomingRequest.origin, incomingRequest.originCoords)}
           >
             <ExternalLink className="h-4 w-4 mr-2" />
             Ver ubicación en Google Maps
@@ -305,10 +356,8 @@ const ConductorHome = () => {
           <div className="relative w-20 h-20 mx-auto">
             <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
               <circle cx="40" cy="40" r="34" fill="none" stroke="hsl(var(--muted))" strokeWidth="6" />
-              <circle
-                cx="40" cy="40" r="34" fill="none"
-                stroke="hsl(var(--accent))" strokeWidth="6"
-                strokeLinecap="round"
+              <circle cx="40" cy="40" r="34" fill="none"
+                stroke="hsl(var(--accent))" strokeWidth="6" strokeLinecap="round"
                 strokeDasharray={`${2 * Math.PI * 34}`}
                 strokeDashoffset={`${2 * Math.PI * 34 * (1 - requestTimer / 30)}`}
                 className="transition-all duration-1000 ease-linear"
@@ -319,22 +368,14 @@ const ConductorHome = () => {
             </span>
           </div>
 
-          {/* Buttons */}
           <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant="outline"
-              size="lg"
+            <Button variant="outline" size="lg"
               className="rounded-xl border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
               onClick={handleRejectRequest}
             >
               <XCircle className="h-5 w-5 mr-1" /> Rechazar
             </Button>
-            <Button
-              variant="hero"
-              size="lg"
-              className="rounded-xl"
-              onClick={handleAcceptRequest}
-            >
+            <Button variant="hero" size="lg" className="rounded-xl" onClick={handleAcceptRequest}>
               <CheckCircle className="h-5 w-5 mr-1" /> Aceptar
             </Button>
           </div>
@@ -343,6 +384,146 @@ const ConductorHome = () => {
             Tienes {requestTimer}s para responder esta solicitud
           </p>
         </div>
+      </div>
+    );
+  }
+
+  // ── APPLICATION FORM ──
+  if (step === "apply") {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <header className="gradient-primary px-4 pt-10 pb-6">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setStep("panel")} className="p-1.5 rounded-full bg-primary-foreground/10 text-primary-foreground">
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <div>
+              <h1 className="text-lg font-extrabold text-accent">Postulación</h1>
+              <p className="text-xs text-primary-foreground/70">Completa tu información</p>
+            </div>
+          </div>
+        </header>
+
+        <div className="px-4 -mt-4 space-y-4">
+          {/* Personal Photo */}
+          <div className="bg-card rounded-2xl border border-border p-4">
+            <Label className="text-sm font-bold text-foreground mb-2 block">Foto personal *</Label>
+            <button
+              onClick={() => handleFileSelect("photoUrl")}
+              className="w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl py-6 hover:border-accent transition-colors"
+            >
+              {form.photoUrl ? (
+                <img src={form.photoUrl} alt="Foto personal" className="w-20 h-20 rounded-full object-cover border-2 border-accent" />
+              ) : (
+                <>
+                  <Camera className="h-8 w-8 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Tomar o subir foto</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Cédula */}
+          <div className="bg-card rounded-2xl border border-border p-4 space-y-3">
+            <div>
+              <Label className="text-sm font-bold text-foreground mb-1.5 block">Número de cédula *</Label>
+              <Input
+                placeholder="Ej: 0801234567"
+                value={form.cedula}
+                onChange={(e) => setForm((p) => ({ ...p, cedula: e.target.value }))}
+                className="rounded-xl"
+                maxLength={10}
+              />
+            </div>
+            <div>
+              <Label className="text-sm font-bold text-foreground mb-1.5 block">Foto de la cédula *</Label>
+              <button
+                onClick={() => handleFileSelect("cedulaPhotoUrl")}
+                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl py-4 hover:border-accent transition-colors"
+              >
+                {form.cedulaPhotoUrl ? (
+                  <img src={form.cedulaPhotoUrl} alt="Cédula" className="h-20 rounded-lg object-cover" />
+                ) : (
+                  <>
+                    <Upload className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Subir foto de cédula</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Contact */}
+          <div className="bg-card rounded-2xl border border-border p-4">
+            <Label className="text-sm font-bold text-foreground mb-1.5 block">Teléfono *</Label>
+            <Input
+              placeholder="Ej: 0991234567"
+              value={form.phone}
+              onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+              className="rounded-xl"
+              type="tel"
+            />
+          </div>
+
+          {/* Moto info */}
+          <div className="bg-card rounded-2xl border border-border p-4 space-y-3">
+            <h3 className="text-sm font-bold text-foreground">Datos de la moto</h3>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">Placa *</Label>
+              <Input
+                placeholder="Ej: EC-0451"
+                value={form.plate}
+                onChange={(e) => setForm((p) => ({ ...p, plate: e.target.value }))}
+                className="rounded-xl"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">Modelo *</Label>
+              <Input
+                placeholder="Ej: Honda Wave 110"
+                value={form.motoModel}
+                onChange={(e) => setForm((p) => ({ ...p, motoModel: e.target.value }))}
+                className="rounded-xl"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">Color *</Label>
+              <Input
+                placeholder="Ej: Rojo"
+                value={form.motoColor}
+                onChange={(e) => setForm((p) => ({ ...p, motoColor: e.target.value }))}
+                className="rounded-xl"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Foto de la moto (placa visible) *</Label>
+              <button
+                onClick={() => handleFileSelect("motoPhotoUrl")}
+                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl py-4 hover:border-accent transition-colors"
+              >
+                {form.motoPhotoUrl ? (
+                  <img src={form.motoPhotoUrl} alt="Moto" className="h-20 rounded-lg object-cover" />
+                ) : (
+                  <>
+                    <Upload className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Subir foto de la moto</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Submit */}
+          <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={handleSubmitApplication}>
+            📋 Enviar postulación
+          </Button>
+
+          <p className="text-[10px] text-muted-foreground text-center pb-4">
+            Tu información será revisada por el equipo MotoYa. Te notificaremos cuando tu postulación sea aprobada.
+          </p>
+        </div>
+
+        <BottomNav />
       </div>
     );
   }
@@ -369,55 +550,67 @@ const ConductorHome = () => {
             </div>
             <div className="flex-1">
               <h2 className="text-lg font-extrabold text-foreground">{userName}</h2>
-              <div className="flex items-center gap-1 mt-0.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className={`h-3.5 w-3.5 ${i < Math.round(rating) ? "fill-accent text-accent" : "fill-muted text-muted"}`} />
-                ))}
-                <span className="text-xs font-medium text-muted-foreground ml-1">{rating.toFixed(1)}</span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">{totalTrips} viajes completados</p>
+              {appStatus === "approved" && (
+                <>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className={`h-3.5 w-3.5 ${i < Math.round(rating) ? "fill-accent text-accent" : "fill-muted text-muted"}`} />
+                    ))}
+                    <span className="text-xs font-medium text-muted-foreground ml-1">{rating.toFixed(1)}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">{totalTrips} viajes completados</p>
+                </>
+              )}
             </div>
           </div>
 
           {/* Application status */}
           {appStatus === "none" && (
-            <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={() => setAppStatus("pending")}>
-              Postularme como conductor
-            </Button>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground text-center">
+                ¿Quieres ser conductor en MotoYa? Completa tu postulación.
+              </p>
+              <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={() => setStep("apply")}>
+                🏍️ Postularme como conductor
+              </Button>
+            </div>
           )}
 
           {appStatus === "pending" && (
-            <div className="bg-accent/10 rounded-xl px-4 py-3 text-center">
+            <div className="bg-accent/10 rounded-xl px-4 py-4 text-center space-y-2">
               <div className="flex items-center justify-center gap-2">
-                <Loader2 className="h-4 w-4 text-accent animate-spin" />
-                <span className="text-sm font-bold text-accent">En revisión ⏳</span>
+                <Loader2 className="h-5 w-5 text-accent animate-spin" />
+                <span className="text-sm font-bold text-accent">Tu solicitud está en revisión ⏳</span>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Tu postulación está siendo revisada por el equipo MotoYa</p>
+              <p className="text-xs text-muted-foreground">
+                El equipo MotoYa está revisando tus documentos. Te notificaremos cuando tengamos una respuesta.
+              </p>
             </div>
           )}
 
           {appStatus === "rejected" && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="bg-destructive/10 rounded-xl px-4 py-3 text-center">
-                <span className="text-sm font-bold text-destructive">Postulación rechazada</span>
-                <p className="text-xs text-muted-foreground mt-1">Puedes volver a intentarlo con documentos actualizados</p>
+                <span className="text-sm font-bold text-destructive">❌ Postulación rechazada</span>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Tu postulación no fue aprobada. Puedes volver a intentarlo con documentos actualizados.
+                </p>
               </div>
-              <Button variant="heroOutline" size="lg" className="w-full rounded-xl" onClick={() => setAppStatus("pending")}>
-                Volver a postular
+              <Button variant="heroOutline" size="lg" className="w-full rounded-xl" onClick={() => { setAppStatus("none"); setStep("apply"); }}>
+                🔄 Volver a postular
               </Button>
             </div>
           )}
 
           {appStatus === "approved" && (
             <div className="space-y-4">
-              {/* Availability toggle */}
               <div className="flex items-center justify-between bg-muted rounded-xl px-4 py-3">
                 <div>
                   <p className="text-sm font-bold text-foreground">
                     {available ? "🟢 Disponible" : "⚫ No disponible"}
                   </p>
                   <p className="text-[10px] text-muted-foreground">
-                    {available ? "Recibirás solicitudes de viaje" : "No recibirás solicitudes"}
+                    {available ? "Apareces en la lista de pasajeros" : "No recibirás solicitudes"}
                   </p>
                 </div>
                 <Switch checked={available} onCheckedChange={setAvailable} />
@@ -437,7 +630,7 @@ const ConductorHome = () => {
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats (only if approved) */}
       {appStatus === "approved" && (
         <div className="px-4 mt-6">
           <h3 className="text-sm font-bold text-foreground mb-3">Tus estadísticas</h3>
