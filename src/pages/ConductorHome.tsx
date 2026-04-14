@@ -227,7 +227,7 @@ const ConductorHome = () => {
     setSubmitting(true);
     try {
       const insertData = {
-        user_id: user.id,
+        usuario_id: user.id,
         nombre: user.user_metadata?.nombre || user.email?.split("@")[0] || "Sin nombre",
         foto: form.photoUrl || null,
         cedula: form.cedula,
