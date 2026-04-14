@@ -14,6 +14,7 @@ import Index from "./pages/Index";
 import Viajes from "./pages/Viajes";
 import Mensajes from "./pages/Mensajes";
 import Perfil from "./pages/Perfil";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/viajes" element={<ProtectedRoute><Viajes /></ProtectedRoute>} />
             <Route path="/mensajes" element={<ProtectedRoute><Mensajes /></ProtectedRoute>} />
             <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
