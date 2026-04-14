@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import logoMotoya from "@/assets/logo-motoya.png";
 import { Button } from "@/components/ui/button";
@@ -75,6 +76,37 @@ const ConductorHome = () => {
   const [available, setAvailable] = useState(false);
   const [rating] = useState(4.7);
   const [totalTrips] = useState(128);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Load existing application status from Supabase
+  useEffect(() => {
+    if (!user) return;
+    const loadStatus = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("conductores")
+          .select("estado, id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
+        if (error) {
+          console.error("Error loading conductor status:", error.message, error.details);
+          return;
+        }
+        if (data) {
+          const statusMap: Record<string, ApplicationStatus> = {
+            pendiente: "pending",
+            aprobado: "approved",
+            rechazado: "rejected",
+          };
+          setAppStatus(statusMap[data.estado] || "pending");
+        }
+      } catch (err) {
+        console.error("Unexpected error loading conductor:", err);
+      }
+    };
+    loadStatus();
+  }, [user]);
 
   // Application form
   const [form, setForm] = useState<ApplicationForm>({
@@ -182,14 +214,45 @@ const ConductorHome = () => {
     input.click();
   };
 
-  const handleSubmitApplication = () => {
+  const handleSubmitApplication = async () => {
     if (!form.cedula || !form.phone || !form.plate || !form.motoModel || !form.motoColor) {
       toast({ title: "Campos incompletos", description: "Llena todos los campos obligatorios.", variant: "destructive" });
       return;
     }
-    setAppStatus("pending");
-    setStep("panel");
-    toast({ title: "📋 Postulación enviada", description: "Te notificaremos cuando sea revisada." });
+    if (!user) {
+      toast({ title: "Error", description: "Debes iniciar sesión.", variant: "destructive" });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const { data, error } = await supabase.from("conductores").insert({
+        user_id: user.id,
+        nombre: user.user_metadata?.nombre || user.email?.split("@")[0] || "Sin nombre",
+        numero_cedula: form.cedula,
+        telefono: form.phone,
+        placa_moto: form.plate,
+        modelo_moto: form.motoModel,
+        color_moto: form.motoColor,
+        estado: "pendiente",
+      }).select();
+
+      if (error) {
+        console.error("Error al guardar postulación:", error.message, error.details, error.hint);
+        toast({ title: "Error al enviar", description: error.message, variant: "destructive" });
+        return;
+      }
+
+      console.log("Postulación guardada exitosamente:", data);
+      setAppStatus("pending");
+      setStep("panel");
+      toast({ title: "📋 Postulación enviada", description: "Te notificaremos cuando sea revisada." });
+    } catch (err) {
+      console.error("Error inesperado al enviar postulación:", err);
+      toast({ title: "Error inesperado", description: "Intenta de nuevo.", variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // ── ACTIVE RIDE VIEW ──
@@ -514,8 +577,8 @@ const ConductorHome = () => {
           </div>
 
           {/* Submit */}
-          <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={handleSubmitApplication}>
-            📋 Enviar postulación
+          <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={handleSubmitApplication} disabled={submitting}>
+            {submitting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Enviando...</> : "📋 Enviar postulación"}
           </Button>
 
           <p className="text-[10px] text-muted-foreground text-center pb-4">
