@@ -577,8 +577,8 @@ const ConductorHome = () => {
           </div>
 
           {/* Submit */}
-          <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={handleSubmitApplication}>
-            📋 Enviar postulación
+          <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={handleSubmitApplication} disabled={submitting}>
+            {submitting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Enviando...</> : "📋 Enviar postulación"}
           </Button>
 
           <p className="text-[10px] text-muted-foreground text-center pb-4">
