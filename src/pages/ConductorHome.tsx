@@ -76,6 +76,38 @@ const ConductorHome = () => {
   const [available, setAvailable] = useState(false);
   const [rating] = useState(4.7);
   const [totalTrips] = useState(128);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Load existing application status from Supabase
+  useEffect(() => {
+    if (!user) return;
+    const loadStatus = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("conductores")
+          .select("estado, id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
+        if (error) {
+          console.error("Error loading conductor status:", error.message, error.details);
+          return;
+        }
+        if (data) {
+          const statusMap: Record<string, ApplicationStatus> = {
+            pendiente: "pending",
+            aprobado: "approved",
+            rechazado: "rejected",
+          };
+          setAppStatus(statusMap[data.estado] || "pending");
+        }
+      } catch (err) {
+        console.error("Unexpected error loading conductor:", err);
+      }
+    };
+    loadStatus();
+  }, [user]);
+  const [totalTrips] = useState(128);
 
   // Application form
   const [form, setForm] = useState<ApplicationForm>({
