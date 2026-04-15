@@ -111,6 +111,22 @@ const ConductorHome = () => {
     loadStatus();
   }, [user]);
 
+  const handleToggleAvailable = async (value: boolean) => {
+    setAvailable(value);
+    if (!user) return;
+    const { error } = await supabase
+      .from("conductores")
+      .update({ disponible: value })
+      .eq("usuario_id", user.id);
+    if (error) {
+      console.error("Error updating disponible:", error);
+      setAvailable(!value);
+      toast({ title: "Error", description: "No se pudo actualizar tu disponibilidad.", variant: "destructive" });
+    } else {
+      toast({ title: value ? "🟢 Ahora estás disponible" : "⚫ No estás disponible" });
+    }
+  };
+
   // Application form
   const [form, setForm] = useState<ApplicationForm>({
     photoUrl: "",
