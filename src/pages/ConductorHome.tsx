@@ -707,7 +707,7 @@ const ConductorHome = () => {
                     {available ? "Apareces en la lista de pasajeros" : "No recibirás solicitudes"}
                   </p>
                 </div>
-                <Switch checked={available} onCheckedChange={setAvailable} />
+                <Switch checked={available} onCheckedChange={handleToggleAvailable} />
               </div>
 
               {available && (
