@@ -86,7 +86,7 @@ const ConductorHome = () => {
       try {
         const { data, error } = await supabase
           .from("conductores")
-          .select("estado, id")
+          .select("estado, id, disponible")
           .eq("usuario_id", user.id)
           .maybeSingle();
         
@@ -95,6 +95,8 @@ const ConductorHome = () => {
           return;
         }
         if (data) {
+          setConductorId(data.id);
+          setAvailable(data.disponible ?? false);
           const statusMap: Record<string, ApplicationStatus> = {
             pendiente: "pending",
             aprobado: "approved",
