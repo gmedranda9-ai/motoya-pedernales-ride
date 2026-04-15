@@ -74,6 +74,7 @@ const ConductorHome = () => {
   const [step, setStep] = useState<Step>("panel");
   const [appStatus, setAppStatus] = useState<ApplicationStatus>("none");
   const [available, setAvailable] = useState(false);
+  const [conductorId, setConductorId] = useState<string | null>(null);
   const [rating] = useState(4.7);
   const [totalTrips] = useState(128);
   const [submitting, setSubmitting] = useState(false);
@@ -85,7 +86,7 @@ const ConductorHome = () => {
       try {
         const { data, error } = await supabase
           .from("conductores")
-          .select("estado, id")
+          .select("estado, id, disponible")
           .eq("usuario_id", user.id)
           .maybeSingle();
         
@@ -94,6 +95,8 @@ const ConductorHome = () => {
           return;
         }
         if (data) {
+          setConductorId(data.id);
+          setAvailable(data.disponible ?? false);
           const statusMap: Record<string, ApplicationStatus> = {
             pendiente: "pending",
             aprobado: "approved",
@@ -107,6 +110,22 @@ const ConductorHome = () => {
     };
     loadStatus();
   }, [user]);
+
+  const handleToggleAvailable = async (value: boolean) => {
+    setAvailable(value);
+    if (!user) return;
+    const { error } = await supabase
+      .from("conductores")
+      .update({ disponible: value })
+      .eq("usuario_id", user.id);
+    if (error) {
+      console.error("Error updating disponible:", error);
+      setAvailable(!value);
+      toast({ title: "Error", description: "No se pudo actualizar tu disponibilidad.", variant: "destructive" });
+    } else {
+      toast({ title: value ? "🟢 Ahora estás disponible" : "⚫ No estás disponible" });
+    }
+  };
 
   // Application form
   const [form, setForm] = useState<ApplicationForm>({
@@ -688,7 +707,7 @@ const ConductorHome = () => {
                     {available ? "Apareces en la lista de pasajeros" : "No recibirás solicitudes"}
                   </p>
                 </div>
-                <Switch checked={available} onCheckedChange={setAvailable} />
+                <Switch checked={available} onCheckedChange={handleToggleAvailable} />
               </div>
 
               {available && (
