@@ -74,6 +74,7 @@ const ConductorHome = () => {
   const [step, setStep] = useState<Step>("panel");
   const [appStatus, setAppStatus] = useState<ApplicationStatus>("none");
   const [available, setAvailable] = useState(false);
+  const [conductorId, setConductorId] = useState<string | null>(null);
   const [rating] = useState(4.7);
   const [totalTrips] = useState(128);
   const [submitting, setSubmitting] = useState(false);
