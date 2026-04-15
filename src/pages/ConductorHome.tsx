@@ -86,7 +86,7 @@ const ConductorHome = () => {
         const { data, error } = await supabase
           .from("conductores")
           .select("estado, id")
-          .eq("user_id", user.id)
+          .eq("usuario_id", user.id)
           .maybeSingle();
         
         if (error) {
