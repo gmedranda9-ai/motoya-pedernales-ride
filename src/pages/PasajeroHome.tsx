@@ -245,6 +245,7 @@ const PasajeroHome = () => {
         onTimeout={handleTimeout}
         onAccepted={handleAccepted}
         estimatedCost={costType}
+        viajeId={viajeId}
       />
     );
   }
