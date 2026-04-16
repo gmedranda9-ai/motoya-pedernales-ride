@@ -25,6 +25,7 @@ const mockTrips = [
 ];
 
 const Viajes = () => {
+  useBackButton();
   return (
     <div className="min-h-screen bg-background pb-20">
       <header className="gradient-primary px-4 pt-12 pb-6">
