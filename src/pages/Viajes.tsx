@@ -1,6 +1,7 @@
 import BottomNav from "@/components/BottomNav";
 import DriverCard from "@/components/DriverCard";
 import { Clock } from "lucide-react";
+import { useBackButton } from "@/hooks/useBackButton";
 
 const mockTrips = [
   {
@@ -24,6 +25,7 @@ const mockTrips = [
 ];
 
 const Viajes = () => {
+  useBackButton();
   return (
     <div className="min-h-screen bg-background pb-20">
       <header className="gradient-primary px-4 pt-12 pb-6">

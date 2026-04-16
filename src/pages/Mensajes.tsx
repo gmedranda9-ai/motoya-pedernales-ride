@@ -1,5 +1,6 @@
 import BottomNav from "@/components/BottomNav";
 import { MessageSquare } from "lucide-react";
+import { useBackButton } from "@/hooks/useBackButton";
 
 const mockChats = [
   { id: "1", name: "Juan Reyes", lastMsg: "Estoy llegando al punto", time: "14:32", unread: 1 },
@@ -7,6 +8,7 @@ const mockChats = [
 ];
 
 const Mensajes = () => {
+  useBackButton();
   return (
     <div className="min-h-screen bg-background pb-20">
       <header className="gradient-primary px-4 pt-12 pb-6">
