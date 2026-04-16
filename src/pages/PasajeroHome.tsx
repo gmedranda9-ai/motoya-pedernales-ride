@@ -271,7 +271,7 @@ const PasajeroHome = () => {
         <div className="px-4 space-y-3">
           {filteredDrivers.length > 0 ? (
             filteredDrivers.map((driver) => {
-              const info = MOCK_DISTANCE[driver.id];
+              return (
               return (
                 <div
                   key={driver.id}
