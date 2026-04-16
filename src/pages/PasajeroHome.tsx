@@ -187,14 +187,19 @@ const PasajeroHome = () => {
     });
   };
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
+    if (viajeId) {
+      await supabase.from("viajes").update({ estado: "cancelado" }).eq("id", viajeId);
+    }
     setSelectedDriver(null);
+    setViajeId(undefined);
     setStep("home");
     toast({ title: "Solicitud cancelada" });
   };
 
   const handleTimeout = () => {
     setSelectedDriver(null);
+    setViajeId(undefined);
     setStep("drivers");
   };
 
