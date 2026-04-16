@@ -3,10 +3,12 @@ import BottomNav from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Star, MapPin, Shield, ChevronRight, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBackButton } from "@/hooks/useBackButton";
 
 const Perfil = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  useBackButton();
 
   const nombre = user?.user_metadata?.nombre || user?.email || "Usuario";
   const rol = user?.user_metadata?.rol || "pasajero";

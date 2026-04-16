@@ -1,6 +1,7 @@
 import BottomNav from "@/components/BottomNav";
 import DriverCard from "@/components/DriverCard";
 import { Clock } from "lucide-react";
+import { useBackButton } from "@/hooks/useBackButton";
 
 const mockTrips = [
   {
