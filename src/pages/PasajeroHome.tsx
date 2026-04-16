@@ -51,6 +51,7 @@ const PasajeroHome = () => {
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loadingDrivers, setLoadingDrivers] = useState(false);
+  const [viajeId, setViajeId] = useState<string | undefined>();
 
   const userName =
     user?.user_metadata?.nombre || user?.email?.split("@")[0] || "Pasajero";
@@ -152,25 +153,53 @@ const PasajeroHome = () => {
     setStep("profile");
   };
 
-  const handleRequest = (driverId: string) => {
+  const handleRequest = async (driverId: string) => {
     const driver = drivers.find((d) => d.id === driverId);
-    if (!driver) return;
+    if (!driver || !user) return;
     setSelectedDriver(driver);
     setStep("waiting");
+
+    // Insert viaje in Supabase
+    const { data, error } = await supabase
+      .from("viajes")
+      .insert({
+        pasajero_id: user.id,
+        conductor_id: driverId,
+        destino: destination,
+        origen: locationAddress,
+        estado: "pendiente",
+        costo_tipo: getCostType(destination),
+      })
+      .select("id")
+      .single();
+
+    if (error) {
+      console.error("Error creando viaje:", error);
+      toast({ title: "Error", description: "No se pudo crear el viaje.", variant: "destructive" });
+      setStep("drivers");
+      return;
+    }
+
+    setViajeId(data.id);
     toast({
       title: "¡Solicitud enviada!",
       description: `Viaje solicitado con ${driver.name}. Esperando confirmación.`,
     });
   };
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
+    if (viajeId) {
+      await supabase.from("viajes").update({ estado: "cancelado" }).eq("id", viajeId);
+    }
     setSelectedDriver(null);
+    setViajeId(undefined);
     setStep("home");
     toast({ title: "Solicitud cancelada" });
   };
 
   const handleTimeout = () => {
     setSelectedDriver(null);
+    setViajeId(undefined);
     setStep("drivers");
   };
 
@@ -216,6 +245,7 @@ const PasajeroHome = () => {
         onTimeout={handleTimeout}
         onAccepted={handleAccepted}
         estimatedCost={costType}
+        viajeId={viajeId}
       />
     );
   }
