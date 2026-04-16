@@ -186,8 +186,19 @@ const ConductorHome = () => {
     return () => clearTimeout(t);
   }, [requestTimer, incomingRequest]);
 
-  const handleAcceptRequest = () => {
+  const handleAcceptRequest = async () => {
     if (!incomingRequest) return;
+    console.log("🟡 Aceptando viaje, ID:", incomingRequest.id);
+    const { error } = await supabase
+      .from("viajes")
+      .update({ estado: "aceptado" })
+      .eq("id", incomingRequest.id);
+    if (error) {
+      console.error("❌ Error al aceptar viaje:", error);
+      toast({ title: "Error", description: "No se pudo aceptar el viaje.", variant: "destructive" });
+      return;
+    }
+    console.log("✅ Viaje aceptado en Supabase, ID:", incomingRequest.id);
     setActiveRide(incomingRequest);
     setIncomingRequest(null);
     setRideStatus("en_camino");

@@ -14,7 +14,7 @@ interface WaitingScreenProps {
   viajeId?: string;
 }
 
-const TIMEOUT_SECONDS = 30;
+const TIMEOUT_SECONDS = 60;
 
 const WaitingScreen = ({ driver, destination, onCancel, onTimeout, onAccepted, estimatedCost, viajeId }: WaitingScreenProps) => {
   const [seconds, setSeconds] = useState(TIMEOUT_SECONDS);
@@ -54,10 +54,13 @@ const WaitingScreen = ({ driver, destination, onCancel, onTimeout, onAccepted, e
         },
         (payload: any) => {
           const nuevo = payload.new;
+          console.log("📡 Estado actual del viaje:", nuevo.estado, "| viajeId:", viajeId);
           if (nuevo.estado === "aceptado") {
+            console.log("✅ Conductor aceptó el viaje, pasando a viaje activo");
             onAccepted();
           }
           if (nuevo.estado === "cancelado" || nuevo.estado === "rechazado") {
+            console.log("❌ Viaje cancelado/rechazado por el conductor");
             setTimedOut(true);
           }
         }
