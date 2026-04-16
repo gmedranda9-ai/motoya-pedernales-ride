@@ -49,16 +49,6 @@ interface ApplicationForm {
   motoPhotoUrl: string;
 }
 
-const MOCK_REQUEST: RideRequest = {
-  id: "r1",
-  passengerName: "María López",
-  passengerPhoto:
-    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face",
-  origin: "Av. Eloy Alfaro, Pedernales",
-  originCoords: { lat: 0.0713, lng: -80.0548 },
-  destination: "Terminal Terrestre",
-  costType: "city",
-};
 
 const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: string }> = {
   en_camino: { label: "En camino al pasajero", emoji: "🏍️", desc: "Dirígete a la ubicación del pasajero" },
@@ -150,15 +140,39 @@ const ConductorHome = () => {
   const [messages, setMessages] = useState<{ from: string; text: string }[]>([]);
   const [msgText, setMsgText] = useState("");
 
-  // Simulate incoming request when available
+  // Subscribe to realtime ride requests when available
   useEffect(() => {
-    if (!available || activeRide || appStatus !== "approved") return;
-    const timer = setTimeout(() => {
-      setIncomingRequest(MOCK_REQUEST);
-      setRequestTimer(30);
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [available, activeRide, appStatus]);
+    if (!available || activeRide || appStatus !== "approved" || !conductorId) return;
+
+    const channel = supabase
+      .channel('viajes-conductor')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'viajes',
+        filter: `conductor_id=eq.${conductorId}`,
+      }, (payload) => {
+        const viaje = payload.new as any;
+        if (viaje.estado === 'pendiente') {
+          setIncomingRequest({
+            id: viaje.id,
+            passengerName: viaje.pasajero_nombre || 'Pasajero',
+            passengerPhoto: viaje.pasajero_foto || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face',
+            origin: viaje.origen || 'Origen no especificado',
+            originCoords: viaje.origen_lat && viaje.origen_lng ? { lat: viaje.origen_lat, lng: viaje.origen_lng } : undefined,
+            destination: viaje.destino || 'Destino no especificado',
+            costType: viaje.tipo_cobro === 'fuera' ? 'outside' : 'city',
+          });
+          setRequestTimer(30);
+          toast({ title: "🔔 Nueva solicitud de viaje", description: `${viaje.pasajero_nombre || 'Un pasajero'} necesita un viaje` });
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [available, activeRide, appStatus, conductorId]);
 
   // Request countdown
   useEffect(() => {
