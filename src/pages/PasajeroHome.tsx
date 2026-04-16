@@ -269,10 +269,13 @@ const PasajeroHome = () => {
         </div>
 
         <div className="px-4 space-y-3">
-          {filteredDrivers.length > 0 ? (
-            filteredDrivers.map((driver) => {
-              return (
-              return (
+          {loadingDrivers ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <Loader2 className="h-10 w-10 text-accent animate-spin mb-3" />
+              <p className="text-sm text-muted-foreground">Buscando conductores...</p>
+            </div>
+          ) : filteredDrivers.length > 0 ? (
+            filteredDrivers.map((driver) => (
                 <div
                   key={driver.id}
                   onClick={() => handleDriverTap(driver)}
@@ -315,18 +318,6 @@ const PasajeroHome = () => {
                         <p className="text-xs text-muted-foreground">
                           🏍️ {driver.model} · <span className="font-semibold">{driver.plate}</span>
                         </p>
-
-                        {/* Distance & ETA */}
-                        {info && (
-                          <div className="flex items-center gap-3 mt-1.5">
-                            <span className="flex items-center gap-1 text-[11px] text-accent font-semibold">
-                              <Navigation className="h-3 w-3" /> {info.dist}
-                            </span>
-                            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                              <Clock className="h-3 w-3" /> {info.eta}
-                            </span>
-                          </div>
-                        )}
                       </div>
                     </div>
 
@@ -344,8 +335,7 @@ const PasajeroHome = () => {
                     </Button>
                   </div>
                 </div>
-              );
-            })
+            ))
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <Frown className="h-16 w-16 text-muted-foreground/50 mb-4" />
