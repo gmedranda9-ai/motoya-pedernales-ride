@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Loader2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import type { Driver } from "@/components/DriverCard";
 
 interface WaitingScreenProps {
@@ -10,30 +11,63 @@ interface WaitingScreenProps {
   onTimeout: () => void;
   onAccepted: () => void;
   estimatedCost?: string;
+  viajeId?: string;
 }
 
 const TIMEOUT_SECONDS = 30;
 
-const WaitingScreen = ({ driver, destination, onCancel, onTimeout, onAccepted, estimatedCost }: WaitingScreenProps) => {
+const WaitingScreen = ({ driver, destination, onCancel, onTimeout, onAccepted, estimatedCost, viajeId }: WaitingScreenProps) => {
   const [seconds, setSeconds] = useState(TIMEOUT_SECONDS);
   const [timedOut, setTimedOut] = useState(false);
 
+  // Countdown timer
   useEffect(() => {
     if (seconds <= 0) {
       setTimedOut(true);
+      // Cancel viaje in DB when timeout
+      if (viajeId) {
+        supabase
+          .from("viajes")
+          .update({ estado: "cancelado" })
+          .eq("id", viajeId)
+          .then();
+      }
       return;
     }
     const timer = setTimeout(() => setSeconds((s) => s - 1), 1000);
     return () => clearTimeout(timer);
-  }, [seconds]);
+  }, [seconds, viajeId]);
 
-  // Demo: simulate driver accepting after 10s (remove when real)
+  // Realtime: listen for driver's response
   useEffect(() => {
-    const accept = setTimeout(() => {
-      if (!timedOut) onAccepted();
-    }, 12000);
-    return () => clearTimeout(accept);
-  }, []);
+    if (!viajeId) return;
+
+    const channel = supabase
+      .channel(`viaje_activo_${viajeId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "viajes",
+          filter: `id=eq.${viajeId}`,
+        },
+        (payload: any) => {
+          const nuevo = payload.new;
+          if (nuevo.estado === "aceptado") {
+            onAccepted();
+          }
+          if (nuevo.estado === "cancelado" || nuevo.estado === "rechazado") {
+            setTimedOut(true);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [viajeId, onAccepted]);
 
   if (timedOut) {
     return (
