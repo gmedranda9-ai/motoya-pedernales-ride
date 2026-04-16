@@ -49,16 +49,6 @@ interface ApplicationForm {
   motoPhotoUrl: string;
 }
 
-const MOCK_REQUEST: RideRequest = {
-  id: "r1",
-  passengerName: "María López",
-  passengerPhoto:
-    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face",
-  origin: "Av. Eloy Alfaro, Pedernales",
-  originCoords: { lat: 0.0713, lng: -80.0548 },
-  destination: "Terminal Terrestre",
-  costType: "city",
-};
 
 const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: string }> = {
   en_camino: { label: "En camino al pasajero", emoji: "🏍️", desc: "Dirígete a la ubicación del pasajero" },
