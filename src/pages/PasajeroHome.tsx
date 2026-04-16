@@ -153,7 +153,7 @@ const PasajeroHome = () => {
   };
 
   const handleRequest = (driverId: string) => {
-    const driver = MOCK_DRIVERS.find((d) => d.id === driverId);
+    const driver = drivers.find((d) => d.id === driverId);
     if (!driver) return;
     setSelectedDriver(driver);
     setStep("waiting");
