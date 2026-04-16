@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import DriverCard, { type Driver } from "@/components/DriverCard";
@@ -8,13 +8,12 @@ import ActiveRideScreen from "@/components/ActiveRideScreen";
 import RatingScreen from "@/components/RatingScreen";
 import BottomNav from "@/components/BottomNav";
 import logoMotoya from "@/assets/logo-motoya.png";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Search,
   Frown,
   MapPin,
   Navigation,
-  Zap,
-  Shield,
   ArrowLeft,
   Loader2,
   Clock,
@@ -22,39 +21,6 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
-const MOCK_DRIVERS: Driver[] = [
-  {
-    id: "1", name: "Carlos Mendoza",
-    photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-    plate: "EC-0451", model: "Honda Wave 110", rating: 4.8, available: true,
-    phone: "0991-234-567", color: "Rojo",
-  },
-  {
-    id: "2", name: "Luis Bravo",
-    photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
-    plate: "EC-0322", model: "Yamaha YBR 125", rating: 4.5, available: true,
-    phone: "0998-765-432", color: "Negro",
-  },
-  {
-    id: "3", name: "Miguel Cedeño",
-    photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-    plate: "EC-0198", model: "Suzuki GN 125", rating: 4.2, available: false,
-    phone: "0985-111-222", color: "Azul",
-  },
-  {
-    id: "4", name: "Pedro Zambrano",
-    photo: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face",
-    plate: "EC-0567", model: "Bajaj Pulsar 135", rating: 4.9, available: true,
-    phone: "0993-456-789", color: "Negro y rojo",
-  },
-  {
-    id: "5", name: "Jorge Pincay",
-    photo: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&h=150&fit=crop&crop=face",
-    plate: "EC-0410", model: "TVS Apache 160", rating: 3.8, available: false,
-    phone: "0987-654-321", color: "Blanco",
-  },
-];
 
 const FREQUENT_DESTINATIONS = [
   "Malecón de Pedernales",
@@ -64,15 +30,6 @@ const FREQUENT_DESTINATIONS = [
   "Parque Central",
   "Colegio 5 de Junio",
 ];
-
-// Mock distances/ETAs per driver
-const MOCK_DISTANCE: Record<string, { dist: string; distKm: number; eta: string }> = {
-  "1": { dist: "0.8 km", distKm: 0.8, eta: "3 min" },
-  "2": { dist: "1.2 km", distKm: 1.2, eta: "5 min" },
-  "3": { dist: "2.1 km", distKm: 2.1, eta: "8 min" },
-  "4": { dist: "0.5 km", distKm: 0.5, eta: "2 min" },
-  "5": { dist: "3.0 km", distKm: 3.0, eta: "10 min" },
-};
 
 const CITY_DESTINATIONS = new Set(FREQUENT_DESTINATIONS);
 
@@ -92,11 +49,54 @@ const PasajeroHome = () => {
   const [destination, setDestination] = useState("");
   const [search, setSearch] = useState("");
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [loadingDrivers, setLoadingDrivers] = useState(false);
 
   const userName =
     user?.user_metadata?.nombre || user?.email?.split("@")[0] || "Pasajero";
 
-  const filteredDrivers = MOCK_DRIVERS.filter(
+  // Fetch drivers from Supabase
+  const fetchDrivers = async () => {
+    setLoadingDrivers(true);
+    try {
+      const { data, error } = await supabase
+        .from("conductores")
+        .select("*")
+        .eq("disponible", true)
+        .eq("estado", "aprobado");
+
+      if (error) {
+        console.error("Error al cargar conductores:", error);
+        toast({ title: "Error", description: "No se pudieron cargar los conductores.", variant: "destructive" });
+        setDrivers([]);
+      } else {
+        const mapped: Driver[] = (data || []).map((c: any) => ({
+          id: c.id,
+          name: c.nombre || "Sin nombre",
+          photo: c.foto || "https://via.placeholder.com/150",
+          plate: c.placa || "",
+          model: c.modelo_moto || "",
+          rating: c.calificacion_promedio ?? 5.0,
+          available: c.disponible ?? true,
+          phone: c.telefono || "",
+          color: c.color || "",
+        }));
+        setDrivers(mapped);
+      }
+    } catch (err) {
+      console.error("Error inesperado:", err);
+      setDrivers([]);
+    }
+    setLoadingDrivers(false);
+  };
+
+  useEffect(() => {
+    if (step === "drivers") {
+      fetchDrivers();
+    }
+  }, [step]);
+
+  const filteredDrivers = drivers.filter(
     (d) =>
       d.name.toLowerCase().includes(search.toLowerCase()) ||
       d.plate.toLowerCase().includes(search.toLowerCase())
@@ -153,7 +153,7 @@ const PasajeroHome = () => {
   };
 
   const handleRequest = (driverId: string) => {
-    const driver = MOCK_DRIVERS.find((d) => d.id === driverId);
+    const driver = drivers.find((d) => d.id === driverId);
     if (!driver) return;
     setSelectedDriver(driver);
     setStep("waiting");
@@ -269,10 +269,13 @@ const PasajeroHome = () => {
         </div>
 
         <div className="px-4 space-y-3">
-          {filteredDrivers.length > 0 ? (
-            filteredDrivers.map((driver) => {
-              const info = MOCK_DISTANCE[driver.id];
-              return (
+          {loadingDrivers ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <Loader2 className="h-10 w-10 text-accent animate-spin mb-3" />
+              <p className="text-sm text-muted-foreground">Buscando conductores...</p>
+            </div>
+          ) : filteredDrivers.length > 0 ? (
+            filteredDrivers.map((driver) => (
                 <div
                   key={driver.id}
                   onClick={() => handleDriverTap(driver)}
@@ -315,18 +318,6 @@ const PasajeroHome = () => {
                         <p className="text-xs text-muted-foreground">
                           🏍️ {driver.model} · <span className="font-semibold">{driver.plate}</span>
                         </p>
-
-                        {/* Distance & ETA */}
-                        {info && (
-                          <div className="flex items-center gap-3 mt-1.5">
-                            <span className="flex items-center gap-1 text-[11px] text-accent font-semibold">
-                              <Navigation className="h-3 w-3" /> {info.dist}
-                            </span>
-                            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                              <Clock className="h-3 w-3" /> {info.eta}
-                            </span>
-                          </div>
-                        )}
                       </div>
                     </div>
 
@@ -344,8 +335,7 @@ const PasajeroHome = () => {
                     </Button>
                   </div>
                 </div>
-              );
-            })
+            ))
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <Frown className="h-16 w-16 text-muted-foreground/50 mb-4" />
