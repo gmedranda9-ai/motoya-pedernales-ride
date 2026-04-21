@@ -24,6 +24,8 @@ import {
   Upload,
 } from "lucide-react";
 import { subscribeToPush, unsubscribeFromPush } from "@/lib/onesignal";
+import { useShareDriverLocation } from "@/hooks/useShareDriverLocation";
+import LiveMap from "@/components/LiveMap";
 
 type ApplicationStatus = "none" | "pending" | "approved" | "rejected";
 type RideStatus = "en_camino" | "en_viaje" | "completado";
@@ -298,6 +300,13 @@ const ConductorHome = () => {
     else if (rideStatus === "en_viaje") setRideStatus("completado");
   };
 
+  // Share driver GPS every 5s while ride is active (en_camino or en_viaje)
+  useShareDriverLocation(
+    activeRide?.id ?? null,
+    !!activeRide && rideStatus !== "completado",
+    5000,
+  );
+
   const finishRide = () => {
     setActiveRide(null);
     setMessages([]);
@@ -438,6 +447,13 @@ const ConductorHome = () => {
                 💰 {activeRide.costType === "city" ? "$1.00" : "Consultar con pasajero"}
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* Live map */}
+        <div className="px-4 mt-4">
+          <div className="h-48 rounded-2xl overflow-hidden border border-border">
+            <LiveMap viajeId={activeRide.id} className="w-full h-full" />
           </div>
         </div>
 
