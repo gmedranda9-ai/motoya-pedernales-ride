@@ -1,6 +1,7 @@
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import logoMotoya from "@/assets/logo-motoya.png";
 
 export interface Driver {
   id: string;

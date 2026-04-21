@@ -241,7 +241,10 @@ const Admin = () => {
               <img src={app.photo} alt={app.name} className="w-14 h-14 rounded-full object-cover border-2 border-accent" />
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-foreground truncate">{app.name}</h3>
-                <p className="text-xs text-muted-foreground">🏍️ {app.motoModel} · {app.plate}</p>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <img src={logoMotoya} alt="" className="w-3.5 h-3.5 object-contain inline-block" />
+                  {app.motoModel} · {app.plate}
+                </p>
                 <p className="text-xs text-muted-foreground">📅 {app.submittedAt}</p>
               </div>
               <div className="flex flex-col items-end gap-1">
