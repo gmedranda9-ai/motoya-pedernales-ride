@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Phone, Shield, MessageCircle, Share2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import LiveMap from "@/components/LiveMap";
 import type { Driver } from "@/components/DriverCard";
 
 type RideStatus = "en_camino" | "en_viaje" | "completado";
@@ -10,6 +11,7 @@ interface ActiveRideScreenProps {
   driver: Driver;
   destination: string;
   onFinish: () => void;
+  viajeId?: string;
 }
 
 const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: string }> = {
@@ -18,7 +20,7 @@ const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: st
   completado: { label: "Viaje completado", emoji: "✅", desc: "¡Has llegado a tu destino!" },
 };
 
-const ActiveRideScreen = ({ driver, destination, onFinish }: ActiveRideScreenProps) => {
+const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRideScreenProps) => {
   const [status, setStatus] = useState<RideStatus>("en_camino");
   const [messages, setMessages] = useState<{ from: string; text: string }[]>([]);
   const [chatOpen, setChatOpen] = useState(false);
