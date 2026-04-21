@@ -403,7 +403,11 @@ const ConductorHome = () => {
         {/* Passenger info */}
         <div className="px-4">
           <div className="bg-card rounded-2xl border border-border p-4 flex items-center gap-4">
-            <img src={activeRide.passengerPhoto} alt={activeRide.passengerName} className="w-14 h-14 rounded-full object-cover border-2 border-accent" />
+            <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center border-2 border-accent flex-shrink-0">
+              <span className="text-xl font-extrabold text-primary-foreground">
+                {activeRide.passengerName.charAt(0).toUpperCase()}
+              </span>
+            </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-foreground truncate">{activeRide.passengerName}</h3>
               <p className="text-xs text-muted-foreground">📍 Destino: {activeRide.destination}</p>
@@ -471,10 +475,34 @@ const ConductorHome = () => {
           <h2 className="text-lg font-extrabold text-foreground">¡Nueva solicitud de viaje!</h2>
 
           <div className="flex items-center justify-center gap-3">
-            <img src={incomingRequest.passengerPhoto} alt={incomingRequest.passengerName} className="w-16 h-16 rounded-full object-cover border-2 border-accent" />
+            <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center border-2 border-accent flex-shrink-0">
+              <span className="text-2xl font-extrabold text-primary-foreground">
+                {incomingRequest.passengerName.charAt(0).toUpperCase()}
+              </span>
+            </div>
             <div className="text-left">
               <p className="font-bold text-foreground">{incomingRequest.passengerName}</p>
-              <p className="text-xs text-muted-foreground">Pasajero</p>
+              {incomingRequest.passengerTrips < 3 ? (
+                <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-accent/20 text-accent text-[10px] font-semibold">
+                  ✨ Nuevo usuario
+                </span>
+              ) : (
+                <div className="flex items-center gap-1 mt-1">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <Star
+                      key={n}
+                      className={`h-3.5 w-3.5 ${
+                        n <= Math.round(incomingRequest.passengerRating)
+                          ? "fill-accent text-accent"
+                          : "text-muted-foreground"
+                      }`}
+                    />
+                  ))}
+                  <span className="text-xs text-muted-foreground ml-1">
+                    {incomingRequest.passengerRating.toFixed(1)} · {incomingRequest.passengerTrips} viajes
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
