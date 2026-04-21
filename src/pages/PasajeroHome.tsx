@@ -125,25 +125,38 @@ const PasajeroHome = () => {
           const data = await res.json();
           const addr = data.address;
           const street = addr?.road || addr?.pedestrian || addr?.neighbourhood || "";
-          const city = addr?.city || addr?.town || addr?.village || "Pedernales";
-          setLocationAddress(street ? `${street}, ${city}` : city);
+          const city = addr?.city || addr?.town || addr?.village || "";
+          setLocationAddress(street && city ? `${street}, ${city}` : street || city || `(${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
           setLocationDenied(false);
         } catch {
-          setLocationAddress(`Pedernales (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
+          setLocationAddress(`(${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
           setLocationDenied(false);
         }
         setDetectingLocation(false);
         toast({ title: "📍 Ubicación detectada", description: "Tu ubicación GPS ha sido registrada." });
       },
-      () => {
+      (err) => {
         setDetectingLocation(false);
-        setLocationDenied(true);
-        toast({
-          title: "Ubicación bloqueada",
-          description: "Escribe tu dirección manualmente o activa el GPS en la configuración.",
-          variant: "destructive",
-        });
-      }
+        if (err.code === err.PERMISSION_DENIED) {
+          setLocationDenied(true);
+          toast({
+            title: "Ubicación bloqueada",
+            description: "Escribe tu dirección manualmente o activa el GPS en la configuración.",
+            variant: "destructive",
+          });
+        } else if (err.code === err.TIMEOUT) {
+          toast({
+            title: "GPS tardó demasiado",
+            description: "Intenta de nuevo o escribe tu dirección manualmente.",
+          });
+        } else {
+          toast({
+            title: "No se pudo obtener tu ubicación",
+            description: "Verifica que el GPS esté activo o escribe tu dirección manualmente.",
+          });
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
