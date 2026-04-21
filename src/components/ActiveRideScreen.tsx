@@ -132,9 +132,20 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRide
             <p className="text-xs text-muted-foreground">🏍️ {driver.model} · <span className="font-semibold">{driver.plate}</span></p>
             <p className="text-xs text-muted-foreground">📍 Destino: {destination}</p>
           </div>
-          <a href={`tel:${driver.phone}`} className="p-2 rounded-full bg-accent/10">
-            <Phone className="h-5 w-5 text-accent" />
-          </a>
+          {driver.phone ? (
+            <a
+              href={`tel:${driver.phone}`}
+              onClick={() => window.open(`tel:${driver.phone}`)}
+              className="p-2 rounded-full bg-accent/10 hover:bg-accent/20 transition-colors"
+              aria-label={`Llamar a ${firstName}`}
+            >
+              <Phone className="h-5 w-5 text-accent" />
+            </a>
+          ) : (
+            <span className="p-2 rounded-full bg-muted opacity-50" aria-label="Teléfono no disponible">
+              <Phone className="h-5 w-5 text-muted-foreground" />
+            </span>
+          )}
         </div>
       </div>
 
