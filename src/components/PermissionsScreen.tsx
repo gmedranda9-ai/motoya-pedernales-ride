@@ -17,32 +17,66 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
   const requestLocation = (): Promise<boolean> =>
     new Promise((resolve) => {
       if (!("geolocation" in navigator)) return resolve(false);
+      let done = false;
+      const finish = (ok: boolean) => {
+        if (done) return;
+        done = true;
+        resolve(ok);
+      };
       navigator.geolocation.getCurrentPosition(
-        () => resolve(true),
-        () => resolve(false),
-        { timeout: 10000 }
+        () => finish(true),
+        () => finish(false),
+        { timeout: 8000, maximumAge: 60000 }
       );
+      // Hard fallback in case the browser never resolves the prompt
+      setTimeout(() => finish(false), 9000);
     });
+
+  const requestNotifications = async (): Promise<boolean> => {
+    try {
+      if (typeof Notification === "undefined") return false;
+      if (Notification.permission === "granted") return true;
+      if (Notification.permission === "denied") return false;
+      const result = await Promise.race<NotificationPermission | "timeout">([
+        Notification.requestPermission(),
+        new Promise<"timeout">((r) => setTimeout(() => r("timeout"), 8000)),
+      ]);
+      return result === "granted";
+    } catch {
+      return false;
+    }
+  };
 
   const handleAllowAll = async () => {
     setLoading(true);
-    await requestLocation();
     try {
-      const playerId = await subscribeToPush();
-      if (playerId && user) {
-        const role = user.user_metadata?.rol;
-        if (role === "conductor") {
-          await supabase
-            .from("conductores")
-            .update({ onesignal_player_id: playerId })
-            .eq("id", user.id);
+      await requestLocation();
+      const granted = await requestNotifications();
+      if (granted) {
+        try {
+          const playerId = await Promise.race<string | null>([
+            subscribeToPush(),
+            new Promise<null>((r) => setTimeout(() => r(null), 8000)),
+          ]);
+          if (playerId && user) {
+            const role = (user.user_metadata as any)?.rol;
+            if (role === "conductor") {
+              await supabase
+                .from("conductores")
+                .update({ onesignal_player_id: playerId })
+                .eq("id", user.id);
+            }
+          }
+        } catch (e) {
+          console.warn("Push subscribe failed:", e);
         }
       }
     } catch (e) {
-      console.warn("Push subscribe failed:", e);
+      console.warn("Permissions flow error:", e);
+    } finally {
+      setLoading(false);
+      onDone();
     }
-    setLoading(false);
-    onDone();
   };
 
   return (

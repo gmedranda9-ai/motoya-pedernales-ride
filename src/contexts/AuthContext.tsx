@@ -19,7 +19,7 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
-const PERMISSIONS_KEY = "motoya_permissions_asked";
+const PERMISSIONS_KEY = "motoya_permisos_solicitados";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -28,12 +28,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [showPermissions, setShowPermissions] = useState(false);
 
   useEffect(() => {
-    const checkPermissions = (u: User | null) => {
-      if (!u) return;
-      const key = `${PERMISSIONS_KEY}_${u.id}`;
-      if (!localStorage.getItem(key)) {
-        setShowPermissions(true);
+    const checkPermissions = async (u: User | null) => {
+      if (!u) {
+        setShowPermissions(false);
+        return;
       }
+      if (localStorage.getItem(PERMISSIONS_KEY)) return;
+
+      // If both permissions are already granted, skip the screen and mark as asked
+      try {
+        let geoGranted = false;
+        let notifGranted = false;
+
+        if ("permissions" in navigator) {
+          try {
+            const geoStatus = await (navigator as any).permissions.query({ name: "geolocation" });
+            geoGranted = geoStatus.state === "granted";
+          } catch {}
+        }
+        if (typeof Notification !== "undefined") {
+          notifGranted = Notification.permission === "granted";
+        }
+
+        if (geoGranted && notifGranted) {
+          localStorage.setItem(PERMISSIONS_KEY, "1");
+          return;
+        }
+      } catch {}
+
+      setShowPermissions(true);
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -58,9 +81,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handlePermissionsDone = () => {
-    if (user) {
-      localStorage.setItem(`${PERMISSIONS_KEY}_${user.id}`, "1");
-    }
+    localStorage.setItem(PERMISSIONS_KEY, "1");
     setShowPermissions(false);
   };
 
