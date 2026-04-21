@@ -195,8 +195,8 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRide
         </div>
       )}
 
-      {/* Demo advance button */}
-      <div className="mt-auto px-4 pb-6 pt-4">
+      {/* Demo advance button — siempre visible abajo */}
+      <div className="sticky bottom-0 mt-auto px-4 pb-6 pt-4 bg-background border-t border-border">
         <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={advanceStatus}>
           {status === "en_camino" ? "El conductor llegó ✅" : "Llegué al destino 🏁"}
         </Button>
