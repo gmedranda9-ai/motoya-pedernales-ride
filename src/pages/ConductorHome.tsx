@@ -23,6 +23,7 @@ import {
   ArrowLeft,
   Camera,
   Upload,
+  Map as MapIcon,
 } from "lucide-react";
 import { subscribeToPush, unsubscribeFromPush } from "@/lib/onesignal";
 import { useShareDriverLocation } from "@/hooks/useShareDriverLocation";
