@@ -31,6 +31,16 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRide
 
   const currentStatus = STATUS_LABELS[status];
 
+  // First name only, capitalized (e.g. "ALEJANDRO PEREZ" -> "Alejandro")
+  const firstName =
+    (driver.name || "")
+      .trim()
+      .split(/\s+/)[0]
+      ?.toLowerCase()
+      .replace(/^./, (c) => c.toUpperCase()) || "Conductor";
+  const initial = firstName.charAt(0).toUpperCase();
+  const hasPhoto = !!driver.photo && !driver.photo.includes("placeholder");
+
   const handleShareWhatsApp = () => {
     const text = encodeURIComponent(
       `🏍️ Estoy en un viaje con MotoYa\n👤 Conductor: ${driver.name}\n🏍️ Placa: ${driver.plate}\n📍 Destino: ${destination}`
@@ -62,9 +72,15 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRide
           <h2 className="text-xl font-extrabold text-foreground">¡Viaje completado!</h2>
           <p className="text-sm text-muted-foreground">Has llegado a <span className="font-bold text-foreground">{destination}</span></p>
           <div className="flex items-center justify-center gap-3">
-            <img src={driver.photo} alt={driver.name} className="w-12 h-12 rounded-full object-cover border-2 border-accent" />
+            {hasPhoto ? (
+              <img src={driver.photo} alt={firstName} className="w-12 h-12 rounded-full object-cover border-2 border-accent" />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-primary border-2 border-accent flex items-center justify-center">
+                <span className="text-base font-extrabold text-primary-foreground">{initial}</span>
+              </div>
+            )}
             <div className="text-left">
-              <p className="text-sm font-bold text-foreground">{driver.name}</p>
+              <p className="text-sm font-bold text-foreground">{firstName}</p>
               <p className="text-xs text-muted-foreground">{driver.plate}</p>
             </div>
           </div>
@@ -104,9 +120,15 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRide
       {/* Driver info */}
       <div className="px-4">
         <div className="bg-card rounded-2xl border border-border p-4 flex items-center gap-4">
-          <img src={driver.photo} alt={driver.name} className="w-16 h-16 rounded-full object-cover border-2 border-accent" />
+          {hasPhoto ? (
+            <img src={driver.photo} alt={firstName} className="w-16 h-16 rounded-full object-cover border-2 border-accent flex-shrink-0" />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-primary border-2 border-accent flex items-center justify-center flex-shrink-0">
+              <span className="text-2xl font-extrabold text-primary-foreground">{initial}</span>
+            </div>
+          )}
           <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-foreground truncate">{driver.name}</h3>
+            <h3 className="font-bold text-foreground truncate">{firstName}</h3>
             <p className="text-xs text-muted-foreground">🏍️ {driver.model} · <span className="font-semibold">{driver.plate}</span></p>
             <p className="text-xs text-muted-foreground">📍 Destino: {destination}</p>
           </div>
@@ -173,8 +195,8 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRide
         </div>
       )}
 
-      {/* Demo advance button */}
-      <div className="mt-auto px-4 pb-6 pt-4">
+      {/* Demo advance button — siempre visible abajo */}
+      <div className="sticky bottom-0 mt-auto px-4 pb-6 pt-4 bg-background border-t border-border">
         <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={advanceStatus}>
           {status === "en_camino" ? "El conductor llegó ✅" : "Llegué al destino 🏁"}
         </Button>
