@@ -115,11 +115,24 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRide
         </div>
       </div>
 
+      {/* Live Map */}
+      {viajeId && mapExpanded && (
+        <div className="px-4 mt-4">
+          <div className="rounded-2xl overflow-hidden border border-border bg-muted h-56">
+            <LiveMap viajeId={viajeId} className="w-full h-full" />
+          </div>
+        </div>
+      )}
+
       {/* Actions */}
-      <div className="px-4 mt-4 grid grid-cols-3 gap-3">
+      <div className="px-4 mt-4 grid grid-cols-4 gap-2">
         <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={() => setChatOpen(!chatOpen)}>
           <MessageCircle className="h-5 w-5" />
           <span className="text-[10px]">Chat</span>
+        </Button>
+        <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={() => setMapExpanded((v) => !v)}>
+          <MapIcon className="h-5 w-5" />
+          <span className="text-[10px]">{mapExpanded ? "Ocultar mapa" : "Ver mapa"}</span>
         </Button>
         <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={handleShareWhatsApp}>
           <Share2 className="h-5 w-5" />
