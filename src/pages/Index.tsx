@@ -1,3 +1,4 @@
+import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import PasajeroHome from "@/pages/PasajeroHome";
 import ConductorHome from "@/pages/ConductorHome";
@@ -12,6 +13,11 @@ const Index = () => {
   const { user } = useAuth();
   useBackButton();
   const role = user?.user_metadata?.rol;
+
+  // First-time OAuth users without a role yet
+  if (user && !role) {
+    return <Navigate to="/seleccionar-rol" replace />;
+  }
 
   // Conductor view
   if (user && role === "conductor") {

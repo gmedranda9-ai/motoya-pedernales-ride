@@ -15,6 +15,7 @@ import Viajes from "./pages/Viajes";
 import Mensajes from "./pages/Mensajes";
 import Perfil from "./pages/Perfil";
 import Admin from "./pages/Admin";
+import SeleccionarRol from "./pages/SeleccionarRol";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/registro" element={<Registro />} />
             <Route path="/olvide-contrasena" element={<OlvideContrasena />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/seleccionar-rol" element={<ProtectedRoute><SeleccionarRol /></ProtectedRoute>} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/viajes" element={<ProtectedRoute><Viajes /></ProtectedRoute>} />
             <Route path="/mensajes" element={<ProtectedRoute><Mensajes /></ProtectedRoute>} />
