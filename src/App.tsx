@@ -17,6 +17,7 @@ import Perfil from "./pages/Perfil";
 import Admin from "./pages/Admin";
 import SeleccionarRol from "./pages/SeleccionarRol";
 import NotFound from "./pages/NotFound";
+import AuthCallback from "./pages/AuthCallback";
 
 const queryClient = new QueryClient();
 
