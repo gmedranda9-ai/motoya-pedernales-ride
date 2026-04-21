@@ -86,6 +86,17 @@ const Login = () => {
           {loading ? 'Ingresando...' : 'Ingresar'}
         </Button>
 
+        <div className="relative my-2">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border" />
+          </div>
+          <div className="relative flex justify-center text-xs">
+            <span className="bg-background px-2 text-muted-foreground">o continúa con</span>
+          </div>
+        </div>
+
+        <GoogleButton />
+
         <Link to="/olvide-contrasena" className="text-center text-sm text-accent font-semibold hover:underline mt-2 block">
           ¿Olvidaste tu contraseña?
         </Link>
