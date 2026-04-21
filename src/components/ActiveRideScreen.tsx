@@ -21,6 +21,7 @@ const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: st
 };
 
 const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRideScreenProps) => {
+  console.log("viajeId en ActiveRide:", viajeId);
   const [status, setStatus] = useState<RideStatus>("en_camino");
   const [messages, setMessages] = useState<{ from: string; text: string }[]>([]);
   const [chatOpen, setChatOpen] = useState(false);
@@ -116,10 +117,16 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRide
       </div>
 
       {/* Live Map */}
-      {viajeId && mapExpanded && (
+      {mapExpanded && (
         <div className="px-4 mt-4">
           <div className="rounded-2xl overflow-hidden border border-border bg-muted h-56">
-            <LiveMap viajeId={viajeId} className="w-full h-full" />
+            {viajeId ? (
+              <LiveMap viajeId={viajeId} className="w-full h-full" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                Mapa no disponible (sin ID de viaje)
+              </div>
+            )}
           </div>
         </div>
       )}
