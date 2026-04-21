@@ -45,6 +45,7 @@ const PasajeroHome = () => {
 
   const [step, setStep] = useState<Step>("home");
   const [locationAddress, setLocationAddress] = useState("");
+  const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [detectingLocation, setDetectingLocation] = useState(false);
   const [locationDenied, setLocationDenied] = useState(false);
   const [manualAddress, setManualAddress] = useState("");
@@ -117,6 +118,7 @@ const PasajeroHome = () => {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
+        setLocationCoords({ lat: latitude, lng: longitude });
         try {
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1&accept-language=es`,
@@ -212,6 +214,8 @@ const PasajeroHome = () => {
         conductor_id: driverId,
         destino: destination,
         origen: locationAddress,
+        origen_lat: locationCoords?.lat ?? null,
+        origen_lng: locationCoords?.lng ?? null,
         estado: "pendiente",
         costo_tipo: getCostType(destination),
         pasajero_nombre: pasajeroNombre,
@@ -307,7 +311,7 @@ const PasajeroHome = () => {
 
   // ── Active Ride ──
   if (step === "active" && selectedDriver) {
-    return <ActiveRideScreen driver={selectedDriver} destination={destination} viajeId={viajeId} onFinish={() => setStep("rating")} />;
+    return <ActiveRideScreen driver={selectedDriver} destination={destination} viajeId={viajeId} originCoords={locationCoords ?? undefined} onFinish={() => setStep("rating")} />;
   }
 
   // ── Waiting Screen ──

@@ -14,6 +14,7 @@ interface ActiveRideScreenProps {
   destination: string;
   onFinish: () => void;
   viajeId?: string;
+  originCoords?: { lat: number; lng: number };
 }
 
 const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: string }> = {
@@ -22,7 +23,7 @@ const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: st
   completado: { label: "Viaje completado", emoji: "✅", desc: "¡Has llegado a tu destino!" },
 };
 
-const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRideScreenProps) => {
+const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords }: ActiveRideScreenProps) => {
   const { user } = useAuth();
   const [status, setStatus] = useState<RideStatus>("en_camino");
   const [chatOpen, setChatOpen] = useState(false);
@@ -49,9 +50,20 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRide
   const hasPhoto = !!driver.photo && !driver.photo.includes("placeholder");
 
   const handleShareWhatsApp = () => {
-    const text = encodeURIComponent(
-      `🏍️ Estoy en un viaje con MotoYa\n👤 Conductor: ${driver.name}\n🏍️ Placa: ${driver.plate}\n📍 Destino: ${destination}`
-    );
+    const lines = [
+      "🏍️ Estoy viajando en MotoYa",
+      `👤 Conductor: ${driver.name}`,
+      `🏍️ Moto: ${driver.model || "—"} - Placa: ${driver.plate || "—"}`,
+    ];
+    if (originCoords) {
+      lines.push(`📍 Mi ubicación: https://maps.google.com/?q=${originCoords.lat},${originCoords.lng}`);
+    } else {
+      lines.push(`📍 Mi ubicación: ${destination}`);
+    }
+    if (viajeId) {
+      lines.push(`🔗 Seguir viaje: ${window.location.origin}/?viaje=${viajeId}`);
+    }
+    const text = encodeURIComponent(lines.join("\n"));
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 
