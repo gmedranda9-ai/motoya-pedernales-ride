@@ -17,6 +17,7 @@ import Perfil from "./pages/Perfil";
 import Admin from "./pages/Admin";
 import SeleccionarRol from "./pages/SeleccionarRol";
 import NotFound from "./pages/NotFound";
+import AuthCallback from "./pages/AuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/registro" element={<Registro />} />
             <Route path="/olvide-contrasena" element={<OlvideContrasena />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/seleccionar-rol" element={<ProtectedRoute><SeleccionarRol /></ProtectedRoute>} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/viajes" element={<ProtectedRoute><Viajes /></ProtectedRoute>} />
