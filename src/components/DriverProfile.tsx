@@ -1,6 +1,8 @@
-import { Star, Phone, ShieldCheck, ArrowLeft, Clock, Route } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Star, Phone, ShieldCheck, ArrowLeft, Clock, Route, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 import type { Driver } from "@/components/DriverCard";
 
 interface DriverProfileProps {
@@ -10,11 +12,14 @@ interface DriverProfileProps {
   estimatedCost?: string;
 }
 
-const MOCK_COMMENTS = [
-  { author: "María L.", text: "Muy puntual y amable. Recomendado.", rating: 5 },
-  { author: "José R.", text: "Conduce con cuidado, buen servicio.", rating: 4 },
-  { author: "Ana P.", text: "Llegó rápido. Todo bien.", rating: 5 },
-];
+interface RealComment {
+  id: string;
+  comentario: string | null;
+  estrellas: number;
+  fecha: string;
+  pasajero_id: string;
+  author?: string;
+}
 
 const MOCK_STATS: Record<string, { trips: number; months: number; cedula: string }> = {
   "1": { trips: 342, months: 18, cedula: "080XXXXXXX01" },
@@ -26,6 +31,48 @@ const MOCK_STATS: Record<string, { trips: number; months: number; cedula: string
 
 const DriverProfile = ({ driver, onRequest, onClose, estimatedCost }: DriverProfileProps) => {
   const stats = MOCK_STATS[driver.id] || { trips: 0, months: 0, cedula: "---" };
+  const [comments, setComments] = useState<RealComment[]>([]);
+  const [loadingComments, setLoadingComments] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoadingComments(true);
+      const { data, error } = await supabase
+        .from("calificaciones")
+        .select("id, comentario, estrellas, fecha, pasajero_id")
+        .eq("conductor_id", driver.id)
+        .order("fecha", { ascending: false })
+        .limit(5);
+
+      if (error || !data) {
+        setComments([]);
+        setLoadingComments(false);
+        return;
+      }
+
+      const ids = Array.from(new Set(data.map((c: any) => c.pasajero_id).filter(Boolean)));
+      const nameMap: Record<string, string> = {};
+      if (ids.length > 0) {
+        const { data: users } = await supabase
+          .from("usuarios")
+          .select("id, nombre")
+          .in("id", ids);
+        (users || []).forEach((u: any) => {
+          const n = (u.nombre || "Usuario").trim();
+          const parts = n.split(" ");
+          nameMap[u.id] = parts.length > 1 ? `${parts[0]} ${parts[1][0]}.` : parts[0];
+        });
+      }
+
+      setComments(
+        (data as any[])
+          .filter((c) => (c.comentario || "").trim().length > 0)
+          .map((c) => ({ ...c, author: nameMap[c.pasajero_id] || "Anónimo" }))
+      );
+      setLoadingComments(false);
+    };
+    load();
+  }, [driver.id]);
 
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm animate-fade-in">
