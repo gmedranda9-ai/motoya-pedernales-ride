@@ -332,8 +332,13 @@ const ConductorHome = () => {
   };
 
   const handleSubmitApplication = async () => {
-    if (!form.cedula || !form.phone || !form.plate || !form.motoModel || !form.motoColor) {
-      toast({ title: "Campos incompletos", description: "Llena todos los campos obligatorios.", variant: "destructive" });
+    const phoneClean = (form.phone || "").trim();
+    if (!form.cedula || !phoneClean || !form.plate || !form.motoModel || !form.motoColor) {
+      toast({ title: "Campos incompletos", description: "Llena todos los campos obligatorios, incluido el teléfono.", variant: "destructive" });
+      return;
+    }
+    if (!/^\d{7,15}$/.test(phoneClean.replace(/[\s+-]/g, ""))) {
+      toast({ title: "Teléfono inválido", description: "Ingresa un número de teléfono válido (solo dígitos).", variant: "destructive" });
       return;
     }
     if (!user) {
@@ -348,7 +353,7 @@ const ConductorHome = () => {
         nombre: user.user_metadata?.nombre || user.email?.split("@")[0] || "Sin nombre",
         foto: form.photoUrl || null,
         cedula: form.cedula,
-        telefono: form.phone,
+        telefono: phoneClean,
         placa: form.plate,
         modelo_moto: form.motoModel,
         color: form.motoColor,

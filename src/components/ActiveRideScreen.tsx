@@ -130,19 +130,23 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRide
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-foreground truncate">{firstName}</h3>
             <p className="text-xs text-muted-foreground">🏍️ {driver.model} · <span className="font-semibold">{driver.plate}</span></p>
-            <p className="text-xs text-muted-foreground">📍 Destino: {destination}</p>
+            {driver.phone ? (
+              <p className="text-xs text-muted-foreground">📞 <span className="font-semibold text-foreground">{driver.phone}</span></p>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">📞 Teléfono no disponible</p>
+            )}
+            <p className="text-xs text-muted-foreground truncate">📍 {destination}</p>
           </div>
           {driver.phone ? (
             <a
               href={`tel:${driver.phone}`}
-              onClick={() => window.open(`tel:${driver.phone}`)}
-              className="p-2 rounded-full bg-accent/10 hover:bg-accent/20 transition-colors"
-              aria-label={`Llamar a ${firstName}`}
+              className="p-2 rounded-full bg-accent/10 hover:bg-accent/20 transition-colors flex-shrink-0"
+              aria-label={`Llamar a ${firstName} al ${driver.phone}`}
             >
               <Phone className="h-5 w-5 text-accent" />
             </a>
           ) : (
-            <span className="p-2 rounded-full bg-muted opacity-50" aria-label="Teléfono no disponible">
+            <span className="p-2 rounded-full bg-muted opacity-50 flex-shrink-0" aria-label="Teléfono no disponible">
               <Phone className="h-5 w-5 text-muted-foreground" />
             </span>
           )}
