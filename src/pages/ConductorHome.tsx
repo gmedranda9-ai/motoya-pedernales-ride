@@ -158,18 +158,21 @@ const ConductorHome = () => {
         if (viaje.estado !== 'pendiente') return;
 
         // Fetch real passenger info
-        let passengerName = 'Pasajero';
+        let passengerName = viaje.pasajero_nombre || '';
         let passengerRating = 0;
         let passengerTrips = 0;
 
-        try {
-          const { data: pasajero } = await supabase
-            .from('usuarios')
-            .select('nombre')
-            .eq('id', viaje.pasajero_id)
-            .maybeSingle();
-          if (pasajero?.nombre) passengerName = pasajero.nombre;
-        } catch (e) { console.error('usuarios fetch:', e); }
+        if (!passengerName) {
+          try {
+            const { data: pasajero } = await supabase
+              .from('usuarios')
+              .select('nombre')
+              .eq('id', viaje.pasajero_id)
+              .maybeSingle();
+            if (pasajero?.nombre) passengerName = pasajero.nombre;
+          } catch (e) { console.error('usuarios fetch:', e); }
+        }
+        if (!passengerName) passengerName = 'Pasajero';
 
         try {
           const { count } = await supabase
