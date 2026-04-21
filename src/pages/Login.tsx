@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Mail, Lock } from 'lucide-react';
 import logoMotoya from '@/assets/logo-motoya.png';
+import GoogleButton from '@/components/GoogleButton';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -84,6 +85,17 @@ const Login = () => {
         <Button type="submit" variant="hero" size="lg" className="w-full mt-4" disabled={loading}>
           {loading ? 'Ingresando...' : 'Ingresar'}
         </Button>
+
+        <div className="relative my-2">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border" />
+          </div>
+          <div className="relative flex justify-center text-xs">
+            <span className="bg-background px-2 text-muted-foreground">o continúa con</span>
+          </div>
+        </div>
+
+        <GoogleButton />
 
         <Link to="/olvide-contrasena" className="text-center text-sm text-accent font-semibold hover:underline mt-2 block">
           ¿Olvidaste tu contraseña?

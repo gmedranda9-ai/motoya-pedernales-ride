@@ -30,8 +30,10 @@ type Step = "panel" | "apply";
 
 interface RideRequest {
   id: string;
+  passengerId: string;
   passengerName: string;
-  passengerPhoto: string;
+  passengerRating: number;
+  passengerTrips: number;
   origin: string;
   originCoords?: { lat: number; lng: number };
   destination: string;
@@ -151,21 +153,57 @@ const ConductorHome = () => {
         schema: 'public',
         table: 'viajes',
         filter: `conductor_id=eq.${conductorId}`,
-      }, (payload) => {
+      }, async (payload) => {
         const viaje = payload.new as any;
-        if (viaje.estado === 'pendiente') {
-          setIncomingRequest({
-            id: viaje.id,
-            passengerName: viaje.pasajero_nombre || 'Pasajero',
-            passengerPhoto: viaje.pasajero_foto || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face',
-            origin: viaje.origen || 'Origen no especificado',
-            originCoords: viaje.origen_lat && viaje.origen_lng ? { lat: viaje.origen_lat, lng: viaje.origen_lng } : undefined,
-            destination: viaje.destino || 'Destino no especificado',
-            costType: viaje.tipo_cobro === 'fuera' ? 'outside' : 'city',
-          });
-          setRequestTimer(30);
-          toast({ title: "🔔 Nueva solicitud de viaje", description: `${viaje.pasajero_nombre || 'Un pasajero'} necesita un viaje` });
-        }
+        if (viaje.estado !== 'pendiente') return;
+
+        // Fetch real passenger info
+        let passengerName = 'Pasajero';
+        let passengerRating = 0;
+        let passengerTrips = 0;
+
+        try {
+          const { data: pasajero } = await supabase
+            .from('usuarios')
+            .select('nombre')
+            .eq('id', viaje.pasajero_id)
+            .maybeSingle();
+          if (pasajero?.nombre) passengerName = pasajero.nombre;
+        } catch (e) { console.error('usuarios fetch:', e); }
+
+        try {
+          const { count } = await supabase
+            .from('viajes')
+            .select('id', { count: 'exact', head: true })
+            .eq('pasajero_id', viaje.pasajero_id)
+            .eq('estado', 'completado');
+          passengerTrips = count ?? 0;
+        } catch (e) { console.error('trips count:', e); }
+
+        try {
+          const { data: calificaciones } = await supabase
+            .from('calificaciones')
+            .select('estrellas')
+            .eq('pasajero_id', viaje.pasajero_id);
+          if (calificaciones && calificaciones.length > 0) {
+            const sum = calificaciones.reduce((acc: number, c: any) => acc + (c.estrellas || 0), 0);
+            passengerRating = sum / calificaciones.length;
+          }
+        } catch (e) { console.error('ratings fetch:', e); }
+
+        setIncomingRequest({
+          id: viaje.id,
+          passengerId: viaje.pasajero_id,
+          passengerName,
+          passengerRating,
+          passengerTrips,
+          origin: viaje.origen || 'Origen no especificado',
+          originCoords: viaje.origen_lat && viaje.origen_lng ? { lat: viaje.origen_lat, lng: viaje.origen_lng } : undefined,
+          destination: viaje.destino || 'Destino no especificado',
+          costType: viaje.tipo_cobro === 'fuera' ? 'outside' : 'city',
+        });
+        setRequestTimer(30);
+        toast({ title: "🔔 Nueva solicitud de viaje", description: `${passengerName} necesita un viaje` });
       })
       .subscribe();
 
@@ -365,7 +403,11 @@ const ConductorHome = () => {
         {/* Passenger info */}
         <div className="px-4">
           <div className="bg-card rounded-2xl border border-border p-4 flex items-center gap-4">
-            <img src={activeRide.passengerPhoto} alt={activeRide.passengerName} className="w-14 h-14 rounded-full object-cover border-2 border-accent" />
+            <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center border-2 border-accent flex-shrink-0">
+              <span className="text-xl font-extrabold text-primary-foreground">
+                {activeRide.passengerName.charAt(0).toUpperCase()}
+              </span>
+            </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-foreground truncate">{activeRide.passengerName}</h3>
               <p className="text-xs text-muted-foreground">📍 Destino: {activeRide.destination}</p>
@@ -433,10 +475,34 @@ const ConductorHome = () => {
           <h2 className="text-lg font-extrabold text-foreground">¡Nueva solicitud de viaje!</h2>
 
           <div className="flex items-center justify-center gap-3">
-            <img src={incomingRequest.passengerPhoto} alt={incomingRequest.passengerName} className="w-16 h-16 rounded-full object-cover border-2 border-accent" />
+            <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center border-2 border-accent flex-shrink-0">
+              <span className="text-2xl font-extrabold text-primary-foreground">
+                {incomingRequest.passengerName.charAt(0).toUpperCase()}
+              </span>
+            </div>
             <div className="text-left">
               <p className="font-bold text-foreground">{incomingRequest.passengerName}</p>
-              <p className="text-xs text-muted-foreground">Pasajero</p>
+              {incomingRequest.passengerTrips < 3 ? (
+                <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-accent/20 text-accent text-[10px] font-semibold">
+                  ✨ Nuevo usuario
+                </span>
+              ) : (
+                <div className="flex items-center gap-1 mt-1">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <Star
+                      key={n}
+                      className={`h-3.5 w-3.5 ${
+                        n <= Math.round(incomingRequest.passengerRating)
+                          ? "fill-accent text-accent"
+                          : "text-muted-foreground"
+                      }`}
+                    />
+                  ))}
+                  <span className="text-xs text-muted-foreground ml-1">
+                    {incomingRequest.passengerRating.toFixed(1)} · {incomingRequest.passengerTrips} viajes
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
