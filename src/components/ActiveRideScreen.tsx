@@ -31,6 +31,16 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRide
 
   const currentStatus = STATUS_LABELS[status];
 
+  // First name only, capitalized (e.g. "ALEJANDRO PEREZ" -> "Alejandro")
+  const firstName =
+    (driver.name || "")
+      .trim()
+      .split(/\s+/)[0]
+      ?.toLowerCase()
+      .replace(/^./, (c) => c.toUpperCase()) || "Conductor";
+  const initial = firstName.charAt(0).toUpperCase();
+  const hasPhoto = !!driver.photo && !driver.photo.includes("placeholder");
+
   const handleShareWhatsApp = () => {
     const text = encodeURIComponent(
       `🏍️ Estoy en un viaje con MotoYa\n👤 Conductor: ${driver.name}\n🏍️ Placa: ${driver.plate}\n📍 Destino: ${destination}`
