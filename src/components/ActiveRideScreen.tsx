@@ -153,7 +153,7 @@ const ActiveRideScreen = ({ driver, destination, onFinish }: ActiveRideScreenPro
       {/* Demo advance button */}
       <div className="mt-auto px-4 pb-6 pt-4">
         <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={advanceStatus}>
-          {status === "en_camino" ? "Simular: Conductor llegó" : "Simular: Llegué al destino"}
+          {status === "en_camino" ? "El conductor llegó ✅" : "Llegué al destino 🏁"}
         </Button>
       </div>
 
