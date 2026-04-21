@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Phone, Shield, MessageCircle, Share2, Send, Map as MapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import LiveMap from "@/components/LiveMap";
 import type { Driver } from "@/components/DriverCard";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRideChat } from "@/hooks/useRideChat";
 
 type RideStatus = "en_camino" | "en_viaje" | "completado";
 
@@ -21,13 +23,18 @@ const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: st
 };
 
 const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRideScreenProps) => {
-  console.log("viajeId en ActiveRide:", viajeId);
+  const { user } = useAuth();
   const [status, setStatus] = useState<RideStatus>("en_camino");
-  const [messages, setMessages] = useState<{ from: string; text: string }[]>([]);
   const [chatOpen, setChatOpen] = useState(false);
   const [msgText, setMsgText] = useState("");
   const [showSOS, setShowSOS] = useState(false);
   const [mapExpanded, setMapExpanded] = useState(true);
+  const { messages, sendMessage } = useRideChat(viajeId, user?.id);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight });
+  }, [messages.length]);
 
   const currentStatus = STATUS_LABELS[status];
 
@@ -48,14 +55,11 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRide
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 
-  const sendMessage = () => {
-    if (!msgText.trim()) return;
-    setMessages((prev) => [...prev, { from: "yo", text: msgText.trim() }]);
+  const handleSend = async () => {
+    const text = msgText.trim();
+    if (!text) return;
     setMsgText("");
-    // Mock driver reply
-    setTimeout(() => {
-      setMessages((prev) => [...prev, { from: driver.name, text: "¡Ya casi llego! 👍" }]);
-    }, 2000);
+    await sendMessage(text);
   };
 
   // Demo: simulate ride progression
