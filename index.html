@@ -16,6 +16,19 @@
   <meta name="twitter:description" content="MotoYa - Tu servicio de mototaxis rápido y seguro en Pedernales, Ecuador. Pide tu moto en minutos.">
   <meta property="og:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/dee99afa-0cf6-4699-ad3d-f70eb8547247/id-preview-91cbfc10--a13100a2-8845-4f50-ad29-7a35d8e0a9b3.lovable.app-1775766144064.png">
   <meta name="twitter:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/dee99afa-0cf6-4699-ad3d-f70eb8547247/id-preview-91cbfc10--a13100a2-8845-4f50-ad29-7a35d8e0a9b3.lovable.app-1775766144064.png">
+
+  <!-- OneSignal Web Push SDK -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "205503f2-6063-40cb-9f36-07c46f559c18",
+        allowLocalhostAsSecureOrigin: true,
+        notifyButton: { enable: false },
+      });
+    });
+  </script>
 </head>
 
   <body>
