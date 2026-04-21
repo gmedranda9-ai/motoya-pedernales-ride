@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Phone, Shield, MessageCircle, Share2, Send } from "lucide-react";
+import { Phone, Shield, MessageCircle, Share2, Send, Map as MapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import LiveMap from "@/components/LiveMap";
@@ -15,7 +15,7 @@ interface ActiveRideScreenProps {
 }
 
 const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: string }> = {
-  en_camino: { label: "En camino hacia ti", emoji: "🏍️", desc: "Tu conductor se dirige a tu ubicación" },
+  en_camino: { label: "Tu conductor está en camino 🏍️", emoji: "🏍️", desc: "Tu conductor se dirige a tu ubicación" },
   en_viaje: { label: "En viaje", emoji: "🛣️", desc: "Estás en camino a tu destino" },
   completado: { label: "Viaje completado", emoji: "✅", desc: "¡Has llegado a tu destino!" },
 };
@@ -26,6 +26,7 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRide
   const [chatOpen, setChatOpen] = useState(false);
   const [msgText, setMsgText] = useState("");
   const [showSOS, setShowSOS] = useState(false);
+  const [mapExpanded, setMapExpanded] = useState(true);
 
   const currentStatus = STATUS_LABELS[status];
 
