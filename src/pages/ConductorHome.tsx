@@ -30,8 +30,10 @@ type Step = "panel" | "apply";
 
 interface RideRequest {
   id: string;
+  passengerId: string;
   passengerName: string;
-  passengerPhoto: string;
+  passengerRating: number;
+  passengerTrips: number;
   origin: string;
   originCoords?: { lat: number; lng: number };
   destination: string;
@@ -151,21 +153,57 @@ const ConductorHome = () => {
         schema: 'public',
         table: 'viajes',
         filter: `conductor_id=eq.${conductorId}`,
-      }, (payload) => {
+      }, async (payload) => {
         const viaje = payload.new as any;
-        if (viaje.estado === 'pendiente') {
-          setIncomingRequest({
-            id: viaje.id,
-            passengerName: viaje.pasajero_nombre || 'Pasajero',
-            passengerPhoto: viaje.pasajero_foto || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face',
-            origin: viaje.origen || 'Origen no especificado',
-            originCoords: viaje.origen_lat && viaje.origen_lng ? { lat: viaje.origen_lat, lng: viaje.origen_lng } : undefined,
-            destination: viaje.destino || 'Destino no especificado',
-            costType: viaje.tipo_cobro === 'fuera' ? 'outside' : 'city',
-          });
-          setRequestTimer(30);
-          toast({ title: "🔔 Nueva solicitud de viaje", description: `${viaje.pasajero_nombre || 'Un pasajero'} necesita un viaje` });
-        }
+        if (viaje.estado !== 'pendiente') return;
+
+        // Fetch real passenger info
+        let passengerName = 'Pasajero';
+        let passengerRating = 0;
+        let passengerTrips = 0;
+
+        try {
+          const { data: pasajero } = await supabase
+            .from('usuarios')
+            .select('nombre')
+            .eq('id', viaje.pasajero_id)
+            .maybeSingle();
+          if (pasajero?.nombre) passengerName = pasajero.nombre;
+        } catch (e) { console.error('usuarios fetch:', e); }
+
+        try {
+          const { count } = await supabase
+            .from('viajes')
+            .select('id', { count: 'exact', head: true })
+            .eq('pasajero_id', viaje.pasajero_id)
+            .eq('estado', 'completado');
+          passengerTrips = count ?? 0;
+        } catch (e) { console.error('trips count:', e); }
+
+        try {
+          const { data: calificaciones } = await supabase
+            .from('calificaciones')
+            .select('estrellas')
+            .eq('pasajero_id', viaje.pasajero_id);
+          if (calificaciones && calificaciones.length > 0) {
+            const sum = calificaciones.reduce((acc: number, c: any) => acc + (c.estrellas || 0), 0);
+            passengerRating = sum / calificaciones.length;
+          }
+        } catch (e) { console.error('ratings fetch:', e); }
+
+        setIncomingRequest({
+          id: viaje.id,
+          passengerId: viaje.pasajero_id,
+          passengerName,
+          passengerRating,
+          passengerTrips,
+          origin: viaje.origen || 'Origen no especificado',
+          originCoords: viaje.origen_lat && viaje.origen_lng ? { lat: viaje.origen_lat, lng: viaje.origen_lng } : undefined,
+          destination: viaje.destino || 'Destino no especificado',
+          costType: viaje.tipo_cobro === 'fuera' ? 'outside' : 'city',
+        });
+        setRequestTimer(30);
+        toast({ title: "🔔 Nueva solicitud de viaje", description: `${passengerName} necesita un viaje` });
       })
       .subscribe();
 
