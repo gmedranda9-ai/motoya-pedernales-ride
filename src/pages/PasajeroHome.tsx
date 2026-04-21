@@ -45,6 +45,7 @@ const PasajeroHome = () => {
 
   const [step, setStep] = useState<Step>("home");
   const [locationAddress, setLocationAddress] = useState("");
+  const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [detectingLocation, setDetectingLocation] = useState(false);
   const [locationDenied, setLocationDenied] = useState(false);
   const [manualAddress, setManualAddress] = useState("");
