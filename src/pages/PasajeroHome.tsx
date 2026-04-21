@@ -489,7 +489,35 @@ const PasajeroHome = () => {
               )}
             </button>
 
-            {locationAddress && (
+            {locationDenied && (
+              <div className="space-y-2 animate-fade-in">
+                <div className="flex items-center gap-3 bg-muted rounded-xl px-4 py-3">
+                  <MapPin className="h-4 w-4 text-accent flex-shrink-0" />
+                  <input
+                    type="text"
+                    placeholder="Escribe tu dirección manualmente"
+                    value={manualAddress}
+                    onChange={(e) => handleManualAddress(e.target.value)}
+                    className="bg-transparent flex-1 text-sm text-foreground placeholder:text-muted-foreground outline-none"
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-2 bg-destructive/10 border border-destructive/30 rounded-xl px-3 py-2">
+                  <p className="text-[11px] text-foreground flex-1">
+                    Activa tu ubicación para mejor experiencia
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-[11px] rounded-lg"
+                    onClick={detectLocation}
+                  >
+                    Reintentar
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {locationAddress && !locationDenied && (
               <p className="text-[10px] text-muted-foreground px-1">
                 ¿No es exacta? En una futura versión podrás mover el pin en el mapa.
               </p>
