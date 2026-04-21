@@ -221,8 +221,11 @@ const PasajeroHome = () => {
       <RatingScreen
         driver={selectedDriver}
         destination={destination}
+        viajeId={viajeId}
         onSubmit={(rating, comment) => {
-          toast({ title: "⭐ Calificación enviada", description: `Calificaste a ${selectedDriver.name} con ${rating} estrella${rating > 1 ? "s" : ""}.` });
+          if (rating > 0) {
+            toast({ title: "⭐ Calificación enviada", description: `Calificaste a ${selectedDriver.name} con ${rating} estrella${rating > 1 ? "s" : ""}.` });
+          }
           setTimeout(() => handleFinish(), 1500);
         }}
       />
