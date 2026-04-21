@@ -61,8 +61,9 @@ const DriverCard = ({ driver, onRequest }: DriverCardProps) => {
             </span>
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            🏍️ {model} · <span className="font-semibold">{plate}</span>
+          <p className="text-xs text-muted-foreground flex items-center gap-1">
+            <img src={logoMotoya} alt="" className="w-4 h-4 object-contain inline-block" />
+            {model} · <span className="font-semibold">{plate}</span>
           </p>
         </div>
       </div>
