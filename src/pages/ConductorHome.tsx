@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { subscribeToPush, unsubscribeFromPush } from "@/lib/onesignal";
 import { useShareDriverLocation } from "@/hooks/useShareDriverLocation";
+import { useRideChat } from "@/hooks/useRideChat";
 import LiveMap from "@/components/LiveMap";
 
 type ApplicationStatus = "none" | "pending" | "approved" | "rejected";
@@ -164,8 +165,8 @@ const ConductorHome = () => {
   const [rideStatus, setRideStatus] = useState<RideStatus>("en_camino");
   const [chatOpen, setChatOpen] = useState(false);
   const [mapExpanded, setMapExpanded] = useState(true);
-  const [messages, setMessages] = useState<{ from: string; text: string }[]>([]);
   const [msgText, setMsgText] = useState("");
+  const { messages, sendMessage } = useRideChat(activeRide?.id ?? null, user?.id ?? null);
 
   // Subscribe to realtime ride requests when available
   useEffect(() => {
@@ -289,13 +290,11 @@ const ConductorHome = () => {
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 
-  const sendMessage = () => {
-    if (!msgText.trim()) return;
-    setMessages((prev) => [...prev, { from: "yo", text: msgText.trim() }]);
+  const handleSend = async () => {
+    const text = msgText.trim();
+    if (!text) return;
     setMsgText("");
-    setTimeout(() => {
-      setMessages((prev) => [...prev, { from: activeRide?.passengerName || "Pasajero", text: "¡Te espero aquí! 📍" }]);
-    }, 2000);
+    await sendMessage(text);
   };
 
   const advanceStatus = () => {
@@ -312,7 +311,6 @@ const ConductorHome = () => {
 
   const finishRide = () => {
     setActiveRide(null);
-    setMessages([]);
     setChatOpen(false);
     setRideStatus("en_camino");
   };
@@ -490,15 +488,29 @@ const ConductorHome = () => {
               {messages.length === 0 && (
                 <p className="text-xs text-muted-foreground text-center py-4">Envía un mensaje al pasajero</p>
               )}
-              {messages.map((m, i) => (
-                <div key={i} className={`mb-2 text-xs px-3 py-2 rounded-xl max-w-[80%] ${m.from === "yo" ? "bg-accent text-accent-foreground self-end" : "bg-muted text-foreground self-start"}`}>
-                  <span className="font-bold">{m.from === "yo" ? "Tú" : m.from}:</span> {m.text}
-                </div>
-              ))}
+              {messages.map((m) => {
+                const mine = m.remitente_id === user?.id;
+                return (
+                  <div
+                    key={m.id}
+                    className={`mb-2 text-xs px-3 py-2 rounded-xl max-w-[80%] ${
+                      mine ? "bg-accent text-accent-foreground self-end" : "bg-muted text-foreground self-start"
+                    }`}
+                  >
+                    {m.texto}
+                  </div>
+                );
+              })}
             </div>
             <div className="flex gap-2 mt-2">
-              <Input placeholder="Escribe un mensaje..." value={msgText} onChange={(e) => setMsgText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendMessage()} className="rounded-xl" />
-              <Button size="icon" variant="hero" className="rounded-xl" onClick={sendMessage}>
+              <Input
+                placeholder="Escribe un mensaje..."
+                value={msgText}
+                onChange={(e) => setMsgText(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                className="rounded-xl"
+              />
+              <Button size="icon" variant="hero" className="rounded-xl" onClick={handleSend}>
                 <Send className="h-4 w-4" />
               </Button>
             </div>

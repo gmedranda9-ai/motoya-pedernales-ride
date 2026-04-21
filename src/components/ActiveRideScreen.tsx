@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Phone, Shield, MessageCircle, Share2, Send, Map as MapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import LiveMap from "@/components/LiveMap";
 import type { Driver } from "@/components/DriverCard";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRideChat } from "@/hooks/useRideChat";
 
 type RideStatus = "en_camino" | "en_viaje" | "completado";
 
@@ -21,13 +23,18 @@ const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: st
 };
 
 const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRideScreenProps) => {
-  console.log("viajeId en ActiveRide:", viajeId);
+  const { user } = useAuth();
   const [status, setStatus] = useState<RideStatus>("en_camino");
-  const [messages, setMessages] = useState<{ from: string; text: string }[]>([]);
   const [chatOpen, setChatOpen] = useState(false);
   const [msgText, setMsgText] = useState("");
   const [showSOS, setShowSOS] = useState(false);
   const [mapExpanded, setMapExpanded] = useState(true);
+  const { messages, sendMessage } = useRideChat(viajeId, user?.id);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight });
+  }, [messages.length]);
 
   const currentStatus = STATUS_LABELS[status];
 
@@ -48,14 +55,11 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRide
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 
-  const sendMessage = () => {
-    if (!msgText.trim()) return;
-    setMessages((prev) => [...prev, { from: "yo", text: msgText.trim() }]);
+  const handleSend = async () => {
+    const text = msgText.trim();
+    if (!text) return;
     setMsgText("");
-    // Mock driver reply
-    setTimeout(() => {
-      setMessages((prev) => [...prev, { from: driver.name, text: "¡Ya casi llego! 👍" }]);
-    }, 2000);
+    await sendMessage(text);
   };
 
   // Demo: simulate ride progression
@@ -191,19 +195,33 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRide
       {/* Chat panel */}
       {chatOpen && (
         <div className="px-4 mt-4 flex-1 flex flex-col min-h-0">
-          <div className="bg-card rounded-2xl border border-border flex-1 flex flex-col p-3 max-h-48 overflow-y-auto">
+          <div ref={chatScrollRef} className="bg-card rounded-2xl border border-border flex-1 flex flex-col p-3 max-h-48 overflow-y-auto">
             {messages.length === 0 && (
               <p className="text-xs text-muted-foreground text-center py-4">Envía un mensaje para coordinar tu recogida</p>
             )}
-            {messages.map((m, i) => (
-              <div key={i} className={`mb-2 text-xs px-3 py-2 rounded-xl max-w-[80%] ${m.from === "yo" ? "bg-accent text-accent-foreground self-end" : "bg-muted text-foreground self-start"}`}>
-                <span className="font-bold">{m.from === "yo" ? "Tú" : m.from}:</span> {m.text}
-              </div>
-            ))}
+            {messages.map((m) => {
+              const mine = m.remitente_id === user?.id;
+              return (
+                <div
+                  key={m.id}
+                  className={`mb-2 text-xs px-3 py-2 rounded-xl max-w-[80%] ${
+                    mine ? "bg-accent text-accent-foreground self-end" : "bg-muted text-foreground self-start"
+                  }`}
+                >
+                  {m.texto}
+                </div>
+              );
+            })}
           </div>
           <div className="flex gap-2 mt-2">
-            <Input placeholder="Escribe un mensaje..." value={msgText} onChange={(e) => setMsgText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendMessage()} className="rounded-xl" />
-            <Button size="icon" variant="hero" className="rounded-xl" onClick={sendMessage}>
+            <Input
+              placeholder="Escribe un mensaje..."
+              value={msgText}
+              onChange={(e) => setMsgText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              className="rounded-xl"
+            />
+            <Button size="icon" variant="hero" className="rounded-xl" onClick={handleSend}>
               <Send className="h-4 w-4" />
             </Button>
           </div>
