@@ -201,6 +201,33 @@ const PasajeroHome = () => {
     }
 
     setViajeId(data.id);
+
+    // Send push notification to the driver via OneSignal (best-effort)
+    try {
+      const { data: conductorRow } = await supabase
+        .from("conductores")
+        .select("onesignal_player_id")
+        .eq("id", driverId)
+        .maybeSingle();
+
+      const playerId = (conductorRow as any)?.onesignal_player_id;
+      if (playerId) {
+        const cost = getCostType(destination) === "city" ? "1.00" : "acordar";
+        await supabase.functions.invoke("send-ride-notification", {
+          body: {
+            player_id: playerId,
+            passenger_name: pasajeroNombre,
+            destination,
+            cost,
+          },
+        });
+      } else {
+        console.log("Conductor sin onesignal_player_id, no se envía push.");
+      }
+    } catch (e) {
+      console.warn("No se pudo enviar push al conductor:", e);
+    }
+
     toast({
       title: "¡Solicitud enviada!",
       description: `Viaje solicitado con ${driver.name}. Esperando confirmación.`,

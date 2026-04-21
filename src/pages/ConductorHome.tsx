@@ -23,6 +23,7 @@ import {
   Camera,
   Upload,
 } from "lucide-react";
+import { subscribeToPush, unsubscribeFromPush } from "@/lib/onesignal";
 
 type ApplicationStatus = "none" | "pending" | "approved" | "rejected";
 type RideStatus = "en_camino" | "en_viaje" | "completado";
@@ -106,9 +107,28 @@ const ConductorHome = () => {
   const handleToggleAvailable = async (value: boolean) => {
     setAvailable(value);
     if (!user) return;
+
+    let onesignal_player_id: string | null = null;
+    if (value) {
+      onesignal_player_id = await subscribeToPush();
+      if (!onesignal_player_id) {
+        toast({
+          title: "Notificaciones desactivadas",
+          description: "Activa los permisos de notificación para recibir solicitudes en tiempo real.",
+        });
+      }
+    } else {
+      await unsubscribeFromPush();
+    }
+
+    const updatePayload: Record<string, any> = { disponible: value };
+    if (value && onesignal_player_id) {
+      updatePayload.onesignal_player_id = onesignal_player_id;
+    }
+
     const { error } = await supabase
       .from("conductores")
-      .update({ disponible: value })
+      .update(updatePayload)
       .eq("usuario_id", user.id);
     if (error) {
       console.error("Error updating disponible:", error);
