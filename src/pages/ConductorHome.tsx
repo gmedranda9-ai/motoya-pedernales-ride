@@ -450,6 +450,13 @@ const ConductorHome = () => {
           </div>
         </div>
 
+        {/* Live map */}
+        <div className="px-4 mt-4">
+          <div className="h-48 rounded-2xl overflow-hidden border border-border">
+            <LiveMap viajeId={activeRide.id} className="w-full h-full" />
+          </div>
+        </div>
+
         {/* Actions */}
         <div className="px-4 mt-4 grid grid-cols-3 gap-3">
           <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={() => setChatOpen(!chatOpen)}>
