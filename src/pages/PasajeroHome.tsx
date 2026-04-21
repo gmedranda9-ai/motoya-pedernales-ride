@@ -46,6 +46,8 @@ const PasajeroHome = () => {
   const [step, setStep] = useState<Step>("home");
   const [locationAddress, setLocationAddress] = useState("");
   const [detectingLocation, setDetectingLocation] = useState(false);
+  const [locationDenied, setLocationDenied] = useState(false);
+  const [manualAddress, setManualAddress] = useState("");
   const [destination, setDestination] = useState("");
   const [search, setSearch] = useState("");
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
@@ -107,8 +109,8 @@ const PasajeroHome = () => {
 
   const detectLocation = () => {
     if (!("geolocation" in navigator)) {
-      setLocationAddress("Pedernales, Ecuador");
-      toast({ title: "GPS no disponible", description: "Usaremos Pedernales como ubicación." });
+      setLocationDenied(true);
+      toast({ title: "GPS no disponible", description: "Escribe tu dirección manualmente." });
       return;
     }
     setDetectingLocation(true);
@@ -125,18 +127,29 @@ const PasajeroHome = () => {
           const street = addr?.road || addr?.pedestrian || addr?.neighbourhood || "";
           const city = addr?.city || addr?.town || addr?.village || "Pedernales";
           setLocationAddress(street ? `${street}, ${city}` : city);
+          setLocationDenied(false);
         } catch {
           setLocationAddress(`Pedernales (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
+          setLocationDenied(false);
         }
         setDetectingLocation(false);
         toast({ title: "📍 Ubicación detectada", description: "Tu ubicación GPS ha sido registrada." });
       },
       () => {
-        setLocationAddress("Pedernales, Ecuador");
         setDetectingLocation(false);
-        toast({ title: "Ubicación no disponible", description: "Usaremos Pedernales como ubicación." });
+        setLocationDenied(true);
+        toast({
+          title: "Ubicación bloqueada",
+          description: "Escribe tu dirección manualmente o activa el GPS en la configuración.",
+          variant: "destructive",
+        });
       }
     );
+  };
+
+  const handleManualAddress = (value: string) => {
+    setManualAddress(value);
+    setLocationAddress(value);
   };
 
   const handleSearch = () => {
