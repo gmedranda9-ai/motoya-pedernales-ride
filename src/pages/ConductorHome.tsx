@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import NotificationsBanner from "@/components/NotificationsBanner";
 import logoMotoya from "@/assets/logo-motoya.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -764,6 +765,8 @@ const ConductorHome = () => {
           </div>
         </div>
       </header>
+
+      {appStatus === "approved" && <NotificationsBanner />}
 
       {/* Profile card */}
       <div className="px-4 -mt-5">
