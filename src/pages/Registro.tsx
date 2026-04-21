@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Mail, Lock, User, Bike } from 'lucide-react';
 import logoMotoya from '@/assets/logo-motoya.png';
+import GoogleButton from '@/components/GoogleButton';
 
 const Registro = () => {
   const [email, setEmail] = useState('');
@@ -150,6 +151,17 @@ const Registro = () => {
         <Button type="submit" variant="hero" size="lg" className="w-full mt-2" disabled={loading}>
           {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
         </Button>
+
+        <div className="relative my-1">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border" />
+          </div>
+          <div className="relative flex justify-center text-xs">
+            <span className="bg-background px-2 text-muted-foreground">o regístrate con</span>
+          </div>
+        </div>
+
+        <GoogleButton label="Registrarme con Google" />
 
         <p className="text-center text-sm text-muted-foreground mt-2">
           ¿Ya tienes cuenta?{' '}

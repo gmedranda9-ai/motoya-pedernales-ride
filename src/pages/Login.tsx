@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Mail, Lock } from 'lucide-react';
 import logoMotoya from '@/assets/logo-motoya.png';
+import GoogleButton from '@/components/GoogleButton';
 
 const Login = () => {
   const [email, setEmail] = useState('');
