@@ -159,6 +159,25 @@ const PasajeroHome = () => {
     setSelectedDriver(driver);
     setStep("waiting");
 
+    // Resolve passenger's real name from auth metadata
+    const pasajeroNombre =
+      user.user_metadata?.nombre ||
+      user.user_metadata?.full_name ||
+      user.user_metadata?.name ||
+      user.email?.split("@")[0] ||
+      "Pasajero";
+
+    // Ensure usuarios row exists with the real name (upsert)
+    const { error: upsertError } = await supabase
+      .from("usuarios")
+      .upsert(
+        { id: user.id, nombre: pasajeroNombre, email: user.email },
+        { onConflict: "id" }
+      );
+    if (upsertError) {
+      console.warn("No se pudo sincronizar usuario:", upsertError.message);
+    }
+
     // Insert viaje in Supabase
     const { data, error } = await supabase
       .from("viajes")
@@ -169,6 +188,7 @@ const PasajeroHome = () => {
         origen: locationAddress,
         estado: "pendiente",
         costo_tipo: getCostType(destination),
+        pasajero_nombre: pasajeroNombre,
       })
       .select("id")
       .single();
