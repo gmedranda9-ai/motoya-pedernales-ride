@@ -187,24 +187,32 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost }: DriverProf
               Comentarios recientes
             </p>
             <div className="space-y-2">
-              {MOCK_COMMENTS.map((c, i) => (
-                <div key={i} className="bg-muted rounded-lg p-3">
-                  <div className="flex items-center gap-1 mb-1">
-                    {Array.from({ length: 5 }).map((_, j) => (
-                      <Star
-                        key={j}
-                        className={`h-3 w-3 ${
-                          j < c.rating
-                            ? "fill-accent text-accent"
-                            : "fill-muted text-muted"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <p className="text-xs text-foreground">{c.text}</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">— {c.author}</p>
+              {loadingComments ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-4 w-4 text-accent animate-spin" />
                 </div>
-              ))}
+              ) : comments.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic text-center py-3">
+                  Este conductor aún no tiene reseñas
+                </p>
+              ) : (
+                comments.map((c) => (
+                  <div key={c.id} className="bg-muted rounded-lg p-3">
+                    <div className="flex items-center gap-1 mb-1">
+                      {Array.from({ length: 5 }).map((_, j) => (
+                        <Star
+                          key={j}
+                          className={`h-3 w-3 ${
+                            j < c.estrellas ? "fill-accent text-accent" : "fill-muted text-muted"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-xs text-foreground">{c.comentario}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">— {c.author}</p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
