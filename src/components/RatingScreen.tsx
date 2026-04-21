@@ -174,10 +174,10 @@ const RatingScreen = ({ driver, destination, viajeId, onSubmit }: RatingScreenPr
           variant="hero"
           size="lg"
           className="w-full rounded-xl"
-          disabled={rating === 0}
+          disabled={rating === 0 || saving}
           onClick={handleSubmit}
         >
-          Enviar calificación
+          {saving ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Guardando...</>) : "Enviar calificación"}
         </Button>
 
         {rating === 0 && (
