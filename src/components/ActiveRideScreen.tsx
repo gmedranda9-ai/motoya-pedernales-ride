@@ -6,6 +6,7 @@ import LiveMap from "@/components/LiveMap";
 import type { Driver } from "@/components/DriverCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRideChat } from "@/hooks/useRideChat";
+import logoMotoya from "@/assets/logo-motoya.png";
 
 type RideStatus = "en_camino" | "en_viaje" | "completado";
 
@@ -145,7 +146,10 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
           )}
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-foreground truncate">{firstName}</h3>
-            <p className="text-xs text-muted-foreground">🏍️ {driver.model} · <span className="font-semibold">{driver.plate}</span></p>
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <img src={logoMotoya} alt="" className="w-3.5 h-3.5 object-contain inline-block" />
+              {driver.model} · <span className="font-semibold">{driver.plate}</span>
+            </p>
             {driver.phone ? (
               <p className="text-xs text-muted-foreground">📞 <span className="font-semibold text-foreground">{driver.phone}</span></p>
             ) : (

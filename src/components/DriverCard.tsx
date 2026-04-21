@@ -1,6 +1,7 @@
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import logoMotoya from "@/assets/logo-motoya.png";
 
 export interface Driver {
   id: string;
@@ -61,8 +62,9 @@ const DriverCard = ({ driver, onRequest }: DriverCardProps) => {
             </span>
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            🏍️ {model} · <span className="font-semibold">{plate}</span>
+          <p className="text-xs text-muted-foreground flex items-center gap-1">
+            <img src={logoMotoya} alt="" className="w-4 h-4 object-contain inline-block" />
+            {model} · <span className="font-semibold">{plate}</span>
           </p>
         </div>
       </div>

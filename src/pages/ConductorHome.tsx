@@ -793,8 +793,8 @@ const ConductorHome = () => {
       <div className="px-4 -mt-5">
         <div className="bg-card rounded-2xl shadow-lg p-5 border border-border">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center text-2xl border-2 border-accent">
-              🏍️
+            <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center border-2 border-accent overflow-hidden">
+              <img src={logoMotoya} alt="MotoYa" className="w-12 h-12 object-contain" />
             </div>
             <div className="flex-1">
               <h2 className="text-lg font-extrabold text-foreground">{userName}</h2>

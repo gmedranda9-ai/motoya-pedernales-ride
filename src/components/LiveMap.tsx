@@ -118,8 +118,8 @@ const LiveMap = ({ viajeId, passengerLocation, className }: LiveMapProps) => {
     if (!isLoaded) return undefined;
     const svg = `
       <svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>
-        <circle cx='22' cy='22' r='18' fill='#e53935' stroke='white' stroke-width='3'/>
-        <text x='22' y='28' text-anchor='middle' font-size='20'>🏍️</text>
+        <circle cx='22' cy='22' r='20' fill='#1a3a5c' stroke='#f5c518' stroke-width='3'/>
+        <image href='/favicon.png' x='6' y='6' width='32' height='32' clip-path='circle(16px at 16px 16px)'/>
       </svg>`;
     return {
       url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
