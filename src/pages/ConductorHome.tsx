@@ -454,11 +454,13 @@ const ConductorHome = () => {
         </div>
 
         {/* Live map */}
-        <div className="px-4 mt-4">
-          <div className="h-48 rounded-2xl overflow-hidden border border-border">
-            <LiveMap viajeId={activeRide.id} className="w-full h-full" />
+        {mapExpanded && (
+          <div className="px-4 mt-4">
+            <div className="h-48 rounded-2xl overflow-hidden border border-border">
+              <LiveMap viajeId={activeRide.id} className="w-full h-full" />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Actions */}
         <div className="px-4 mt-4 grid grid-cols-3 gap-3">
@@ -466,9 +468,9 @@ const ConductorHome = () => {
             <MessageCircle className="h-5 w-5" />
             <span className="text-[10px]">Chat</span>
           </Button>
-          <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={() => openInMaps(activeRide.destination)}>
-            <MapPin className="h-5 w-5" />
-            <span className="text-[10px]">Ver mapa</span>
+          <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={() => setMapExpanded((v) => !v)}>
+            <MapIcon className="h-5 w-5" />
+            <span className="text-[10px]">{mapExpanded ? "Ocultar mapa" : "Ver mapa"}</span>
           </Button>
           <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={handleShareWhatsApp}>
             <Share2 className="h-5 w-5" />
