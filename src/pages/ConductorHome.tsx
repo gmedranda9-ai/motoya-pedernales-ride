@@ -163,6 +163,7 @@ const ConductorHome = () => {
   const [activeRide, setActiveRide] = useState<RideRequest | null>(null);
   const [rideStatus, setRideStatus] = useState<RideStatus>("en_camino");
   const [chatOpen, setChatOpen] = useState(false);
+  const [mapExpanded, setMapExpanded] = useState(true);
   const [messages, setMessages] = useState<{ from: string; text: string }[]>([]);
   const [msgText, setMsgText] = useState("");
 
