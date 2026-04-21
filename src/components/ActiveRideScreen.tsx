@@ -120,9 +120,15 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRide
       {/* Driver info */}
       <div className="px-4">
         <div className="bg-card rounded-2xl border border-border p-4 flex items-center gap-4">
-          <img src={driver.photo} alt={driver.name} className="w-16 h-16 rounded-full object-cover border-2 border-accent" />
+          {hasPhoto ? (
+            <img src={driver.photo} alt={firstName} className="w-16 h-16 rounded-full object-cover border-2 border-accent flex-shrink-0" />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-primary border-2 border-accent flex items-center justify-center flex-shrink-0">
+              <span className="text-2xl font-extrabold text-primary-foreground">{initial}</span>
+            </div>
+          )}
           <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-foreground truncate">{driver.name}</h3>
+            <h3 className="font-bold text-foreground truncate">{firstName}</h3>
             <p className="text-xs text-muted-foreground">🏍️ {driver.model} · <span className="font-semibold">{driver.plate}</span></p>
             <p className="text-xs text-muted-foreground">📍 Destino: {destination}</p>
           </div>
