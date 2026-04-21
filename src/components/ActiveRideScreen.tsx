@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Phone, Shield, MessageCircle, Share2, Send } from "lucide-react";
+import { Phone, Shield, MessageCircle, Share2, Send, Map as MapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import LiveMap from "@/components/LiveMap";
@@ -15,7 +15,7 @@ interface ActiveRideScreenProps {
 }
 
 const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: string }> = {
-  en_camino: { label: "En camino hacia ti", emoji: "🏍️", desc: "Tu conductor se dirige a tu ubicación" },
+  en_camino: { label: "Tu conductor está en camino 🏍️", emoji: "🏍️", desc: "Tu conductor se dirige a tu ubicación" },
   en_viaje: { label: "En viaje", emoji: "🛣️", desc: "Estás en camino a tu destino" },
   completado: { label: "Viaje completado", emoji: "✅", desc: "¡Has llegado a tu destino!" },
 };
@@ -26,6 +26,7 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRide
   const [chatOpen, setChatOpen] = useState(false);
   const [msgText, setMsgText] = useState("");
   const [showSOS, setShowSOS] = useState(false);
+  const [mapExpanded, setMapExpanded] = useState(true);
 
   const currentStatus = STATUS_LABELS[status];
 
@@ -114,11 +115,24 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId }: ActiveRide
         </div>
       </div>
 
+      {/* Live Map */}
+      {viajeId && mapExpanded && (
+        <div className="px-4 mt-4">
+          <div className="rounded-2xl overflow-hidden border border-border bg-muted h-56">
+            <LiveMap viajeId={viajeId} className="w-full h-full" />
+          </div>
+        </div>
+      )}
+
       {/* Actions */}
-      <div className="px-4 mt-4 grid grid-cols-3 gap-3">
+      <div className="px-4 mt-4 grid grid-cols-4 gap-2">
         <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={() => setChatOpen(!chatOpen)}>
           <MessageCircle className="h-5 w-5" />
           <span className="text-[10px]">Chat</span>
+        </Button>
+        <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={() => setMapExpanded((v) => !v)}>
+          <MapIcon className="h-5 w-5" />
+          <span className="text-[10px]">{mapExpanded ? "Ocultar mapa" : "Ver mapa"}</span>
         </Button>
         <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={handleShareWhatsApp}>
           <Share2 className="h-5 w-5" />
