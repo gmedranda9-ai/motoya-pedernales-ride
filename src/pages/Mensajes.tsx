@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import BottomNav from "@/components/BottomNav";
-import { Loader2, Send, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { useBackButton } from "@/hooks/useBackButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,8 +45,7 @@ const ChatPanel = ({
   onClose: () => void;
 }) => {
   const { user } = useAuth();
-  const { messages, sendMessage, loading } = useRideChat(viajeId, user?.id);
-  const [text, setText] = useState("");
+  const { messages, loading } = useRideChat(viajeId, user?.id);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,13 +57,6 @@ const ChatPanel = ({
     }
   }, [messages, viajeId, user?.id]);
 
-  const handleSend = async () => {
-    if (!text.trim()) return;
-    const t = text;
-    setText("");
-    await sendMessage(t);
-  };
-
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
       <header className="gradient-primary px-4 pt-12 pb-4 flex items-center gap-3">
@@ -74,7 +66,7 @@ const ChatPanel = ({
         <Avatar name={otherName} />
         <div className="flex-1 min-w-0">
           <h2 className="text-base font-bold text-accent truncate">{otherName}</h2>
-          <p className="text-[10px] text-primary-foreground/70">Chat del viaje</p>
+          <p className="text-[10px] text-primary-foreground/70">Historial del viaje</p>
         </div>
       </header>
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
@@ -83,7 +75,7 @@ const ChatPanel = ({
             <Loader2 className="h-5 w-5 text-accent animate-spin" />
           </div>
         ) : messages.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground py-8">Sin mensajes aún 💬</p>
+          <p className="text-center text-sm text-muted-foreground py-8">Sin mensajes en este viaje</p>
         ) : (
           messages.map((m) => {
             const mine = m.remitente_id === user?.id;
@@ -106,22 +98,8 @@ const ChatPanel = ({
           })
         )}
       </div>
-      <div className="border-t border-border bg-card p-3 flex items-center gap-2">
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          placeholder="Escribe un mensaje..."
-          className="flex-1 bg-background border border-border rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-        />
-        <button
-          onClick={handleSend}
-          className="w-10 h-10 rounded-full bg-accent text-accent-foreground flex items-center justify-center disabled:opacity-50"
-          disabled={!text.trim()}
-          aria-label="Enviar"
-        >
-          <Send className="h-4 w-4" />
-        </button>
+      <div className="border-t border-border bg-card p-3 text-center">
+        <p className="text-[11px] text-muted-foreground">Solo lectura · Historial del viaje</p>
       </div>
     </div>
   );
@@ -262,7 +240,7 @@ const Mensajes = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       <header className="gradient-primary px-4 pt-12 pb-6">
-        <h1 className="text-xl font-extrabold text-accent">Mensajes</h1>
+        <h1 className="text-xl font-extrabold text-accent">Historial de conversaciones</h1>
         <p className="text-xs text-primary-foreground/70 mt-1">
           {role === "conductor" ? "Chats con pasajeros" : "Chats con conductores"}
         </p>
@@ -275,7 +253,7 @@ const Mensajes = () => {
           </div>
         ) : convos.length === 0 ? (
           <div className="text-center py-12 px-4">
-            <p className="text-base font-semibold text-foreground">Sin mensajes aún 💬</p>
+            <p className="text-base font-semibold text-foreground">Sin conversaciones aún 💬</p>
             <p className="text-xs text-muted-foreground mt-1">
               Tus conversaciones de viaje aparecerán aquí
             </p>
