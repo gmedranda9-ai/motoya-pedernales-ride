@@ -669,7 +669,9 @@ const ConductorHome = () => {
         </div>
       </header>
 
-      {appStatus === "approved" && <NotificationsBanner />}
+      {appStatus === "approved" && (
+        <NotificationsBanner critical={available && !notifGranted} />
+      )}
 
       {/* Profile card */}
       <div className="px-4 -mt-5">
