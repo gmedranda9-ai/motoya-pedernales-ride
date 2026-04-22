@@ -180,11 +180,20 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [conductorId, isApprovedAvailable, toast]);
 
-  // Countdown
+  // Countdown — cancels the viaje in DB if the conductor doesn't respond in 60s
   useEffect(() => {
     if (!incomingRequest) return;
     if (requestTimer <= 0) {
+      const expiredId = incomingRequest.id;
       setIncomingRequest(null);
+      supabase
+        .from("viajes")
+        .update({ estado: "cancelado" })
+        .eq("id", expiredId)
+        .eq("estado", "pendiente")
+        .then(({ error }) => {
+          if (error) console.error("Error cancelando viaje expirado:", error);
+        });
       toast({ title: "Solicitud expirada", description: "No respondiste a tiempo." });
       return;
     }
