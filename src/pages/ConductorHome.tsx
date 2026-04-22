@@ -169,11 +169,24 @@ const ConductorHome = () => {
         }
       }
 
+      // Verify SW registration before subscribing
+      try {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        console.log("Service Workers:", regs);
+        if (!regs.length) {
+          console.warn("⚠️ No hay Service Workers registrados todavía. OneSignal intentará registrar uno.");
+        }
+      } catch (e) {
+        console.warn("No se pudo consultar Service Workers:", e);
+      }
+
+      console.log("➡️ Llamando subscribeToPush()...");
       const playerId = await subscribeToPush();
+      console.log("⬅️ Resultado subscribeToPush:", playerId);
       if (!playerId) {
         toast({
-          title: "No se pudo suscribir",
-          description: "Intenta nuevamente en unos segundos.",
+          title: "No se pudo activar notificaciones",
+          description: "El navegador no entregó un Player ID. Recarga la página e inténtalo de nuevo.",
           variant: "destructive",
         });
         return;
