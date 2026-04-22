@@ -31,11 +31,12 @@ const formatDate = (iso: string) => {
 };
 
 const estadoLabel: Record<string, { label: string; cls: string }> = {
-  completado: { label: "Completado", cls: "bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))]" },
-  cancelado: { label: "Cancelado", cls: "bg-destructive/15 text-destructive" },
-  pendiente: { label: "Pendiente", cls: "bg-muted text-muted-foreground" },
-  aceptado: { label: "En curso", cls: "bg-accent/20 text-accent-foreground" },
-  en_camino: { label: "En camino", cls: "bg-accent/20 text-accent-foreground" },
+  completado: { label: "Finalizado ✅", cls: "bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))]" },
+  cancelado: { label: "Cancelado ❌", cls: "bg-destructive/15 text-destructive" },
+  pendiente: { label: "En curso 🏍️", cls: "bg-accent/20 text-accent-foreground" },
+  aceptado: { label: "En curso 🏍️", cls: "bg-accent/20 text-accent-foreground" },
+  en_camino: { label: "En curso 🏍️", cls: "bg-accent text-accent-foreground" },
+  en_viaje: { label: "En curso 🏍️", cls: "bg-accent text-accent-foreground" },
 };
 
 const costLabel = (tipo: string | null) => {
