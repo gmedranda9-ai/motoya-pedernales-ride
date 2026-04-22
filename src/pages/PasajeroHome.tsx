@@ -248,26 +248,23 @@ const PasajeroHome = () => {
       const playerId = (conductorRow as any)?.onesignal_player_id;
       console.log("🔑 OneSignal player_id:", playerId || "(no registrado)");
 
-      if (playerId) {
-        const cost = getCostType(destination) === "city" ? "1.00" : "acordar";
-        const { data: pushData, error: pushErr } = await supabase.functions.invoke(
-          "send-ride-notification",
-          {
-            body: {
-              player_id: playerId,
-              passenger_name: pasajeroNombre,
-              destination,
-              cost,
-            },
-          }
-        );
-        if (pushErr) {
-          console.error("❌ Error invocando send-ride-notification:", pushErr);
-        } else {
-          console.log("✅ Respuesta OneSignal:", pushData);
+      const cost = getCostType(destination) === "city" ? "1.00" : "acordar";
+      const { data: pushData, error: pushErr } = await supabase.functions.invoke(
+        "send-ride-notification",
+        {
+          body: {
+            player_id: playerId || undefined,
+            conductor_id: driverId,
+            passenger_name: pasajeroNombre,
+            destination,
+            cost,
+          },
         }
+      );
+      if (pushErr) {
+        console.error("❌ Error invocando send-ride-notification:", pushErr);
       } else {
-        console.log("ℹ️ Conductor sin onesignal_player_id, no se envía push.");
+        console.log("✅ Respuesta OneSignal:", pushData);
       }
     } catch (e) {
       console.warn("No se pudo enviar push al conductor:", e);
