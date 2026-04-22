@@ -904,7 +904,7 @@ const ConductorHome = () => {
             {[
               { label: "Viajes", value: totalTrips.toString(), emoji: "🏍️" },
               { label: "Calificación", value: rating.toFixed(1), emoji: "⭐" },
-              { label: "Meses activo", value: "8", emoji: "📅" },
+              { label: "Meses activo", value: monthsActive.toString(), emoji: "📅" },
             ].map((stat) => (
               <div key={stat.label} className="bg-card rounded-xl p-3 text-center border border-border">
                 <span className="text-lg">{stat.emoji}</span>
