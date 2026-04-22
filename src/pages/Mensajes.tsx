@@ -253,7 +253,7 @@ const Mensajes = () => {
           </div>
         ) : convos.length === 0 ? (
           <div className="text-center py-12 px-4">
-            <p className="text-base font-semibold text-foreground">Sin mensajes aún 💬</p>
+            <p className="text-base font-semibold text-foreground">Sin conversaciones aún 💬</p>
             <p className="text-xs text-muted-foreground mt-1">
               Tus conversaciones de viaje aparecerán aquí
             </p>
