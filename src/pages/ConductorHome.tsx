@@ -24,6 +24,7 @@ import {
   Map as MapIcon,
 } from "lucide-react";
 import { subscribeToPush, unsubscribeFromPush } from "@/lib/onesignal";
+import { useNotificationPermission } from "@/hooks/useNotificationPermission";
 import { useShareDriverLocation } from "@/hooks/useShareDriverLocation";
 import { useRideChat } from "@/hooks/useRideChat";
 import LiveMap from "@/components/LiveMap";
@@ -66,6 +67,7 @@ const ConductorHome = () => {
   const { user } = useAuth();
   const { acceptedRide, consumeAcceptedRide } = useRide();
   const { toast } = useToast();
+  const { isGranted: notifGranted, isBlocked: notifBlocked, request: requestNotif, refresh: refreshNotif } = useNotificationPermission();
   const userName = user?.user_metadata?.nombre || user?.email?.split("@")[0] || "Conductor";
 
   const [step, setStep] = useState<Step>("panel");
@@ -126,40 +128,109 @@ const ConductorHome = () => {
     loadStatus();
   }, [user]);
 
-  const handleToggleAvailable = async (value: boolean) => {
-    setAvailable(value);
-    if (!user) return;
-
-    let onesignal_player_id: string | null = null;
-    if (value) {
-      onesignal_player_id = await subscribeToPush();
-      if (!onesignal_player_id) {
-        toast({
-          title: "Notificaciones desactivadas",
-          description: "Activa los permisos de notificación para recibir solicitudes en tiempo real.",
-        });
-      }
-    } else {
-      await unsubscribeFromPush();
-    }
-
+  const persistAvailability = async (value: boolean, playerId?: string | null) => {
+    if (!user) return false;
     const updatePayload: Record<string, any> = { disponible: value };
-    if (value && onesignal_player_id) {
-      updatePayload.onesignal_player_id = onesignal_player_id;
-    }
-
+    if (value && playerId) updatePayload.onesignal_player_id = playerId;
     const { error } = await supabase
       .from("conductores")
       .update(updatePayload)
       .eq("usuario_id", user.id);
     if (error) {
       console.error("Error updating disponible:", error);
-      setAvailable(!value);
-      toast({ title: "Error", description: "No se pudo actualizar tu disponibilidad.", variant: "destructive" });
+      return false;
+    }
+    return true;
+  };
+
+  const handleToggleAvailable = async (value: boolean) => {
+    if (!user) return;
+
+    if (value) {
+      // Require notification permission BEFORE flipping the toggle on.
+      refreshNotif();
+      if (notifBlocked) {
+        toast({
+          title: "Notificaciones bloqueadas",
+          description: "Actívalas en la configuración del navegador y recarga la página.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!notifGranted) {
+        const next = await requestNotif();
+        if (next !== "granted") {
+          toast({
+            title: "Permiso necesario",
+            description: "Debes permitir notificaciones para recibir solicitudes.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      const playerId = await subscribeToPush();
+      if (!playerId) {
+        toast({
+          title: "No se pudo suscribir",
+          description: "Intenta nuevamente en unos segundos.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const ok = await persistAvailability(true, playerId);
+      if (!ok) {
+        toast({ title: "Error", description: "No se pudo actualizar tu disponibilidad.", variant: "destructive" });
+        return;
+      }
+      setAvailable(true);
+      toast({ title: "🟢 Ahora estás disponible" });
     } else {
-      toast({ title: value ? "🟢 Ahora estás disponible" : "⚫ No estás disponible" });
+      await unsubscribeFromPush();
+      const ok = await persistAvailability(false);
+      if (!ok) {
+        toast({ title: "Error", description: "No se pudo actualizar tu disponibilidad.", variant: "destructive" });
+        return;
+      }
+      setAvailable(false);
+      toast({ title: "⚫ No estás disponible" });
     }
   };
+
+  // Auto-disable when notifications are missing while marked as "disponible".
+  // Also resubscribe on app reopen to refresh player_id in case it changed.
+  useEffect(() => {
+    if (!user || !conductorId) return;
+    if (available && !notifGranted) {
+      console.warn("⚠️ Conductor disponible sin notificaciones — desactivando automáticamente.");
+      persistAvailability(false).then(() => setAvailable(false));
+      toast({
+        title: "⚠️ Notificaciones desactivadas",
+        description: "No recibirás solicitudes. Actívalas para continuar recibiendo viajes.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (available && notifGranted) {
+      // Resubscribe silently to refresh player_id (may change between sessions/devices).
+      (async () => {
+        try {
+          const playerId = await subscribeToPush();
+          if (playerId) {
+            await supabase
+              .from("conductores")
+              .update({ onesignal_player_id: playerId })
+              .eq("usuario_id", user.id);
+            console.log("🔄 player_id refrescado:", playerId);
+          }
+        } catch (e) {
+          console.warn("Resubscribe failed:", e);
+        }
+      })();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conductorId, notifGranted]);
 
   // Application form
   const [form, setForm] = useState<ApplicationForm>({
@@ -598,7 +669,9 @@ const ConductorHome = () => {
         </div>
       </header>
 
-      {appStatus === "approved" && <NotificationsBanner />}
+      {appStatus === "approved" && (
+        <NotificationsBanner critical={available && !notifGranted} />
+      )}
 
       {/* Profile card */}
       <div className="px-4 -mt-5">
