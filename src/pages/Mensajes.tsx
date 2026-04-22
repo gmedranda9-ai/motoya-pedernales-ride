@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import BottomNav from "@/components/BottomNav";
-import { MessageSquare, Loader2, Send, X } from "lucide-react";
+import { Loader2, Send, ArrowLeft } from "lucide-react";
 import { useBackButton } from "@/hooks/useBackButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ interface Conversation {
   lastMsg: string;
   time: string;
   iso: string;
+  unread: number;
 }
 
 const formatTime = (iso: string) => {
@@ -24,6 +25,15 @@ const formatTime = (iso: string) => {
   if (d.toDateString() === yest.toDateString()) return "Ayer";
   return d.toLocaleDateString("es-EC", { day: "2-digit", month: "short" });
 };
+
+const initialOf = (name: string) => (name?.trim()?.[0] || "?").toUpperCase();
+const readKey = (viajeId: string, userId: string) => `chat:lastRead:${userId}:${viajeId}`;
+
+const Avatar = ({ name }: { name: string }) => (
+  <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center shrink-0">
+    <span className="text-base font-bold text-accent">{initialOf(name)}</span>
+  </div>
+);
 
 const ChatPanel = ({
   viajeId,
@@ -41,7 +51,12 @@ const ChatPanel = ({
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+    if (user?.id && messages.length) {
+      try {
+        localStorage.setItem(readKey(viajeId, user.id), new Date().toISOString());
+      } catch {}
+    }
+  }, [messages, viajeId, user?.id]);
 
   const handleSend = async () => {
     if (!text.trim()) return;
@@ -53,11 +68,12 @@ const ChatPanel = ({
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
       <header className="gradient-primary px-4 pt-12 pb-4 flex items-center gap-3">
-        <button onClick={onClose} className="text-accent" aria-label="Cerrar">
-          <X className="h-5 w-5" />
+        <button onClick={onClose} className="text-accent" aria-label="Volver">
+          <ArrowLeft className="h-5 w-5" />
         </button>
-        <div className="flex-1">
-          <h2 className="text-base font-bold text-accent">{otherName}</h2>
+        <Avatar name={otherName} />
+        <div className="flex-1 min-w-0">
+          <h2 className="text-base font-bold text-accent truncate">{otherName}</h2>
           <p className="text-[10px] text-primary-foreground/70">Chat del viaje</p>
         </div>
       </header>
@@ -77,7 +93,7 @@ const ChatPanel = ({
                   className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
                     mine
                       ? "bg-accent text-accent-foreground rounded-br-sm"
-                      : "bg-card border border-border text-foreground rounded-bl-sm"
+                      : "bg-muted text-foreground rounded-bl-sm"
                   }`}
                 >
                   <p className="break-words">{m.texto}</p>
@@ -117,8 +133,11 @@ const Mensajes = () => {
   const [convos, setConvos] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [openChat, setOpenChat] = useState<{ viajeId: string; name: string } | null>(null);
-  const role: "pasajero" | "conductor" =
-    (user?.user_metadata?.rol as any) === "conductor" ? "conductor" : "pasajero";
+  const [refreshTick, setRefreshTick] = useState(0);
+  const role: "pasajero" | "conductor" = useMemo(
+    () => ((user?.user_metadata?.rol as any) === "conductor" ? "conductor" : "pasajero"),
+    [user]
+  );
 
   useEffect(() => {
     if (!user) return;
@@ -155,13 +174,24 @@ const Mensajes = () => {
       const viajeIds = viajes.map((v: any) => v.id);
       const { data: msgs } = await supabase
         .from("mensajes")
-        .select("viaje_id, texto, hora")
+        .select("viaje_id, texto, hora, remitente_id")
         .in("viaje_id", viajeIds)
         .order("hora", { ascending: false });
 
       const lastByViaje: Record<string, { texto: string; hora: string }> = {};
+      const unreadByViaje: Record<string, number> = {};
       (msgs || []).forEach((m: any) => {
         if (!lastByViaje[m.viaje_id]) lastByViaje[m.viaje_id] = { texto: m.texto, hora: m.hora };
+        if (m.remitente_id !== user.id) {
+          let lastRead = 0;
+          try {
+            const v = localStorage.getItem(readKey(m.viaje_id, user.id));
+            lastRead = v ? new Date(v).getTime() : 0;
+          } catch {}
+          if (new Date(m.hora).getTime() > lastRead) {
+            unreadByViaje[m.viaje_id] = (unreadByViaje[m.viaje_id] || 0) + 1;
+          }
+        }
       });
 
       const otherIds = Array.from(
@@ -202,6 +232,7 @@ const Mensajes = () => {
             lastMsg: last.texto,
             time: formatTime(last.hora),
             iso: last.hora,
+            unread: unreadByViaje[v.id] || 0,
           };
         })
         .sort((a, b) => (a.iso < b.iso ? 1 : -1));
@@ -210,7 +241,23 @@ const Mensajes = () => {
       setLoading(false);
     };
     load();
-  }, [user, role]);
+  }, [user, role, refreshTick]);
+
+  // Realtime: refresh list when any new message arrives
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`mensajes-list-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "mensajes" },
+        () => setRefreshTick((t) => t + 1)
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -227,27 +274,46 @@ const Mensajes = () => {
             <Loader2 className="h-5 w-5 text-accent animate-spin" />
           </div>
         ) : convos.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-12">Sin mensajes aún 💬</p>
+          <div className="text-center py-12 px-4">
+            <p className="text-base font-semibold text-foreground">Sin mensajes aún 💬</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Tus conversaciones de viaje aparecerán aquí
+            </p>
+          </div>
         ) : (
           convos.map((chat) => (
             <button
               key={chat.viaje_id}
-              onClick={() => setOpenChat({ viajeId: chat.viaje_id, name: chat.otherName })}
-              className="flex items-center gap-3 w-full bg-card rounded-xl p-4 border border-border text-left hover:bg-muted/40 transition-colors"
+              onClick={() => {
+                setOpenChat({ viajeId: chat.viaje_id, name: chat.otherName });
+                if (user?.id) {
+                  try {
+                    localStorage.setItem(readKey(chat.viaje_id, user.id), new Date().toISOString());
+                  } catch {}
+                }
+              }}
+              className="flex items-center gap-3 w-full bg-card rounded-xl p-3 border border-border text-left hover:bg-muted/40 transition-colors"
             >
-              <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center shrink-0">
-                <MessageSquare className="h-5 w-5 text-accent" />
-              </div>
+              <Avatar name={chat.otherName} />
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-semibold text-foreground truncate">
                     {chat.otherName}
                   </span>
-                  <span className="text-[10px] text-muted-foreground shrink-0 ml-2">
+                  <span className="text-[10px] text-muted-foreground shrink-0">
                     {chat.time}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground truncate">{chat.lastMsg}</p>
+                <div className="flex items-center justify-between gap-2 mt-0.5">
+                  <p className={`text-xs truncate ${chat.unread > 0 ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                    {chat.lastMsg}
+                  </p>
+                  {chat.unread > 0 && (
+                    <span className="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-accent text-accent-foreground text-[10px] font-bold flex items-center justify-center">
+                      {chat.unread > 9 ? "9+" : chat.unread}
+                    </span>
+                  )}
+                </div>
               </div>
             </button>
           ))
@@ -258,7 +324,10 @@ const Mensajes = () => {
         <ChatPanel
           viajeId={openChat.viajeId}
           otherName={openChat.name}
-          onClose={() => setOpenChat(null)}
+          onClose={() => {
+            setOpenChat(null);
+            setRefreshTick((t) => t + 1);
+          }}
         />
       )}
 
