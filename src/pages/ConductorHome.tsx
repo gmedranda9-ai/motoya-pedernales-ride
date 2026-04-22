@@ -67,6 +67,7 @@ const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: st
 
 const ConductorHome = () => {
   const { user } = useAuth();
+  const { acceptedRide, consumeAcceptedRide } = useRide();
   const { toast } = useToast();
   const userName = user?.user_metadata?.nombre || user?.email?.split("@")[0] || "Conductor";
 
@@ -175,10 +176,6 @@ const ConductorHome = () => {
     motoPhotoUrl: "",
   });
 
-  // Request states
-  const [incomingRequest, setIncomingRequest] = useState<RideRequest | null>(null);
-  const [requestTimer, setRequestTimer] = useState(30);
-
   // Active ride
   const [activeRide, setActiveRide] = useState<RideRequest | null>(null);
   const [rideStatus, setRideStatus] = useState<RideStatus>("en_camino");
@@ -187,114 +184,16 @@ const ConductorHome = () => {
   const [msgText, setMsgText] = useState("");
   const { messages, sendMessage } = useRideChat(activeRide?.id ?? null, user?.id ?? null);
 
-  // Subscribe to realtime ride requests when available
+  // Pick up rides accepted from the global modal (works across all screens)
   useEffect(() => {
-    if (!available || activeRide || appStatus !== "approved" || !conductorId) return;
-
-    const channel = supabase
-      .channel('viajes-conductor')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'viajes',
-        filter: `conductor_id=eq.${conductorId}`,
-      }, async (payload) => {
-        const viaje = payload.new as any;
-        if (viaje.estado !== 'pendiente') return;
-
-        // Fetch real passenger info
-        let passengerName = viaje.pasajero_nombre || '';
-        let passengerRating = 0;
-        let passengerTrips = 0;
-
-        if (!passengerName) {
-          try {
-            const { data: pasajero } = await supabase
-              .from('usuarios')
-              .select('nombre')
-              .eq('id', viaje.pasajero_id)
-              .maybeSingle();
-            if (pasajero?.nombre) passengerName = pasajero.nombre;
-          } catch (e) { console.error('usuarios fetch:', e); }
-        }
-        if (!passengerName) passengerName = 'Pasajero';
-
-        try {
-          const { count } = await supabase
-            .from('viajes')
-            .select('id', { count: 'exact', head: true })
-            .eq('pasajero_id', viaje.pasajero_id)
-            .eq('estado', 'completado');
-          passengerTrips = count ?? 0;
-        } catch (e) { console.error('trips count:', e); }
-
-        try {
-          const { data: calificaciones } = await supabase
-            .from('calificaciones')
-            .select('estrellas')
-            .eq('pasajero_id', viaje.pasajero_id);
-          if (calificaciones && calificaciones.length > 0) {
-            const sum = calificaciones.reduce((acc: number, c: any) => acc + (c.estrellas || 0), 0);
-            passengerRating = sum / calificaciones.length;
-          }
-        } catch (e) { console.error('ratings fetch:', e); }
-
-        setIncomingRequest({
-          id: viaje.id,
-          passengerId: viaje.pasajero_id,
-          passengerName,
-          passengerRating,
-          passengerTrips,
-          origin: viaje.origen || 'Origen no especificado',
-          originCoords: viaje.origen_lat && viaje.origen_lng ? { lat: viaje.origen_lat, lng: viaje.origen_lng } : undefined,
-          destination: viaje.destino || 'Destino no especificado',
-          costType: viaje.tipo_cobro === 'fuera' ? 'outside' : 'city',
-        });
-        setRequestTimer(30);
-        toast({ title: "🔔 Nueva solicitud de viaje", description: `${passengerName} necesita un viaje` });
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [available, activeRide, appStatus, conductorId]);
-
-  // Request countdown
-  useEffect(() => {
-    if (!incomingRequest) return;
-    if (requestTimer <= 0) {
-      setIncomingRequest(null);
-      toast({ title: "Solicitud expirada", description: "No respondiste a tiempo." });
-      return;
+    if (acceptedRide && !activeRide) {
+      const ride = consumeAcceptedRide();
+      if (ride) {
+        setActiveRide(ride);
+        setRideStatus("en_camino");
+      }
     }
-    const t = setTimeout(() => setRequestTimer((s) => s - 1), 1000);
-    return () => clearTimeout(t);
-  }, [requestTimer, incomingRequest]);
-
-  const handleAcceptRequest = async () => {
-    if (!incomingRequest) return;
-    console.log("🟡 Aceptando viaje, ID:", incomingRequest.id);
-    const { error } = await supabase
-      .from("viajes")
-      .update({ estado: "aceptado" })
-      .eq("id", incomingRequest.id);
-    if (error) {
-      console.error("❌ Error al aceptar viaje:", error);
-      toast({ title: "Error", description: "No se pudo aceptar el viaje.", variant: "destructive" });
-      return;
-    }
-    console.log("✅ Viaje aceptado en Supabase, ID:", incomingRequest.id);
-    setActiveRide(incomingRequest);
-    setIncomingRequest(null);
-    setRideStatus("en_camino");
-    toast({ title: "✅ Viaje aceptado", description: `Dirígete hacia ${incomingRequest.passengerName}` });
-  };
-
-  const handleRejectRequest = () => {
-    setIncomingRequest(null);
-    toast({ title: "Solicitud rechazada", description: "Sigues disponible para otras solicitudes." });
-  };
+  }, [acceptedRide, activeRide, consumeAcceptedRide]);
 
   const openInMaps = (address: string, coords?: { lat: number; lng: number }) => {
     const query = coords ? `${coords.lat},${coords.lng}` : encodeURIComponent(address + " Pedernales Ecuador");
