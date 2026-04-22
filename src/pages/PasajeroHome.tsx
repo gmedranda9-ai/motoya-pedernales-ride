@@ -234,25 +234,37 @@ const PasajeroHome = () => {
 
     // Send push notification to the driver via OneSignal (best-effort)
     try {
-      const { data: conductorRow } = await supabase
+      console.log("📨 Enviando notificación a conductor:", driverId);
+      const { data: conductorRow, error: conductorErr } = await supabase
         .from("conductores")
         .select("onesignal_player_id")
         .eq("id", driverId)
         .maybeSingle();
 
+      if (conductorErr) {
+        console.warn("⚠️ Error consultando conductor:", conductorErr.message);
+      }
+
       const playerId = (conductorRow as any)?.onesignal_player_id;
-      if (playerId) {
-        const cost = getCostType(destination) === "city" ? "1.00" : "acordar";
-        await supabase.functions.invoke("send-ride-notification", {
+      console.log("🔑 OneSignal player_id:", playerId || "(no registrado)");
+
+      const cost = getCostType(destination) === "city" ? "1.00" : "acordar";
+      const { data: pushData, error: pushErr } = await supabase.functions.invoke(
+        "send-ride-notification",
+        {
           body: {
-            player_id: playerId,
+            player_id: playerId || undefined,
+            conductor_id: driverId,
             passenger_name: pasajeroNombre,
             destination,
             cost,
           },
-        });
+        }
+      );
+      if (pushErr) {
+        console.error("❌ Error invocando send-ride-notification:", pushErr);
       } else {
-        console.log("Conductor sin onesignal_player_id, no se envía push.");
+        console.log("✅ Respuesta OneSignal:", pushData);
       }
     } catch (e) {
       console.warn("No se pudo enviar push al conductor:", e);

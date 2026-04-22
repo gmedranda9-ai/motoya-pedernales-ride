@@ -1,4 +1,6 @@
 // Edge function: send a OneSignal push to a driver when a passenger requests a ride
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -15,6 +17,7 @@ Deno.serve(async (req) => {
   try {
     const apiKey = Deno.env.get("ONESIGNAL_REST_API_KEY");
     if (!apiKey) {
+      console.error("❌ ONESIGNAL_REST_API_KEY no configurada");
       return new Response(
         JSON.stringify({ error: "ONESIGNAL_REST_API_KEY not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -22,11 +25,30 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { player_id, passenger_name, destination, cost } = body ?? {};
+    let { player_id, conductor_id, passenger_name, destination, cost } = body ?? {};
+    console.log("📥 Payload recibido:", { player_id, conductor_id, passenger_name, destination, cost });
+
+    // Fallback: resolve player_id from conductor_id via Supabase
+    if (!player_id && conductor_id) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (supabaseUrl && serviceKey) {
+        const sb = createClient(supabaseUrl, serviceKey);
+        const { data, error } = await sb
+          .from("conductores")
+          .select("onesignal_player_id")
+          .eq("id", conductor_id)
+          .maybeSingle();
+        if (error) console.warn("⚠️ Error consultando conductor:", error.message);
+        player_id = (data as any)?.onesignal_player_id;
+        console.log("🔎 player_id resuelto desde conductor_id:", player_id);
+      }
+    }
 
     if (!player_id || typeof player_id !== "string") {
+      console.warn("⚠️ player_id ausente; no se envía push.");
       return new Response(
-        JSON.stringify({ error: "player_id is required" }),
+        JSON.stringify({ error: "player_id is required (or conductor must have onesignal_player_id)" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -46,6 +68,8 @@ Deno.serve(async (req) => {
       url: req.headers.get("origin") || undefined,
     };
 
+    console.log("📤 Enviando a OneSignal:", { player_id, contents: payload.contents });
+
     const res = await fetch("https://onesignal.com/api/v1/notifications", {
       method: "POST",
       headers: {
@@ -56,8 +80,10 @@ Deno.serve(async (req) => {
     });
 
     const data = await res.json();
+    console.log("📨 Respuesta OneSignal:", res.status, data);
+
     if (!res.ok) {
-      console.error("OneSignal error:", res.status, data);
+      console.error("❌ OneSignal error:", res.status, data);
       return new Response(
         JSON.stringify({ error: "OneSignal API error", details: data }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
