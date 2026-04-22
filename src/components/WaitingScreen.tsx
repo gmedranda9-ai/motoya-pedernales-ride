@@ -19,6 +19,7 @@ const TIMEOUT_SECONDS = 60;
 const WaitingScreen = ({ driver, destination, onCancel, onTimeout, onAccepted, estimatedCost, viajeId }: WaitingScreenProps) => {
   const [seconds, setSeconds] = useState(TIMEOUT_SECONDS);
   const [timedOut, setTimedOut] = useState(false);
+  const [rejected, setRejected] = useState(false);
 
   // Countdown timer
   useEffect(() => {
@@ -59,8 +60,11 @@ const WaitingScreen = ({ driver, destination, onCancel, onTimeout, onAccepted, e
             console.log("✅ Conductor aceptó el viaje, pasando a viaje activo");
             onAccepted();
           }
-          if (nuevo.estado === "cancelado" || nuevo.estado === "rechazado") {
-            console.log("❌ Viaje cancelado/rechazado por el conductor");
+          if (nuevo.estado === "rechazado") {
+            console.log("❌ Viaje rechazado por el conductor");
+            setRejected(true);
+          } else if (nuevo.estado === "cancelado") {
+            console.log("❌ Viaje cancelado");
             setTimedOut(true);
           }
         }
@@ -71,6 +75,28 @@ const WaitingScreen = ({ driver, destination, onCancel, onTimeout, onAccepted, e
       supabase.removeChannel(channel);
     };
   }, [viajeId, onAccepted]);
+
+  if (rejected) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center px-6 animate-fade-in">
+        <div className="text-center space-y-6 max-w-sm">
+          <span className="text-5xl">😔</span>
+          <h2 className="text-lg font-extrabold text-foreground">El conductor rechazó tu solicitud</h2>
+          <p className="text-sm text-muted-foreground">
+            {driver.name} no pudo aceptar tu viaje en este momento. Puedes elegir otro conductor disponible.
+          </p>
+          <div className="space-y-3">
+            <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={onTimeout}>
+              Buscar otro conductor
+            </Button>
+            <Button variant="outline" size="lg" className="w-full rounded-xl" onClick={onCancel}>
+              Cancelar viaje
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (timedOut) {
     return (
