@@ -96,6 +96,23 @@ const ConductorHome = () => {
         if (data) {
           setConductorId(data.id);
           setAvailable(data.disponible ?? false);
+          setRating(Number(data.calificacion_promedio) || 0);
+          if (data.created_at) {
+            const created = new Date(data.created_at);
+            const now = new Date();
+            const months =
+              (now.getFullYear() - created.getFullYear()) * 12 +
+              (now.getMonth() - created.getMonth());
+            setMonthsActive(Math.max(0, months));
+          }
+          // Count completed trips
+          const { count } = await supabase
+            .from("viajes")
+            .select("id", { count: "exact", head: true })
+            .eq("conductor_id", data.id)
+            .eq("estado", "completado");
+          setTotalTrips(count ?? 0);
+
           const statusMap: Record<string, ApplicationStatus> = {
             pendiente: "pending",
             aprobado: "approved",
