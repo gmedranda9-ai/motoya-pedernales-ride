@@ -73,8 +73,9 @@ const ConductorHome = () => {
   const [appStatus, setAppStatus] = useState<ApplicationStatus>("none");
   const [available, setAvailable] = useState(false);
   const [conductorId, setConductorId] = useState<string | null>(null);
-  const [rating] = useState(4.7);
-  const [totalTrips] = useState(128);
+  const [rating, setRating] = useState(0);
+  const [totalTrips, setTotalTrips] = useState(0);
+  const [monthsActive, setMonthsActive] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
   // Load existing application status from Supabase
@@ -84,7 +85,7 @@ const ConductorHome = () => {
       try {
         const { data, error } = await supabase
           .from("conductores")
-          .select("estado, id, disponible")
+          .select("estado, id, disponible, calificacion_promedio, created_at")
           .eq("usuario_id", user.id)
           .maybeSingle();
         
@@ -95,6 +96,23 @@ const ConductorHome = () => {
         if (data) {
           setConductorId(data.id);
           setAvailable(data.disponible ?? false);
+          setRating(Number(data.calificacion_promedio) || 0);
+          if (data.created_at) {
+            const created = new Date(data.created_at);
+            const now = new Date();
+            const months =
+              (now.getFullYear() - created.getFullYear()) * 12 +
+              (now.getMonth() - created.getMonth());
+            setMonthsActive(Math.max(0, months));
+          }
+          // Count completed trips
+          const { count } = await supabase
+            .from("viajes")
+            .select("id", { count: "exact", head: true })
+            .eq("conductor_id", data.id)
+            .eq("estado", "completado");
+          setTotalTrips(count ?? 0);
+
           const statusMap: Record<string, ApplicationStatus> = {
             pendiente: "pending",
             aprobado: "approved",
@@ -886,7 +904,7 @@ const ConductorHome = () => {
             {[
               { label: "Viajes", value: totalTrips.toString(), emoji: "🏍️" },
               { label: "Calificación", value: rating.toFixed(1), emoji: "⭐" },
-              { label: "Meses activo", value: "8", emoji: "📅" },
+              { label: "Meses activo", value: monthsActive.toString(), emoji: "📅" },
             ].map((stat) => (
               <div key={stat.label} className="bg-card rounded-xl p-3 text-center border border-border">
                 <span className="text-lg">{stat.emoji}</span>
