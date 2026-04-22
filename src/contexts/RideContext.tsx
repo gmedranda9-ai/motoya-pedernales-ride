@@ -218,10 +218,20 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
     navigate("/");
   }, [incomingRequest, navigate, toast]);
 
-  const handleReject = useCallback(() => {
+  const handleReject = useCallback(async () => {
+    if (!incomingRequest) return;
+    const rejectedId = incomingRequest.id;
     setIncomingRequest(null);
+    const { error } = await supabase
+      .from("viajes")
+      .update({ estado: "rechazado" })
+      .eq("id", rejectedId)
+      .eq("estado", "pendiente");
+    if (error) {
+      console.error("❌ Error al rechazar viaje:", error);
+    }
     toast({ title: "Solicitud rechazada", description: "Sigues disponible para otras solicitudes." });
-  }, [toast]);
+  }, [incomingRequest, toast]);
 
   // ConductorHome calls this to take ownership of the accepted ride
   const consumeAcceptedRide = useCallback(() => {
