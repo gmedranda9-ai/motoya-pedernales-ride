@@ -24,6 +24,7 @@ import {
   Map as MapIcon,
 } from "lucide-react";
 import { subscribeToPush, unsubscribeFromPush } from "@/lib/onesignal";
+import { useNotificationPermission } from "@/hooks/useNotificationPermission";
 import { useShareDriverLocation } from "@/hooks/useShareDriverLocation";
 import { useRideChat } from "@/hooks/useRideChat";
 import LiveMap from "@/components/LiveMap";
