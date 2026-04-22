@@ -67,6 +67,7 @@ const ConductorHome = () => {
   const { user } = useAuth();
   const { acceptedRide, consumeAcceptedRide } = useRide();
   const { toast } = useToast();
+  const { isGranted: notifGranted, isBlocked: notifBlocked, request: requestNotif, refresh: refreshNotif } = useNotificationPermission();
   const userName = user?.user_metadata?.nombre || user?.email?.split("@")[0] || "Conductor";
 
   const [step, setStep] = useState<Step>("panel");
