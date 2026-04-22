@@ -240,7 +240,7 @@ const Mensajes = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       <header className="gradient-primary px-4 pt-12 pb-6">
-        <h1 className="text-xl font-extrabold text-accent">Mensajes</h1>
+        <h1 className="text-xl font-extrabold text-accent">Historial de conversaciones</h1>
         <p className="text-xs text-primary-foreground/70 mt-1">
           {role === "conductor" ? "Chats con pasajeros" : "Chats con conductores"}
         </p>
