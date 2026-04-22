@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRide } from "@/contexts/RideContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/BottomNav";
@@ -16,10 +17,7 @@ import {
   MessageCircle,
   Send,
   Share2,
-  CheckCircle,
-  XCircle,
   Loader2,
-  ExternalLink,
   ArrowLeft,
   Camera,
   Upload,
@@ -66,6 +64,7 @@ const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: st
 
 const ConductorHome = () => {
   const { user } = useAuth();
+  const { acceptedRide, consumeAcceptedRide } = useRide();
   const { toast } = useToast();
   const userName = user?.user_metadata?.nombre || user?.email?.split("@")[0] || "Conductor";
 
@@ -174,10 +173,6 @@ const ConductorHome = () => {
     motoPhotoUrl: "",
   });
 
-  // Request states
-  const [incomingRequest, setIncomingRequest] = useState<RideRequest | null>(null);
-  const [requestTimer, setRequestTimer] = useState(30);
-
   // Active ride
   const [activeRide, setActiveRide] = useState<RideRequest | null>(null);
   const [rideStatus, setRideStatus] = useState<RideStatus>("en_camino");
@@ -186,114 +181,16 @@ const ConductorHome = () => {
   const [msgText, setMsgText] = useState("");
   const { messages, sendMessage } = useRideChat(activeRide?.id ?? null, user?.id ?? null);
 
-  // Subscribe to realtime ride requests when available
+  // Pick up rides accepted from the global modal (works across all screens)
   useEffect(() => {
-    if (!available || activeRide || appStatus !== "approved" || !conductorId) return;
-
-    const channel = supabase
-      .channel('viajes-conductor')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'viajes',
-        filter: `conductor_id=eq.${conductorId}`,
-      }, async (payload) => {
-        const viaje = payload.new as any;
-        if (viaje.estado !== 'pendiente') return;
-
-        // Fetch real passenger info
-        let passengerName = viaje.pasajero_nombre || '';
-        let passengerRating = 0;
-        let passengerTrips = 0;
-
-        if (!passengerName) {
-          try {
-            const { data: pasajero } = await supabase
-              .from('usuarios')
-              .select('nombre')
-              .eq('id', viaje.pasajero_id)
-              .maybeSingle();
-            if (pasajero?.nombre) passengerName = pasajero.nombre;
-          } catch (e) { console.error('usuarios fetch:', e); }
-        }
-        if (!passengerName) passengerName = 'Pasajero';
-
-        try {
-          const { count } = await supabase
-            .from('viajes')
-            .select('id', { count: 'exact', head: true })
-            .eq('pasajero_id', viaje.pasajero_id)
-            .eq('estado', 'completado');
-          passengerTrips = count ?? 0;
-        } catch (e) { console.error('trips count:', e); }
-
-        try {
-          const { data: calificaciones } = await supabase
-            .from('calificaciones')
-            .select('estrellas')
-            .eq('pasajero_id', viaje.pasajero_id);
-          if (calificaciones && calificaciones.length > 0) {
-            const sum = calificaciones.reduce((acc: number, c: any) => acc + (c.estrellas || 0), 0);
-            passengerRating = sum / calificaciones.length;
-          }
-        } catch (e) { console.error('ratings fetch:', e); }
-
-        setIncomingRequest({
-          id: viaje.id,
-          passengerId: viaje.pasajero_id,
-          passengerName,
-          passengerRating,
-          passengerTrips,
-          origin: viaje.origen || 'Origen no especificado',
-          originCoords: viaje.origen_lat && viaje.origen_lng ? { lat: viaje.origen_lat, lng: viaje.origen_lng } : undefined,
-          destination: viaje.destino || 'Destino no especificado',
-          costType: viaje.tipo_cobro === 'fuera' ? 'outside' : 'city',
-        });
-        setRequestTimer(30);
-        toast({ title: "🔔 Nueva solicitud de viaje", description: `${passengerName} necesita un viaje` });
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [available, activeRide, appStatus, conductorId]);
-
-  // Request countdown
-  useEffect(() => {
-    if (!incomingRequest) return;
-    if (requestTimer <= 0) {
-      setIncomingRequest(null);
-      toast({ title: "Solicitud expirada", description: "No respondiste a tiempo." });
-      return;
+    if (acceptedRide && !activeRide) {
+      const ride = consumeAcceptedRide();
+      if (ride) {
+        setActiveRide(ride);
+        setRideStatus("en_camino");
+      }
     }
-    const t = setTimeout(() => setRequestTimer((s) => s - 1), 1000);
-    return () => clearTimeout(t);
-  }, [requestTimer, incomingRequest]);
-
-  const handleAcceptRequest = async () => {
-    if (!incomingRequest) return;
-    console.log("🟡 Aceptando viaje, ID:", incomingRequest.id);
-    const { error } = await supabase
-      .from("viajes")
-      .update({ estado: "aceptado" })
-      .eq("id", incomingRequest.id);
-    if (error) {
-      console.error("❌ Error al aceptar viaje:", error);
-      toast({ title: "Error", description: "No se pudo aceptar el viaje.", variant: "destructive" });
-      return;
-    }
-    console.log("✅ Viaje aceptado en Supabase, ID:", incomingRequest.id);
-    setActiveRide(incomingRequest);
-    setIncomingRequest(null);
-    setRideStatus("en_camino");
-    toast({ title: "✅ Viaje aceptado", description: `Dirígete hacia ${incomingRequest.passengerName}` });
-  };
-
-  const handleRejectRequest = () => {
-    setIncomingRequest(null);
-    toast({ title: "Solicitud rechazada", description: "Sigues disponible para otras solicitudes." });
-  };
+  }, [acceptedRide, activeRide, consumeAcceptedRide]);
 
   const openInMaps = (address: string, coords?: { lat: number; lng: number }) => {
     const query = coords ? `${coords.lat},${coords.lng}` : encodeURIComponent(address + " Pedernales Ecuador");
@@ -545,112 +442,8 @@ const ConductorHome = () => {
     );
   }
 
-  // ── INCOMING REQUEST OVERLAY ──
-  if (incomingRequest) {
-    return (
-      <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center px-6 animate-fade-in">
-        <div className="text-center space-y-5 max-w-sm w-full">
-          <span className="text-4xl">🔔</span>
-          <h2 className="text-lg font-extrabold text-foreground">¡Nueva solicitud de viaje!</h2>
+  // Incoming requests are handled globally by RideContext modal
 
-          <div className="flex items-center justify-center gap-3">
-            <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center border-2 border-accent flex-shrink-0">
-              <span className="text-2xl font-extrabold text-primary-foreground">
-                {incomingRequest.passengerName.charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <div className="text-left">
-              <p className="font-bold text-foreground">{incomingRequest.passengerName}</p>
-              {incomingRequest.passengerTrips < 3 ? (
-                <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-accent/20 text-accent text-[10px] font-semibold">
-                  ✨ Nuevo usuario
-                </span>
-              ) : (
-                <div className="flex items-center gap-1 mt-1">
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <Star
-                      key={n}
-                      className={`h-3.5 w-3.5 ${
-                        n <= Math.round(incomingRequest.passengerRating)
-                          ? "fill-accent text-accent"
-                          : "text-muted-foreground"
-                      }`}
-                    />
-                  ))}
-                  <span className="text-xs text-muted-foreground ml-1">
-                    {incomingRequest.passengerRating.toFixed(1)} · {incomingRequest.passengerTrips} viajes
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="bg-card rounded-2xl border border-border p-4 space-y-3 text-left">
-            <div className="flex items-start gap-2">
-              <div className="w-3 h-3 rounded-full bg-[hsl(var(--success))] mt-1 flex-shrink-0" />
-              <div>
-                <p className="text-[10px] text-muted-foreground">Origen</p>
-                <p className="text-sm font-medium text-foreground">{incomingRequest.origin}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-2">
-              <MapPin className="h-3 w-3 text-accent mt-1 flex-shrink-0" />
-              <div>
-                <p className="text-[10px] text-muted-foreground">Destino</p>
-                <p className="text-sm font-medium text-foreground">{incomingRequest.destination}</p>
-              </div>
-            </div>
-            <div className="border-t border-border pt-2">
-              <p className="text-sm font-bold text-accent">
-                {incomingRequest.costType === "city" ? "💰 $1.00 (dentro de la ciudad)" : "💰 Consultar con pasajero"}
-              </p>
-            </div>
-          </div>
-
-          <Button
-            variant="outline"
-            className="w-full rounded-xl"
-            onClick={() => openInMaps(incomingRequest.origin, incomingRequest.originCoords)}
-          >
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Ver ubicación en Google Maps
-          </Button>
-
-          {/* Timer */}
-          <div className="relative w-20 h-20 mx-auto">
-            <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
-              <circle cx="40" cy="40" r="34" fill="none" stroke="hsl(var(--muted))" strokeWidth="6" />
-              <circle cx="40" cy="40" r="34" fill="none"
-                stroke="hsl(var(--accent))" strokeWidth="6" strokeLinecap="round"
-                strokeDasharray={`${2 * Math.PI * 34}`}
-                strokeDashoffset={`${2 * Math.PI * 34 * (1 - requestTimer / 30)}`}
-                className="transition-all duration-1000 ease-linear"
-              />
-            </svg>
-            <span className="absolute inset-0 flex items-center justify-center text-lg font-extrabold text-foreground">
-              {requestTimer}s
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" size="lg"
-              className="rounded-xl border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-              onClick={handleRejectRequest}
-            >
-              <XCircle className="h-5 w-5 mr-1" /> Rechazar
-            </Button>
-            <Button variant="hero" size="lg" className="rounded-xl" onClick={handleAcceptRequest}>
-              <CheckCircle className="h-5 w-5 mr-1" /> Aceptar
-            </Button>
-          </div>
-
-          <p className="text-[10px] text-muted-foreground">
-            Tienes {requestTimer}s para responder esta solicitud
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   // ── APPLICATION FORM ──
   if (step === "apply") {
