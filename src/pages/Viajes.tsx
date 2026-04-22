@@ -30,13 +30,12 @@ const formatDate = (iso: string) => {
   return `${d.toLocaleDateString("es-EC", { day: "2-digit", month: "short" })}, ${time}`;
 };
 
+const HISTORY_STATES = ["completado", "cancelado", "rechazado"] as const;
+
 const estadoLabel: Record<string, { label: string; cls: string }> = {
   completado: { label: "Finalizado ✅", cls: "bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))]" },
   cancelado: { label: "Cancelado ❌", cls: "bg-destructive/15 text-destructive" },
-  pendiente: { label: "En curso 🏍️", cls: "bg-accent/20 text-accent-foreground" },
-  aceptado: { label: "En curso 🏍️", cls: "bg-accent/20 text-accent-foreground" },
-  en_camino: { label: "En curso 🏍️", cls: "bg-accent text-accent-foreground" },
-  en_viaje: { label: "En curso 🏍️", cls: "bg-accent text-accent-foreground" },
+  rechazado: { label: "Rechazado 😔", cls: "bg-muted text-muted-foreground" },
 };
 
 const costLabel = (tipo: string | null) => {
@@ -70,6 +69,7 @@ const Viajes = () => {
       const query = supabase
         .from("viajes")
         .select("id, destino, origen, estado, costo_tipo, created_at, pasajero_id, conductor_id")
+        .in("estado", HISTORY_STATES as unknown as string[])
         .order("created_at", { ascending: false })
         .limit(50);
 
@@ -147,7 +147,7 @@ const Viajes = () => {
           </div>
         ) : trips.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-sm text-muted-foreground">Aún no tienes viajes</p>
+            <p className="text-sm text-muted-foreground">Aún no tienes viajes completados 🏍️</p>
           </div>
         ) : (
           trips.map((trip) => {
