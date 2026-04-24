@@ -134,7 +134,7 @@ const Mensajes = () => {
 
       const tripsQuery = supabase
         .from("viajes")
-        .select("id, pasajero_id, conductor_id, created_at")
+        .select("id, pasajero_id, conductor_id, created_at, pasajero_nombre")
         .order("created_at", { ascending: false })
         .limit(50);
 
@@ -180,9 +180,18 @@ const Mensajes = () => {
         )
       );
       const nameMap: Record<string, string> = {};
-      if (role === "conductor" && otherIds.length) {
-        const { data: us } = await supabase.from("usuarios").select("id, nombre").in("id", otherIds);
-        (us || []).forEach((u: any) => (nameMap[u.id] = u.nombre || "Pasajero"));
+      if (role === "conductor") {
+        // Prefer denormalized pasajero_nombre on viaje
+        (viajes as any[]).forEach((v) => {
+          if (v.pasajero_id && v.pasajero_nombre) {
+            nameMap[v.pasajero_id] = v.pasajero_nombre;
+          }
+        });
+        const missing = otherIds.filter((id) => !nameMap[id as string]);
+        if (missing.length) {
+          const { data: us } = await supabase.from("usuarios").select("id, nombre").in("id", missing);
+          (us || []).forEach((u: any) => (nameMap[u.id] = u.nombre || "Pasajero"));
+        }
       } else if (role === "pasajero" && otherIds.length) {
         const { data: cs } = await supabase
           .from("conductores")
