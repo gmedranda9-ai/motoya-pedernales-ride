@@ -23,6 +23,7 @@ import {
   CalendarDays,
   Route,
   Camera,
+  MapPin,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBackButton } from "@/hooks/useBackButton";
@@ -285,9 +286,36 @@ const Perfil = () => {
               <Phone className="h-5 w-5 text-accent shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] text-muted-foreground">Teléfono</p>
-                <p className="text-sm text-foreground truncate">{telefono || "Sin registrar"}</p>
+                <p className="text-sm text-foreground truncate">
+                  {telefono || (
+                    <button
+                      onClick={openEdit}
+                      className="text-accent underline underline-offset-2"
+                    >
+                      Sin registrar — agregar
+                    </button>
+                  )}
+                </p>
               </div>
             </div>
+            {role === "pasajero" && (
+              <>
+                <div className="flex items-center gap-3 py-3 border-t border-border">
+                  <MapPin className="h-5 w-5 text-accent shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] text-muted-foreground">Miembro desde</p>
+                    <p className="text-sm text-foreground truncate">{joinDate}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 py-3 border-t border-border">
+                  <Bike className="h-5 w-5 text-accent shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] text-muted-foreground">Viajes realizados</p>
+                    <p className="text-sm font-bold text-foreground truncate">{tripsCount}</p>
+                  </div>
+                </div>
+              </>
+            )}
             {role === "conductor" && (
               <>
                 <div className="flex items-center gap-3 py-3 border-t border-border">
