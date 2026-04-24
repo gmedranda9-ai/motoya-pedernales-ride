@@ -8,6 +8,7 @@ import { useRideChat } from "@/hooks/useRideChat";
 
 interface Conversation {
   viaje_id: string;
+  otherKey: string;
   otherName: string;
   lastMsg: string;
   time: string;
@@ -25,6 +26,14 @@ const formatTime = (iso: string) => {
   if (d.toDateString() === yest.toDateString()) return "Ayer";
   return d.toLocaleDateString("es-EC", { day: "2-digit", month: "short" });
 };
+
+const toTitleCase = (raw: string) =>
+  (raw || "")
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
 
 const initialOf = (name: string) => (name?.trim()?.[0] || "?").toUpperCase();
 const readKey = (viajeId: string, userId: string) => `chat:lastRead:${userId}:${viajeId}`;
@@ -184,13 +193,13 @@ const Mensajes = () => {
         // Prefer denormalized pasajero_nombre on viaje
         (viajes as any[]).forEach((v) => {
           if (v.pasajero_id && v.pasajero_nombre) {
-            nameMap[v.pasajero_id] = v.pasajero_nombre;
+            nameMap[v.pasajero_id] = toTitleCase(v.pasajero_nombre);
           }
         });
         const missing = otherIds.filter((id) => !nameMap[id as string]);
         if (missing.length) {
           const { data: us } = await supabase.from("usuarios").select("id, nombre").in("id", missing);
-          (us || []).forEach((u: any) => (nameMap[u.id] = u.nombre || "Pasajero"));
+          (us || []).forEach((u: any) => (nameMap[u.id] = toTitleCase(u.nombre || "Pasajero")));
         }
       } else if (role === "pasajero" && otherIds.length) {
         const { data: cs } = await supabase
@@ -203,26 +212,41 @@ const Mensajes = () => {
         if (uids.length) {
           const { data: us } = await supabase.from("usuarios").select("id, nombre").in("id", uids);
           const un: Record<string, string> = {};
-          (us || []).forEach((u: any) => (un[u.id] = u.nombre || "Conductor"));
+          (us || []).forEach((u: any) => (un[u.id] = toTitleCase(u.nombre || "Conductor")));
           Object.entries(condToUser).forEach(([cid, uid]) => (nameMap[cid] = un[uid] || "Conductor"));
         }
       }
 
-      const list: Conversation[] = viajes
-        .filter((v: any) => lastByViaje[v.id])
-        .map((v: any) => {
-          const last = lastByViaje[v.id];
+      // Group by other party (conductor_id for pasajero, pasajero_id for conductor)
+      // Keep only the most recent viaje per other party that has messages.
+      const grouped: Record<string, Conversation> = {};
+      (viajes as any[])
+        .filter((v) => lastByViaje[v.id])
+        .forEach((v) => {
           const otherKey = role === "conductor" ? v.pasajero_id : v.conductor_id;
-          return {
-            viaje_id: v.id,
-            otherName: nameMap[otherKey] || "—",
-            lastMsg: last.texto,
-            time: formatTime(last.hora),
-            iso: last.hora,
-            unread: unreadByViaje[v.id] || 0,
-          };
-        })
-        .sort((a, b) => (a.iso < b.iso ? 1 : -1));
+          if (!otherKey) return;
+          const last = lastByViaje[v.id];
+          const existing = grouped[otherKey];
+          // Sum unread across all viajes with this other party
+          const unreadForThis = unreadByViaje[v.id] || 0;
+          if (!existing || existing.iso < last.hora) {
+            grouped[otherKey] = {
+              viaje_id: v.id,
+              otherKey,
+              otherName: nameMap[otherKey] || "—",
+              lastMsg: last.texto,
+              time: formatTime(last.hora),
+              iso: last.hora,
+              unread: (existing?.unread || 0) + unreadForThis,
+            };
+          } else {
+            existing.unread += unreadForThis;
+          }
+        });
+
+      const list: Conversation[] = Object.values(grouped).sort((a, b) =>
+        a.iso < b.iso ? 1 : -1
+      );
 
       setConvos(list);
       setLoading(false);
@@ -270,7 +294,7 @@ const Mensajes = () => {
         ) : (
           convos.map((chat) => (
             <button
-              key={chat.viaje_id}
+              key={chat.otherKey}
               onClick={() => {
                 setOpenChat({ viajeId: chat.viaje_id, name: chat.otherName });
                 if (user?.id) {
