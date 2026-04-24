@@ -251,9 +251,14 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
 
       {/* Actions */}
       <div className="px-4 mt-4 grid grid-cols-4 gap-2">
-        <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={() => setChatOpen(!chatOpen)}>
+        <Button variant="outline" className="relative rounded-xl flex-col h-auto py-3 gap-1" onClick={handleToggleChat}>
           <MessageCircle className="h-5 w-5" />
           <span className="text-[10px]">Chat</span>
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center shadow">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
         </Button>
         <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={() => setMapExpanded((v) => !v)}>
           <MapIcon className="h-5 w-5" />
