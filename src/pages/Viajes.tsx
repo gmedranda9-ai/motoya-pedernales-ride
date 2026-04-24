@@ -68,7 +68,7 @@ const Viajes = () => {
 
       const query = supabase
         .from("viajes")
-        .select("id, destino, origen, estado, costo_tipo, created_at, pasajero_id, conductor_id")
+        .select("id, destino, origen, estado, costo_tipo, created_at, pasajero_id, conductor_id, pasajero_nombre")
         .in("estado", HISTORY_STATES as unknown as string[])
         .order("created_at", { ascending: false })
         .limit(50);
@@ -93,12 +93,21 @@ const Viajes = () => {
         )
       );
       const nameMap: Record<string, string> = {};
-      if (role === "conductor" && otherIds.length) {
-        const { data: us } = await supabase
-          .from("usuarios")
-          .select("id, nombre")
-          .in("id", otherIds);
-        (us || []).forEach((u: any) => (nameMap[u.id] = u.nombre || "Pasajero"));
+      if (role === "conductor") {
+        // Prefer denormalized pasajero_nombre stored on viaje
+        (data as any[]).forEach((t) => {
+          if (t.pasajero_id && t.pasajero_nombre) {
+            nameMap[t.pasajero_id] = t.pasajero_nombre;
+          }
+        });
+        const missing = otherIds.filter((id) => !nameMap[id as string]);
+        if (missing.length) {
+          const { data: us } = await supabase
+            .from("usuarios")
+            .select("id, nombre")
+            .in("id", missing);
+          (us || []).forEach((u: any) => (nameMap[u.id] = u.nombre || "Pasajero"));
+        }
       } else if (role === "pasajero" && otherIds.length) {
         const { data: cs } = await supabase
           .from("conductores")
