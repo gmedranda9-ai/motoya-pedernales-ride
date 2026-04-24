@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,19 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Star, LogOut, Mail, Phone, Bike, Pencil, Loader2 } from "lucide-react";
+import {
+  Star,
+  LogOut,
+  Mail,
+  Phone,
+  Bike,
+  Pencil,
+  Loader2,
+  BadgeCheck,
+  CalendarDays,
+  Route,
+  Camera,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBackButton } from "@/hooks/useBackButton";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,7 +35,43 @@ interface ConductorData {
   modelo_moto: string | null;
   telefono: string | null;
   calificacion_promedio: number | null;
+  estado: string | null;
+  created_at: string | null;
 }
+
+// Capitaliza "ALEJANDRO PEREZ" -> "Alejandro Perez"
+const toTitleCase = (raw: string) =>
+  (raw || "")
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+
+// Detecta fotos por defecto / placeholders / logo MotoYa
+const isPlaceholderPhoto = (url: string | null | undefined) => {
+  if (!url) return true;
+  const u = url.toLowerCase();
+  return (
+    u.includes("placeholder") ||
+    u.includes("logo-motoya") ||
+    u.includes("via.placeholder") ||
+    u.endsWith("/placeholder.svg")
+  );
+};
+
+const formatJoinDate = (iso: string | null | undefined) => {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleDateString("es-EC", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  } catch {
+    return "—";
+  }
+};
 
 const Perfil = () => {
   const { user, signOut } = useAuth();
@@ -34,9 +82,11 @@ const Perfil = () => {
   const role: "pasajero" | "conductor" =
     (user?.user_metadata?.rol as any) === "conductor" ? "conductor" : "pasajero";
 
-  const [nombre, setNombre] = useState(user?.user_metadata?.nombre || "");
+  const [nombre, setNombre] = useState(toTitleCase(user?.user_metadata?.nombre || ""));
   const [telefono, setTelefono] = useState("");
   const [conductor, setConductor] = useState<ConductorData | null>(null);
+  const [conductorId, setConductorId] = useState<string | null>(null);
+  const [tripsCount, setTripsCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
   const [editNombre, setEditNombre] = useState("");
@@ -45,6 +95,8 @@ const Perfil = () => {
 
   const email = user?.email || "—";
   const inicial = (nombre || email).charAt(0).toUpperCase();
+  const showRealPhoto = role === "conductor" && !isPlaceholderPhoto(conductor?.foto);
+  const isVerified = role === "conductor" && conductor?.estado === "aprobado";
 
   useEffect(() => {
     if (!user) return;
@@ -55,25 +107,48 @@ const Perfil = () => {
         .select("nombre, telefono")
         .eq("id", user.id)
         .maybeSingle();
+      let tel = "";
       if (usuario) {
-        setNombre(usuario.nombre || user.user_metadata?.nombre || "");
-        setTelefono((usuario as any).telefono || "");
+        setNombre(toTitleCase(usuario.nombre || user.user_metadata?.nombre || ""));
+        tel = (usuario as any).telefono || "";
+        setTelefono(tel);
       }
       if (role === "conductor") {
         const { data: cond } = await supabase
           .from("conductores")
-          .select("foto, placa, modelo_moto, telefono, calificacion_promedio")
+          .select("id, foto, placa, modelo_moto, telefono, calificacion_promedio, estado, created_at")
           .eq("usuario_id", user.id)
           .maybeSingle();
         if (cond) {
           setConductor(cond as ConductorData);
-          if (!telefono && cond.telefono) setTelefono(cond.telefono);
+          setConductorId((cond as any).id);
+          if (!tel && cond.telefono) setTelefono(cond.telefono);
+
+          // Total de viajes completados como conductor
+          const { count } = await supabase
+            .from("viajes")
+            .select("id", { count: "exact", head: true })
+            .eq("conductor_id", (cond as any).id)
+            .eq("estado", "completado");
+          setTripsCount(count || 0);
         }
+      } else {
+        const { count } = await supabase
+          .from("viajes")
+          .select("id", { count: "exact", head: true })
+          .eq("pasajero_id", user.id)
+          .eq("estado", "completado");
+        setTripsCount(count || 0);
       }
       setLoading(false);
     };
     load();
   }, [user, role]);
+
+  const joinDate = useMemo(() => {
+    if (role === "conductor") return formatJoinDate(conductor?.created_at);
+    return formatJoinDate(user?.created_at);
+  }, [role, conductor?.created_at, user?.created_at]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -86,10 +161,18 @@ const Perfil = () => {
     setEditOpen(true);
   };
 
+  const handlePhotoUpload = () => {
+    toast({
+      title: "Próximamente",
+      description:
+        "La subida de foto requiere activar Lovable Cloud Storage. Avísame y lo habilitamos.",
+    });
+  };
+
   const saveProfile = async () => {
     if (!user) return;
     setSaving(true);
-    const cleanNombre = editNombre.trim();
+    const cleanNombre = toTitleCase(editNombre.trim());
     const cleanTel = editTelefono.trim();
 
     const { error: uErr } = await supabase
@@ -126,9 +209,9 @@ const Perfil = () => {
     <div className="min-h-screen bg-background pb-20">
       <header className="gradient-primary px-4 pt-12 pb-8">
         <div className="flex items-center gap-4">
-          {role === "conductor" && conductor?.foto ? (
+          {showRealPhoto ? (
             <img
-              src={conductor.foto}
+              src={conductor!.foto as string}
               alt={nombre}
               className="w-16 h-16 rounded-full object-cover border-2 border-accent"
             />
@@ -143,11 +226,19 @@ const Perfil = () => {
             </h1>
             <p className="text-xs text-primary-foreground/70 capitalize">{role}</p>
             {role === "conductor" && (
-              <div className="flex items-center gap-1 mt-1">
-                <Star className="h-3.5 w-3.5 fill-accent text-accent" />
-                <span className="text-sm font-medium text-accent">
-                  {(conductor?.calificacion_promedio ?? 0).toFixed(1)}
-                </span>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                <div className="flex items-center gap-1">
+                  <Star className="h-3.5 w-3.5 fill-accent text-accent" />
+                  <span className="text-sm font-medium text-accent">
+                    {(conductor?.calificacion_promedio ?? 0).toFixed(1)}
+                  </span>
+                </div>
+                {isVerified && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))]">
+                    <BadgeCheck className="h-3 w-3" />
+                    Conductor verificado
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -160,7 +251,29 @@ const Perfil = () => {
         </div>
       ) : (
         <>
-          <div className="mx-4 -mt-4 bg-card rounded-2xl shadow-lg border border-border p-4 space-y-1">
+          {/* Stats */}
+          <div className="mx-4 -mt-4 grid grid-cols-2 gap-3">
+            <div className="bg-card rounded-2xl shadow-md border border-border p-3 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-accent/15 flex items-center justify-center shrink-0">
+                <Route className="h-5 w-5 text-accent" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground">Viajes completados</p>
+                <p className="text-base font-extrabold text-foreground">{tripsCount}</p>
+              </div>
+            </div>
+            <div className="bg-card rounded-2xl shadow-md border border-border p-3 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-accent/15 flex items-center justify-center shrink-0">
+                <CalendarDays className="h-5 w-5 text-accent" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground">En MotoYa desde</p>
+                <p className="text-sm font-bold text-foreground truncate">{joinDate}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mx-4 mt-4 bg-card rounded-2xl shadow-lg border border-border p-4 space-y-1">
             <div className="flex items-center gap-3 py-3">
               <Mail className="h-5 w-5 text-accent shrink-0" />
               <div className="flex-1 min-w-0">
@@ -180,7 +293,7 @@ const Perfil = () => {
                 <div className="flex items-center gap-3 py-3 border-t border-border">
                   <Bike className="h-5 w-5 text-accent shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-muted-foreground">Moto</p>
+                    <p className="text-[10px] text-muted-foreground">Moto (verificada)</p>
                     <p className="text-sm text-foreground truncate">
                       {conductor?.modelo_moto || "—"}
                     </p>
@@ -189,7 +302,7 @@ const Perfil = () => {
                 <div className="flex items-center gap-3 py-3 border-t border-border">
                   <span className="text-accent font-bold text-sm w-5 text-center">#</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-muted-foreground">Placa</p>
+                    <p className="text-[10px] text-muted-foreground">Placa (verificada)</p>
                     <p className="text-sm font-bold text-foreground truncate">
                       {conductor?.placa || "—"}
                     </p>
@@ -221,7 +334,32 @@ const Perfil = () => {
           <DialogHeader>
             <DialogTitle>Editar perfil</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-4">
+            {/* Avatar + subir foto */}
+            <div className="flex flex-col items-center gap-2">
+              {showRealPhoto ? (
+                <img
+                  src={conductor!.foto as string}
+                  alt={nombre}
+                  className="w-20 h-20 rounded-full object-cover border-2 border-accent"
+                />
+              ) : (
+                <div className="w-20 h-20 rounded-full bg-accent/20 border-2 border-accent flex items-center justify-center">
+                  <span className="text-3xl font-bold text-accent">{inicial}</span>
+                </div>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handlePhotoUpload}
+                className="rounded-xl"
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                Subir foto
+              </Button>
+            </div>
+
             <div>
               <Label htmlFor="edit-nombre">Nombre</Label>
               <Input
@@ -241,6 +379,11 @@ const Perfil = () => {
                 inputMode="tel"
               />
             </div>
+            {role === "conductor" && (
+              <p className="text-[11px] text-muted-foreground text-center">
+                Placa y moto son datos verificados y no se pueden modificar.
+              </p>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)} disabled={saving}>
