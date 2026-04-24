@@ -12,7 +12,7 @@ const Welcome = () => {
         <div className="text-center">
           <h1 className="text-4xl font-extrabold text-accent">MotoYa</h1>
           <p className="text-primary-foreground/80 text-sm mt-2">
-            Tu mototaxi seguro y rápido en Pedernales 🏍️
+            Tu mototaxi seguro y rápido en Pedernales
           </p>
         </div>
       </div>

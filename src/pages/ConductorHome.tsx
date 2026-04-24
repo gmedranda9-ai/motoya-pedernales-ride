@@ -58,7 +58,7 @@ interface ApplicationForm {
 
 
 const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: string }> = {
-  en_camino: { label: "En camino al pasajero", emoji: "🏍️", desc: "Dirígete a la ubicación del pasajero" },
+  en_camino: { label: "En camino al pasajero", emoji: "🚦", desc: "Dirígete a la ubicación del pasajero" },
   en_viaje: { label: "En viaje", emoji: "🛣️", desc: "Llevando al pasajero a su destino" },
   completado: { label: "Viaje completado", emoji: "✅", desc: "¡Has completado el viaje!" },
 };
@@ -284,7 +284,7 @@ const ConductorHome = () => {
   const handleShareWhatsApp = () => {
     if (!activeRide) return;
     const text = encodeURIComponent(
-      `🏍️ Viaje MotoYa\n👤 Pasajero: ${activeRide.passengerName}\n📍 Destino: ${activeRide.destination}`
+      `Viaje MotoYa\n👤 Pasajero: ${activeRide.passengerName}\n📍 Destino: ${activeRide.destination}`
     );
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
@@ -716,7 +716,7 @@ const ConductorHome = () => {
                 ¿Quieres ser conductor en MotoYa? Completa tu postulación.
               </p>
               <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={() => setStep("apply")}>
-                🏍️ Postularme como conductor
+                Postularme como conductor
               </Button>
             </div>
           )}
@@ -781,12 +781,16 @@ const ConductorHome = () => {
           <h3 className="text-sm font-bold text-foreground mb-3">Tus estadísticas</h3>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: "Viajes", value: totalTrips.toString(), emoji: "🏍️" },
-              { label: "Calificación", value: rating.toFixed(1), emoji: "⭐" },
-              { label: "Meses activo", value: monthsActive.toString(), emoji: "📅" },
+              { label: "Viajes", value: totalTrips.toString(), useLogo: true },
+              { label: "Calificación", value: rating.toFixed(1), emoji: "⭐", useLogo: false },
+              { label: "Meses activo", value: monthsActive.toString(), emoji: "📅", useLogo: false },
             ].map((stat) => (
               <div key={stat.label} className="bg-card rounded-xl p-3 text-center border border-border">
-                <span className="text-lg">{stat.emoji}</span>
+                {stat.useLogo ? (
+                  <img src={logoMotoya} alt="" className="h-6 w-6 mx-auto" />
+                ) : (
+                  <span className="text-lg">{stat.emoji}</span>
+                )}
                 <p className="text-lg font-extrabold text-foreground mt-1">{stat.value}</p>
                 <p className="text-[10px] text-muted-foreground">{stat.label}</p>
               </div>
