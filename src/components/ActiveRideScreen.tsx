@@ -6,6 +6,8 @@ import LiveMap from "@/components/LiveMap";
 import type { Driver } from "@/components/DriverCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRideChat } from "@/hooks/useRideChat";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 import logoMotoya from "@/assets/logo-motoya.png";
 
 type RideStatus = "en_camino" | "en_viaje" | "completado";
@@ -75,10 +77,36 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
     await sendMessage(text);
   };
 
-  // Demo: simulate ride progression
-  const advanceStatus = () => {
-    if (status === "en_camino") setStatus("en_viaje");
-    else if (status === "en_viaje") setStatus("completado");
+  // Progresión del viaje, persistiendo estado en Supabase
+  const advanceStatus = async () => {
+    const next: RideStatus = status === "en_camino" ? "en_viaje" : "completado";
+    setStatus(next);
+
+    if (!viajeId) {
+      console.warn("⚠️ Sin viajeId; no se puede actualizar estado en DB");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("viajes")
+      .update({ estado: next })
+      .eq("id", viajeId);
+
+    if (error) {
+      console.error("❌ Error actualizando estado del viaje:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el estado del viaje",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (next === "completado") {
+      console.log(`Viaje completado: ${viajeId} → estado: completado`);
+    } else {
+      console.log(`Viaje actualizado: ${viajeId} → estado: ${next}`);
+    }
   };
 
   if (status === "completado") {
