@@ -21,20 +21,62 @@ interface RealComment {
   author?: string;
 }
 
-const MOCK_STATS: Record<string, { trips: number; months: number; cedula: string }> = {
-  "1": { trips: 342, months: 18, cedula: "080XXXXXXX01" },
-  "2": { trips: 215, months: 12, cedula: "080XXXXXXX02" },
-  "3": { trips: 189, months: 8, cedula: "080XXXXXXX03" },
-  "4": { trips: 410, months: 24, cedula: "080XXXXXXX04" },
-  "5": { trips: 98, months: 4, cedula: "080XXXXXXX05" },
+const isPlaceholderPhoto = (url: string | null | undefined) => {
+  if (!url) return true;
+  const u = url.toLowerCase();
+  return (
+    u.includes("placeholder") ||
+    u.includes("logo-motoya") ||
+    u.includes("via.placeholder") ||
+    u.endsWith("/placeholder.svg")
+  );
+};
+
+const monthsSince = (iso: string | null | undefined) => {
+  if (!iso) return 0;
+  const start = new Date(iso);
+  if (isNaN(start.getTime())) return 0;
+  const now = new Date();
+  const months =
+    (now.getFullYear() - start.getFullYear()) * 12 +
+    (now.getMonth() - start.getMonth());
+  return Math.max(0, months);
 };
 
 const DriverProfile = ({ driver, onRequest, onClose, estimatedCost }: DriverProfileProps) => {
-  const stats = MOCK_STATS[driver.id] || { trips: 0, months: 0, cedula: "---" };
+  const [stats, setStats] = useState<{ trips: number; months: number; cedula: string | null }>({
+    trips: 0,
+    months: 0,
+    cedula: null,
+  });
   const [comments, setComments] = useState<RealComment[]>([]);
   const [loadingComments, setLoadingComments] = useState(true);
 
+  const initial = (driver.name || "?").trim().charAt(0).toUpperCase();
+  const showRealPhoto = !isPlaceholderPhoto(driver.photo);
+
   useEffect(() => {
+    const loadStats = async () => {
+      const [{ data: cond }, { count }] = await Promise.all([
+        supabase
+          .from("conductores")
+          .select("cedula, created_at")
+          .eq("id", driver.id)
+          .maybeSingle(),
+        supabase
+          .from("viajes")
+          .select("id", { count: "exact", head: true })
+          .eq("conductor_id", driver.id)
+          .eq("estado", "completado"),
+      ]);
+      setStats({
+        trips: count || 0,
+        months: monthsSince((cond as any)?.created_at),
+        cedula: (cond as any)?.cedula ?? null,
+      });
+    };
+    loadStats();
+
     const load = async () => {
       setLoadingComments(true);
       const { data, error } = await supabase
@@ -85,18 +127,26 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost }: DriverProf
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <img
-            src={driver.photo}
-            alt={driver.name}
-            className="w-24 h-24 rounded-full object-cover border-4 border-accent mx-auto mb-3"
-          />
+          {showRealPhoto ? (
+            <img
+              src={driver.photo}
+              alt={driver.name}
+              className="w-24 h-24 rounded-full object-cover border-4 border-accent mx-auto mb-3"
+            />
+          ) : (
+            <div className="w-24 h-24 rounded-full bg-primary border-4 border-accent mx-auto mb-3 flex items-center justify-center">
+              <span className="text-4xl font-extrabold text-accent leading-none">
+                {initial}
+              </span>
+            </div>
+          )}
           <h2 className="text-xl font-extrabold text-primary-foreground">
             {driver.name}
           </h2>
           <div className="flex items-center justify-center gap-1 mt-1">
             <ShieldCheck className="h-4 w-4 text-accent" />
             <span className="text-xs text-accent font-semibold">
-              Cédula verificada · {stats.cedula}
+              {stats.cedula ? `Cédula verificada · ${stats.cedula}` : "Verificado"}
             </span>
           </div>
         </div>
