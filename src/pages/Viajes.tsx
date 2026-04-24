@@ -156,7 +156,7 @@ const Viajes = () => {
           </div>
         ) : trips.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-sm text-muted-foreground">Aún no tienes viajes completados 🏍️</p>
+            <p className="text-sm text-muted-foreground">Aún no tienes viajes completados</p>
           </div>
         ) : (
           trips.map((trip) => {

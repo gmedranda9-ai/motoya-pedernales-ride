@@ -41,7 +41,7 @@ const Index = () => {
           </div>
         </div>
         <p className="text-primary-foreground/90 text-sm mt-3">
-          Tu mototaxi seguro y rápido 🏍️
+          Tu mototaxi seguro y rápido
         </p>
       </header>
 

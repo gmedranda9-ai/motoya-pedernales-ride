@@ -21,7 +21,7 @@ interface ActiveRideScreenProps {
 }
 
 const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: string }> = {
-  en_camino: { label: "Tu conductor está en camino 🏍️", emoji: "🏍️", desc: "Tu conductor se dirige a tu ubicación" },
+  en_camino: { label: "Tu conductor está en camino", emoji: "🚦", desc: "Tu conductor se dirige a tu ubicación" },
   en_viaje: { label: "En viaje", emoji: "🛣️", desc: "Estás en camino a tu destino" },
   completado: { label: "Viaje completado", emoji: "✅", desc: "¡Has llegado a tu destino!" },
 };
@@ -87,9 +87,9 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
 
   const handleShareWhatsApp = () => {
     const lines = [
-      "🏍️ Estoy viajando en MotoYa",
+      "Estoy viajando en MotoYa",
       `👤 Conductor: ${driver.name}`,
-      `🏍️ Moto: ${driver.model || "—"} - Placa: ${driver.plate || "—"}`,
+      `🛺 Moto: ${driver.model || "—"} - Placa: ${driver.plate || "—"}`,
     ];
     if (originCoords) {
       lines.push(`📍 Mi ubicación: https://maps.google.com/?q=${originCoords.lat},${originCoords.lng}`);
