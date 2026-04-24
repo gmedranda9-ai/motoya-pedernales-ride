@@ -1,272 +1,598 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import logoMotoya from "@/assets/logo-motoya.png";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   CheckCircle,
   XCircle,
-  ArrowLeft,
   Shield,
-  Eye,
-  User,
+  Loader2,
   Bike,
-  CreditCard,
   Phone,
+  CreditCard,
+  Route as RouteIcon,
+  Users,
+  BarChart3,
+  DollarSign,
+  Calendar,
 } from "lucide-react";
+import BottomNavAdmin, { AdminTab } from "@/components/BottomNavAdmin";
 
-interface Application {
-  id: string;
-  name: string;
-  photo: string;
-  cedula: string;
-  cedulaPhoto: string;
-  phone: string;
-  plate: string;
-  motoModel: string;
-  motoColor: string;
-  motoPhoto: string;
-  submittedAt: string;
-  status: "pending" | "approved" | "rejected";
-}
+const ADMIN_EMAIL = "g.medranda9@gmail.com";
 
-const MOCK_APPLICATIONS: Application[] = [
-  {
-    id: "a1",
-    name: "Roberto Quiñónez",
-    photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-    cedula: "0801234567",
-    cedulaPhoto: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=300&h=200&fit=crop",
-    phone: "0991-111-222",
-    plate: "EC-0789",
-    motoModel: "Honda Wave 110",
-    motoColor: "Rojo",
-    motoPhoto: "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=300&h=200&fit=crop",
-    submittedAt: "2026-04-12",
-    status: "pending",
-  },
-  {
-    id: "a2",
-    name: "Fernando Delgado",
-    photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
-    cedula: "0809876543",
-    cedulaPhoto: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=300&h=200&fit=crop",
-    phone: "0998-333-444",
-    plate: "EC-0912",
-    motoModel: "Yamaha YBR 125",
-    motoColor: "Negro",
-    motoPhoto: "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=300&h=200&fit=crop",
-    submittedAt: "2026-04-13",
-    status: "pending",
-  },
-  {
-    id: "a3",
-    name: "Carlos Mendoza",
-    photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-    cedula: "0805556667",
-    cedulaPhoto: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=300&h=200&fit=crop",
-    phone: "0991-234-567",
-    plate: "EC-0451",
-    motoModel: "Honda Wave 110",
-    motoColor: "Rojo",
-    motoPhoto: "https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=300&h=200&fit=crop",
-    submittedAt: "2026-04-10",
-    status: "approved",
-  },
-];
+const isPlaceholder = (url: string | null | undefined) => {
+  if (!url) return true;
+  const u = url.toLowerCase();
+  return (
+    u.includes("placeholder") ||
+    u.includes("logo-motoya") ||
+    u.endsWith("/placeholder.svg")
+  );
+};
 
+const toTitleCase = (raw: string) =>
+  (raw || "")
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+
+const formatDate = (iso: string | null) => {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleDateString("es-EC", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return "—";
+  }
+};
+
+// ─────────────── CONDUCTORES ───────────────
+const ConductoresTab = () => {
+  const { toast } = useToast();
+  const [filter, setFilter] = useState<"pendiente" | "aprobado" | "rechazado">("pendiente");
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [acting, setActing] = useState<string | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    const { data: conds } = await supabase
+      .from("conductores")
+      .select("id, usuario_id, foto, cedula, placa, modelo_moto, color, telefono, estado, created_at")
+      .order("created_at", { ascending: false });
+
+    const ids = Array.from(new Set((conds || []).map((c: any) => c.usuario_id).filter(Boolean)));
+    const nameMap: Record<string, { nombre: string; email: string }> = {};
+    if (ids.length) {
+      const { data: us } = await supabase
+        .from("usuarios")
+        .select("id, nombre, email")
+        .in("id", ids);
+      (us || []).forEach((u: any) => (nameMap[u.id] = { nombre: u.nombre || "—", email: u.email || "" }));
+    }
+    setItems(
+      (conds || []).map((c: any) => ({
+        ...c,
+        nombre: toTitleCase(nameMap[c.usuario_id]?.nombre || "Sin nombre"),
+        email: nameMap[c.usuario_id]?.email || "",
+      }))
+    );
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const filtered = items.filter((i) => (i.estado || "pendiente") === filter);
+
+  const updateEstado = async (id: string, estado: "aprobado" | "rechazado") => {
+    setActing(id);
+    const { error } = await supabase.from("conductores").update({ estado }).eq("id", id);
+    setActing(null);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: estado === "aprobado" ? "✅ Conductor aprobado" : "❌ Conductor rechazado" });
+    load();
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2 bg-card rounded-xl p-1 border border-border">
+        {([
+          { key: "pendiente", label: "Pendientes" },
+          { key: "aprobado", label: "Aprobados" },
+          { key: "rechazado", label: "Rechazados" },
+        ] as const).map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setFilter(tab.key)}
+            className={`flex-1 text-xs font-semibold py-2 rounded-lg transition-colors ${
+              filter === tab.key ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-10">
+          <Loader2 className="h-5 w-5 text-accent animate-spin" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <p className="text-center text-sm text-muted-foreground py-10">
+          No hay conductores en este estado.
+        </p>
+      ) : (
+        filtered.map((c) => {
+          const showPhoto = !isPlaceholder(c.foto);
+          const initial = (c.nombre || "?").charAt(0).toUpperCase();
+          return (
+            <div key={c.id} className="bg-card rounded-2xl border border-border p-4">
+              <div className="flex items-start gap-3">
+                {showPhoto ? (
+                  <img
+                    src={c.foto}
+                    alt={c.nombre}
+                    className="w-14 h-14 rounded-full object-cover border-2 border-accent shrink-0"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-full bg-primary border-2 border-accent flex items-center justify-center shrink-0">
+                    <span className="text-xl font-extrabold text-accent">{initial}</span>
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-foreground truncate">{c.nombre}</h3>
+                  <p className="text-[11px] text-muted-foreground truncate">{c.email}</p>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-[11px]">
+                    <p className="flex items-center gap-1">
+                      <CreditCard className="h-3 w-3 text-accent" />
+                      <span className="font-mono">{c.cedula || "—"}</span>
+                    </p>
+                    <p className="flex items-center gap-1">
+                      <Phone className="h-3 w-3 text-accent" />
+                      {c.telefono || "—"}
+                    </p>
+                    <p className="flex items-center gap-1">
+                      <Bike className="h-3 w-3 text-accent" />
+                      {c.modelo_moto || "—"}
+                    </p>
+                    <p className="font-bold">#{c.placa || "—"}</p>
+                  </div>
+                </div>
+                <span
+                  className={`text-[10px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap ${
+                    c.estado === "aprobado"
+                      ? "bg-[hsl(var(--success))]/20 text-[hsl(var(--success))]"
+                      : c.estado === "rechazado"
+                      ? "bg-destructive/20 text-destructive"
+                      : "bg-accent/20 text-accent"
+                  }`}
+                >
+                  {c.estado === "aprobado" ? "✅ Aprobado" : c.estado === "rechazado" ? "❌ Rechazado" : "⏳ Pendiente"}
+                </span>
+              </div>
+
+              {(c.estado || "pendiente") === "pendiente" && (
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <Button
+                    variant="outline"
+                    className="rounded-xl border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    onClick={() => updateEstado(c.id, "rechazado")}
+                    disabled={acting === c.id}
+                  >
+                    {acting === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (<><XCircle className="h-4 w-4 mr-1" /> Rechazar</>)}
+                  </Button>
+                  <Button
+                    variant="hero"
+                    className="rounded-xl"
+                    onClick={() => updateEstado(c.id, "aprobado")}
+                    disabled={acting === c.id}
+                  >
+                    {acting === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (<><CheckCircle className="h-4 w-4 mr-1" /> Aprobar</>)}
+                  </Button>
+                </div>
+              )}
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+};
+
+// ─────────────── VIAJES ───────────────
+const VIAJES_ESTADOS = ["todos", "pendiente", "aceptado", "en_curso", "completado", "cancelado"] as const;
+
+const ViajesTab = () => {
+  const [estado, setEstado] = useState<(typeof VIAJES_ESTADOS)[number]>("todos");
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      let q = supabase
+        .from("viajes")
+        .select("id, pasajero_id, conductor_id, pasajero_nombre, destino, estado, costo, created_at")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (estado !== "todos") q = q.eq("estado", estado);
+      const { data: viajes } = await q;
+
+      const condIds = Array.from(new Set((viajes || []).map((v: any) => v.conductor_id).filter(Boolean)));
+      const condNames: Record<string, string> = {};
+      if (condIds.length) {
+        const { data: cs } = await supabase
+          .from("conductores")
+          .select("id, usuario_id")
+          .in("id", condIds);
+        const userIds = (cs || []).map((c: any) => c.usuario_id).filter(Boolean);
+        const condToUser: Record<string, string> = {};
+        (cs || []).forEach((c: any) => (condToUser[c.id] = c.usuario_id));
+        if (userIds.length) {
+          const { data: us } = await supabase
+            .from("usuarios")
+            .select("id, nombre")
+            .in("id", userIds);
+          const un: Record<string, string> = {};
+          (us || []).forEach((u: any) => (un[u.id] = toTitleCase(u.nombre || "Conductor")));
+          Object.entries(condToUser).forEach(([cid, uid]) => (condNames[cid] = un[uid] || "—"));
+        }
+      }
+
+      setItems(
+        (viajes || []).map((v: any) => ({
+          ...v,
+          pasajeroNombre: toTitleCase(v.pasajero_nombre || "—"),
+          conductorNombre: condNames[v.conductor_id] || "—",
+        }))
+      );
+      setLoading(false);
+    };
+    load();
+  }, [estado]);
+
+  return (
+    <div className="space-y-3">
+      <Select value={estado} onValueChange={(v) => setEstado(v as any)}>
+        <SelectTrigger className="rounded-xl">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {VIAJES_ESTADOS.map((e) => (
+            <SelectItem key={e} value={e}>
+              {e === "todos" ? "Todos los estados" : e.replace("_", " ")}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {loading ? (
+        <div className="flex justify-center py-10">
+          <Loader2 className="h-5 w-5 text-accent animate-spin" />
+        </div>
+      ) : items.length === 0 ? (
+        <p className="text-center text-sm text-muted-foreground py-10">No hay viajes.</p>
+      ) : (
+        items.map((v) => (
+          <div key={v.id} className="bg-card rounded-xl border border-border p-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-bold text-foreground truncate">
+                {v.pasajeroNombre} → {v.conductorNombre}
+              </p>
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full font-semibold capitalize whitespace-nowrap ${
+                  v.estado === "completado"
+                    ? "bg-[hsl(var(--success))]/20 text-[hsl(var(--success))]"
+                    : v.estado === "cancelado"
+                    ? "bg-destructive/20 text-destructive"
+                    : "bg-accent/20 text-accent"
+                }`}
+              >
+                {(v.estado || "pendiente").replace("_", " ")}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground truncate mt-1">
+              📍 {v.destino || "Sin destino"}
+            </p>
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-[10px] text-muted-foreground">{formatDate(v.created_at)}</p>
+              <p className="text-xs font-bold text-accent">
+                {v.costo != null ? `$${Number(v.costo).toFixed(2)}` : "—"}
+              </p>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+};
+
+// ─────────────── USUARIOS ───────────────
+const ROLES = ["pasajero", "conductor", "admin"] as const;
+
+const UsuariosTab = () => {
+  const { toast } = useToast();
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState<string | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("usuarios")
+      .select("id, nombre, email, rol, created_at")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    setItems(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const changeRole = async (id: string, rol: string) => {
+    setUpdating(id);
+    const { error } = await supabase.from("usuarios").update({ rol }).eq("id", id);
+    setUpdating(null);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Rol actualizado", description: `Nuevo rol: ${rol}` });
+    setItems((prev) => prev.map((u) => (u.id === id ? { ...u, rol } : u)));
+  };
+
+  return (
+    <div className="space-y-2">
+      {loading ? (
+        <div className="flex justify-center py-10">
+          <Loader2 className="h-5 w-5 text-accent animate-spin" />
+        </div>
+      ) : items.length === 0 ? (
+        <p className="text-center text-sm text-muted-foreground py-10">No hay usuarios.</p>
+      ) : (
+        items.map((u) => (
+          <div key={u.id} className="bg-card rounded-xl border border-border p-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-foreground truncate">
+                  {toTitleCase(u.nombre || "Sin nombre")}
+                </p>
+                <p className="text-[11px] text-muted-foreground truncate">{u.email}</p>
+                <p className="text-[10px] text-muted-foreground">📅 {formatDate(u.created_at)}</p>
+              </div>
+              <Select
+                value={u.rol || "pasajero"}
+                onValueChange={(v) => changeRole(u.id, v)}
+                disabled={updating === u.id}
+              >
+                <SelectTrigger className="w-32 h-9 rounded-lg text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLES.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {r}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+};
+
+// ─────────────── STATS ───────────────
+const StatsTab = () => {
+  const [stats, setStats] = useState({
+    conductoresAprobados: 0,
+    pasajeros: 0,
+    viajesHoy: 0,
+    viajesSemana: 0,
+    viajesMes: 0,
+    ingresosMes: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - 7);
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+      const [
+        condCountRes,
+        pasajCountRes,
+        hoyRes,
+        semRes,
+        mesRes,
+        ingresosRes,
+      ] = await Promise.all([
+        supabase.from("conductores").select("id", { count: "exact", head: true }).eq("estado", "aprobado"),
+        supabase.from("usuarios").select("id", { count: "exact", head: true }).eq("rol", "pasajero"),
+        supabase.from("viajes").select("id", { count: "exact", head: true }).eq("estado", "completado").gte("created_at", startOfDay),
+        supabase.from("viajes").select("id", { count: "exact", head: true }).eq("estado", "completado").gte("created_at", startOfWeek.toISOString()),
+        supabase.from("viajes").select("id", { count: "exact", head: true }).eq("estado", "completado").gte("created_at", startOfMonth),
+        supabase.from("viajes").select("costo").eq("estado", "completado").gte("created_at", startOfMonth),
+      ]);
+
+      const ingresos = (ingresosRes.data || []).reduce(
+        (acc: number, v: any) => acc + (Number(v.costo) || 0),
+        0
+      );
+
+      setStats({
+        conductoresAprobados: condCountRes.count || 0,
+        pasajeros: pasajCountRes.count || 0,
+        viajesHoy: hoyRes.count || 0,
+        viajesSemana: semRes.count || 0,
+        viajesMes: mesRes.count || 0,
+        ingresosMes: ingresos,
+      });
+      setLoading(false);
+    };
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-10">
+        <Loader2 className="h-5 w-5 text-accent animate-spin" />
+      </div>
+    );
+  }
+
+  const Card = ({ icon: Icon, label, value, sub }: any) => (
+    <div className="bg-card rounded-2xl border border-border p-4">
+      <div className="flex items-center gap-2">
+        <div className="w-9 h-9 rounded-full bg-accent/15 flex items-center justify-center">
+          <Icon className="h-4 w-4 text-accent" />
+        </div>
+        <p className="text-[11px] text-muted-foreground">{label}</p>
+      </div>
+      <p className="text-2xl font-extrabold text-foreground mt-2">{value}</p>
+      {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}
+    </div>
+  );
+
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <Card icon={Bike} label="Conductores activos" value={stats.conductoresAprobados} />
+      <Card icon={Users} label="Pasajeros registrados" value={stats.pasajeros} />
+      <Card icon={Calendar} label="Viajes hoy" value={stats.viajesHoy} sub="completados" />
+      <Card icon={RouteIcon} label="Viajes semana" value={stats.viajesSemana} sub="últimos 7 días" />
+      <Card icon={BarChart3} label="Viajes mes" value={stats.viajesMes} sub="completados este mes" />
+      <Card
+        icon={DollarSign}
+        label="Ingresos mes"
+        value={`$${stats.ingresosMes.toFixed(2)}`}
+        sub="estimado"
+      />
+    </div>
+  );
+};
+
+// ─────────────── ADMIN ROOT ───────────────
 const Admin = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [applications, setApplications] = useState(MOCK_APPLICATIONS);
-  const [selectedApp, setSelectedApp] = useState<Application | null>(null);
-  const [filter, setFilter] = useState<"pending" | "approved" | "rejected" | "all">("pending");
+  const [tab, setTab] = useState<AdminTab>("conductores");
+  const [checking, setChecking] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  const role = user?.user_metadata?.rol;
+  useEffect(() => {
+    const check = async () => {
+      if (!user) {
+        setChecking(false);
+        return;
+      }
+      // Bypass por email autorizado
+      if (user.email?.toLowerCase() === ADMIN_EMAIL) {
+        // Asegurar rol admin en tabla usuarios
+        await supabase
+          .from("usuarios")
+          .upsert(
+            { id: user.id, email: user.email, rol: "admin" },
+            { onConflict: "id" }
+          );
+        setIsAdmin(true);
+        setChecking(false);
+        return;
+      }
+      // Rol en metadata
+      if ((user.user_metadata as any)?.rol === "admin") {
+        setIsAdmin(true);
+        setChecking(false);
+        return;
+      }
+      // Rol en tabla usuarios
+      const { data } = await supabase
+        .from("usuarios")
+        .select("rol")
+        .eq("id", user.id)
+        .maybeSingle();
+      setIsAdmin((data as any)?.rol === "admin");
+      setChecking(false);
+    };
+    check();
+  }, [user]);
 
-  // Gate: only admin role
-  if (role !== "admin") {
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-6 w-6 text-accent animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
         <Shield className="h-16 w-16 text-destructive mb-4" />
         <h1 className="text-xl font-extrabold text-foreground mb-2">Acceso denegado</h1>
-        <p className="text-sm text-muted-foreground text-center mb-6">Solo los administradores pueden acceder a este panel.</p>
-        <Button variant="hero" onClick={() => navigate("/")}>Volver al inicio</Button>
+        <p className="text-sm text-muted-foreground text-center mb-6">
+          Solo los administradores pueden acceder a este panel.
+        </p>
+        <Button variant="hero" onClick={() => navigate("/")}>
+          Volver al inicio
+        </Button>
       </div>
     );
   }
 
-  const handleApprove = (id: string) => {
-    setApplications((prev) => prev.map((a) => a.id === id ? { ...a, status: "approved" as const } : a));
-    setSelectedApp(null);
+  const titles: Record<AdminTab, string> = {
+    conductores: "Conductores",
+    viajes: "Viajes",
+    usuarios: "Usuarios",
+    stats: "Estadísticas",
   };
 
-  const handleReject = (id: string) => {
-    setApplications((prev) => prev.map((a) => a.id === id ? { ...a, status: "rejected" as const } : a));
-    setSelectedApp(null);
-  };
-
-  const filtered = filter === "all" ? applications : applications.filter((a) => a.status === filter);
-  const pendingCount = applications.filter((a) => a.status === "pending").length;
-
-  // ── Detail View ──
-  if (selectedApp) {
-    return (
-      <div className="min-h-screen bg-background pb-10">
-        <header className="gradient-primary px-4 pt-10 pb-6">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setSelectedApp(null)} className="p-1.5 rounded-full bg-primary-foreground/10 text-primary-foreground">
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <div>
-              <h1 className="text-lg font-extrabold text-accent">Detalle de postulación</h1>
-              <p className="text-xs text-primary-foreground/70">{selectedApp.name}</p>
-            </div>
-          </div>
-        </header>
-
-        <div className="px-4 -mt-4 space-y-4">
-          {/* Photo & Name */}
-          <div className="bg-card rounded-2xl border border-border p-5 text-center">
-            <img src={selectedApp.photo} alt={selectedApp.name} className="w-24 h-24 rounded-full object-cover border-4 border-accent mx-auto mb-3" />
-            <h2 className="text-lg font-extrabold text-foreground">{selectedApp.name}</h2>
-            <p className="text-xs text-muted-foreground">Enviado: {selectedApp.submittedAt}</p>
-            <span className={`inline-block mt-2 text-xs px-3 py-1 rounded-full font-semibold ${
-              selectedApp.status === "pending" ? "bg-accent/20 text-accent" :
-              selectedApp.status === "approved" ? "bg-[hsl(var(--success))]/20 text-[hsl(var(--success))]" :
-              "bg-destructive/20 text-destructive"
-            }`}>
-              {selectedApp.status === "pending" ? "⏳ Pendiente" : selectedApp.status === "approved" ? "✅ Aprobado" : "❌ Rechazado"}
-            </span>
-          </div>
-
-          {/* Documents */}
-          <div className="bg-card rounded-2xl border border-border p-4 space-y-3">
-            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-accent" /> Cédula
-            </h3>
-            <p className="text-sm text-foreground font-mono">{selectedApp.cedula}</p>
-            <img src={selectedApp.cedulaPhoto} alt="Cédula" className="w-full h-40 object-cover rounded-xl border border-border" />
-          </div>
-
-          <div className="bg-card rounded-2xl border border-border p-4 space-y-2">
-            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-              <Phone className="h-4 w-4 text-accent" /> Teléfono
-            </h3>
-            <p className="text-sm text-foreground">{selectedApp.phone}</p>
-          </div>
-
-          <div className="bg-card rounded-2xl border border-border p-4 space-y-3">
-            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-              <Bike className="h-4 w-4 text-accent" /> Moto
-            </h3>
-            <div className="grid grid-cols-3 gap-2 text-xs">
-              <div><span className="text-muted-foreground">Placa:</span><p className="font-bold text-foreground">{selectedApp.plate}</p></div>
-              <div><span className="text-muted-foreground">Modelo:</span><p className="font-bold text-foreground">{selectedApp.motoModel}</p></div>
-              <div><span className="text-muted-foreground">Color:</span><p className="font-bold text-foreground">{selectedApp.motoColor}</p></div>
-            </div>
-            <img src={selectedApp.motoPhoto} alt="Moto" className="w-full h-40 object-cover rounded-xl border border-border" />
-          </div>
-
-          {/* Actions */}
-          {selectedApp.status === "pending" && (
-            <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" size="lg"
-                className="rounded-xl border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                onClick={() => handleReject(selectedApp.id)}
-              >
-                <XCircle className="h-5 w-5 mr-1" /> Rechazar
-              </Button>
-              <Button variant="hero" size="lg" className="rounded-xl" onClick={() => handleApprove(selectedApp.id)}>
-                <CheckCircle className="h-5 w-5 mr-1" /> Aprobar
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // ── List View ──
   return (
-    <div className="min-h-screen bg-background pb-10">
+    <div className="min-h-screen bg-background pb-24">
       <header className="gradient-primary px-4 pt-10 pb-6">
-        <div className="flex items-center gap-3 mb-3">
-          <button onClick={() => navigate("/")} className="p-1.5 rounded-full bg-primary-foreground/10 text-primary-foreground">
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <div className="flex items-center gap-2">
-            <img src={logoMotoya} alt="MotoYa" className="h-8 w-8" />
-            <div>
-              <h1 className="text-lg font-extrabold text-accent">Panel Admin</h1>
-              <p className="text-xs text-primary-foreground/70">
-                {pendingCount} postulación{pendingCount !== 1 ? "es" : ""} pendiente{pendingCount !== 1 ? "s" : ""}
-              </p>
-            </div>
+        <div className="flex items-center gap-2">
+          <Shield className="h-5 w-5 text-accent" />
+          <div>
+            <h1 className="text-lg font-extrabold text-accent">Panel Admin</h1>
+            <p className="text-xs text-primary-foreground/70">{titles[tab]}</p>
           </div>
         </div>
       </header>
 
-      {/* Filter tabs */}
-      <div className="px-4 -mt-3 mb-4">
-        <div className="flex gap-2 bg-card rounded-xl p-1 border border-border">
-          {([
-            { key: "pending", label: "Pendientes" },
-            { key: "approved", label: "Aprobados" },
-            { key: "rejected", label: "Rechazados" },
-            { key: "all", label: "Todos" },
-          ] as const).map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setFilter(tab.key)}
-              className={`flex-1 text-xs font-semibold py-2 rounded-lg transition-colors ${
-                filter === tab.key ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-muted"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      <div className="px-4 pt-4">
+        {tab === "conductores" && <ConductoresTab />}
+        {tab === "viajes" && <ViajesTab />}
+        {tab === "usuarios" && <UsuariosTab />}
+        {tab === "stats" && <StatsTab />}
       </div>
 
-      {/* Applications list */}
-      <div className="px-4 space-y-3">
-        {filtered.length > 0 ? (
-          filtered.map((app) => (
-            <div
-              key={app.id}
-              className="bg-card rounded-2xl border border-border p-4 flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => setSelectedApp(app)}
-            >
-              <img src={app.photo} alt={app.name} className="w-14 h-14 rounded-full object-cover border-2 border-accent" />
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-foreground truncate">{app.name}</h3>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <img src={logoMotoya} alt="" className="w-3.5 h-3.5 object-contain inline-block" />
-                  {app.motoModel} · {app.plate}
-                </p>
-                <p className="text-xs text-muted-foreground">📅 {app.submittedAt}</p>
-              </div>
-              <div className="flex flex-col items-end gap-1">
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
-                  app.status === "pending" ? "bg-accent/20 text-accent" :
-                  app.status === "approved" ? "bg-[hsl(var(--success))]/20 text-[hsl(var(--success))]" :
-                  "bg-destructive/20 text-destructive"
-                }`}>
-                  {app.status === "pending" ? "⏳ Pendiente" : app.status === "approved" ? "✅ Aprobado" : "❌ Rechazado"}
-                </span>
-                <Eye className="h-4 w-4 text-muted-foreground" />
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="text-center py-16">
-            <User className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
-            <p className="text-sm font-bold text-foreground">No hay postulaciones</p>
-            <p className="text-xs text-muted-foreground">No se encontraron postulaciones con este filtro.</p>
-          </div>
-        )}
-      </div>
+      <BottomNavAdmin active={tab} onChange={setTab} />
     </div>
   );
 };
