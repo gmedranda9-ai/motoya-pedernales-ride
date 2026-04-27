@@ -30,11 +30,11 @@ const DriverCard = ({ driver, onRequest }: DriverCardProps) => {
           <img
             src={photo}
             alt={name}
-            className="w-16 h-16 rounded-full object-cover border-2 border-accent"
+            className="w-20 h-20 rounded-full object-cover border-[3px] border-accent flex-shrink-0 shadow-md"
           />
         ) : (
-          <div className="w-16 h-16 rounded-full bg-primary border-2 border-accent flex items-center justify-center flex-shrink-0">
-            <span className="text-2xl font-extrabold text-accent">
+          <div className="w-20 h-20 rounded-full bg-primary border-[3px] border-accent flex items-center justify-center flex-shrink-0 shadow-md">
+            <span className="text-3xl font-extrabold text-accent">
               {(name || "?").trim().charAt(0).toUpperCase()}
             </span>
           </div>
