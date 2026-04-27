@@ -246,22 +246,34 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost }: DriverProf
                   Este conductor aún no tiene reseñas
                 </p>
               ) : (
-                comments.map((c) => (
-                  <div key={c.id} className="bg-muted rounded-lg p-3">
-                    <div className="flex items-center gap-1 mb-1">
-                      {Array.from({ length: 5 }).map((_, j) => (
-                        <Star
-                          key={j}
-                          className={`h-3 w-3 ${
-                            j < c.estrellas ? "fill-accent text-accent" : "fill-muted text-muted"
-                          }`}
-                        />
-                      ))}
+                <>
+                  {(showAllComments ? comments : comments.slice(0, 3)).map((c) => (
+                    <div key={c.id} className="bg-muted rounded-lg p-3">
+                      <div className="flex items-center gap-1 mb-1">
+                        {Array.from({ length: 5 }).map((_, j) => (
+                          <Star
+                            key={j}
+                            className={`h-3 w-3 ${
+                              j < c.estrellas ? "fill-accent text-accent" : "fill-muted text-muted"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-xs text-foreground">{c.comentario}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">— {c.author}</p>
                     </div>
-                    <p className="text-xs text-foreground">{c.comentario}</p>
-                    <p className="text-[10px] text-muted-foreground mt-1">— {c.author}</p>
-                  </div>
-                ))
+                  ))}
+                  {comments.length > 3 && (
+                    <button
+                      onClick={() => setShowAllComments((v) => !v)}
+                      className="w-full text-center text-xs font-semibold text-accent hover:underline py-2"
+                    >
+                      {showAllComments
+                        ? "Ver menos"
+                        : `Ver todos los comentarios (${comments.length})`}
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
