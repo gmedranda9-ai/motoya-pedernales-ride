@@ -496,19 +496,23 @@ const ConductorHome = () => {
           </div>
         )}
 
-        {/* Actions */}
+        {/* Actions — Chat & SOS siempre visibles */}
         <div className="px-4 mt-4 grid grid-cols-3 gap-3">
           <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={() => setChatOpen(!chatOpen)}>
             <MessageCircle className="h-5 w-5" />
-            <span className="text-[10px]">Chat</span>
+            <span className="text-[10px]">Chat 💬</span>
           </Button>
           <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={() => setMapExpanded((v) => !v)}>
             <MapIcon className="h-5 w-5" />
             <span className="text-[10px]">{mapExpanded ? "Ocultar mapa" : "Ver mapa"}</span>
           </Button>
-          <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={handleShareWhatsApp}>
-            <Share2 className="h-5 w-5" />
-            <span className="text-[10px]">Compartir</span>
+          <Button
+            variant="outline"
+            className="rounded-xl flex-col h-auto py-3 gap-1 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+            onClick={() => window.open("tel:911", "_self")}
+          >
+            <span className="text-lg leading-none">🆘</span>
+            <span className="text-[10px]">SOS</span>
           </Button>
         </div>
 
@@ -548,12 +552,12 @@ const ConductorHome = () => {
           </div>
         )}
 
-        {/* Demo advance */}
+        {/* Botón de avance de estado */}
         <div className="mt-auto px-4 pb-6 pt-4">
           <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={advanceStatus}>
-            {rideStatus === "en_camino" && "📍 He llegado al pasajero"}
-            {rideStatus === "llegado" && "▶ Iniciar viaje"}
-            {rideStatus === "en_viaje" && "🏁 Completar viaje"}
+            {rideStatus === "en_camino" && "📍 Llegué al pasajero"}
+            {rideStatus === "llegado" && "▶️ Iniciar viaje"}
+            {rideStatus === "en_viaje" && "🏁 Llegué al destino"}
           </Button>
         </div>
       </div>
