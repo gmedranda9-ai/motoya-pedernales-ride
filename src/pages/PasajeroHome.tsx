@@ -446,7 +446,7 @@ const PasajeroHome = () => {
                         </div>
 
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
-                          <span className="text-xs">🏍️</span>
+                          <span className="text-xs">🛺</span>
                           {driver.model} · <span className="font-semibold">{driver.plate}</span>
                         </p>
                       </div>
