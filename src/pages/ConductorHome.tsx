@@ -59,7 +59,7 @@ interface ApplicationForm {
 
 const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: string }> = {
   en_camino: { label: "En camino al pasajero", emoji: "🚦", desc: "Dirígete a la ubicación del pasajero" },
-  llegado: { label: "Esperando al pasajero", emoji: "🛺", desc: "El pasajero confirmó tu llegada — recoge y arranca" },
+  llegado: { label: "Esperando al pasajero", emoji: "🛺", desc: "Esperando que el pasajero aborde" },
   en_viaje: { label: "En viaje 🚀", emoji: "🛣️", desc: "Llevando al pasajero a su destino" },
   completado: { label: "Viaje completado", emoji: "✅", desc: "¡Has completado el viaje!" },
 };
@@ -423,6 +423,8 @@ const ConductorHome = () => {
     const currentStatus = STATUS_LABELS[rideStatus];
 
     if (rideStatus === "completado") {
+      const cobroLabel =
+        activeRide.costType === "city" ? "Cobro: $1.00" : "Cobro: acordado con el pasajero";
       return (
         <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center px-6 animate-fade-in">
           <div className="text-center space-y-6 max-w-sm">
@@ -433,12 +435,10 @@ const ConductorHome = () => {
             </p>
             <p className="text-sm text-muted-foreground">📍 {activeRide.destination}</p>
             <div className="bg-accent/10 rounded-xl px-4 py-3">
-              <span className="text-sm font-bold text-accent">
-                {activeRide.costType === "city" ? "Cobro: $1.00" : "Cobro acordado con el pasajero"}
-              </span>
+              <span className="text-sm font-bold text-accent">{cobroLabel}</span>
             </div>
             <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={finishRide}>
-              Volver al panel
+              Volver al inicio
             </Button>
           </div>
         </div>
@@ -496,19 +496,23 @@ const ConductorHome = () => {
           </div>
         )}
 
-        {/* Actions */}
+        {/* Actions — Chat & SOS siempre visibles */}
         <div className="px-4 mt-4 grid grid-cols-3 gap-3">
           <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={() => setChatOpen(!chatOpen)}>
             <MessageCircle className="h-5 w-5" />
-            <span className="text-[10px]">Chat</span>
+            <span className="text-[10px]">Chat 💬</span>
           </Button>
           <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={() => setMapExpanded((v) => !v)}>
             <MapIcon className="h-5 w-5" />
             <span className="text-[10px]">{mapExpanded ? "Ocultar mapa" : "Ver mapa"}</span>
           </Button>
-          <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={handleShareWhatsApp}>
-            <Share2 className="h-5 w-5" />
-            <span className="text-[10px]">Compartir</span>
+          <Button
+            variant="outline"
+            className="rounded-xl flex-col h-auto py-3 gap-1 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+            onClick={() => window.open("tel:911", "_self")}
+          >
+            <span className="text-lg leading-none">🆘</span>
+            <span className="text-[10px]">SOS</span>
           </Button>
         </div>
 
@@ -548,12 +552,12 @@ const ConductorHome = () => {
           </div>
         )}
 
-        {/* Demo advance */}
+        {/* Botón de avance de estado */}
         <div className="mt-auto px-4 pb-6 pt-4">
           <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={advanceStatus}>
-            {rideStatus === "en_camino" && "📍 He llegado al pasajero"}
-            {rideStatus === "llegado" && "▶ Iniciar viaje"}
-            {rideStatus === "en_viaje" && "🏁 Completar viaje"}
+            {rideStatus === "en_camino" && "📍 Llegué al pasajero"}
+            {rideStatus === "llegado" && "▶️ Iniciar viaje"}
+            {rideStatus === "en_viaje" && "🏁 Llegué al destino"}
           </Button>
         </div>
       </div>
