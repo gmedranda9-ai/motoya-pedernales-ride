@@ -217,18 +217,14 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
         </div>
       )}
 
-      {/* Banner: en viaje */}
+      {/* Banner: en viaje (tarjeta amarilla de seguridad) */}
       {status === "en_viaje" && (
-        <div className="px-4 mb-3 space-y-2 animate-fade-in">
-          <div className="road-anim" aria-hidden="true">
-            <span className="road-anim__vehicle">🛺</span>
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-extrabold text-foreground">¡En viaje! Disfruta tu trayecto 😊</p>
-          </div>
-          <div className="rounded-xl border border-accent bg-accent/15 px-3 py-2">
-            <p className="text-[11px] text-foreground leading-snug">
-              Si notas algo inusual usa el botón <span className="font-bold">SOS</span> o comparte tu ubicación.
+        <div className="px-4 mb-3 animate-fade-in">
+          <div className="rounded-2xl border-2 border-accent bg-accent/15 px-4 py-3 flex items-start gap-3 shadow-md">
+            <span className="text-2xl leading-none">⚠️</span>
+            <p className="text-xs text-foreground leading-snug">
+              Si notas algo inusual recuerda que tienes el botón{" "}
+              <span className="font-bold">SOS</span> o puedes compartir tu ubicación con un familiar.
             </p>
           </div>
         </div>
