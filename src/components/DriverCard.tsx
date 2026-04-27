@@ -71,7 +71,7 @@ const DriverCard = ({ driver, onRequest }: DriverCardProps) => {
           </div>
 
           <p className="text-xs text-muted-foreground flex items-center gap-1">
-            <span className="text-sm">🏍️</span>
+            <span className="text-sm">🛺</span>
             {model} · <span className="font-semibold">{plate}</span>
           </p>
         </div>

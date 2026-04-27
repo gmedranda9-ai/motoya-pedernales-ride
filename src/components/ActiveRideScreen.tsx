@@ -21,7 +21,7 @@ interface ActiveRideScreenProps {
 
 const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: string }> = {
   en_camino: { label: "Tu conductor está en camino", emoji: "🚦", desc: "Tu conductor se dirige a tu ubicación" },
-  llegado: { label: "¡Tu conductor está aquí!", emoji: "🏍️", desc: "Prepárate para abordar" },
+  llegado: { label: "¡Tu conductor está aquí!", emoji: "🛺", desc: "Prepárate para abordar" },
   en_viaje: { label: "En viaje 🚀", emoji: "🛣️", desc: "Estás en camino a tu destino" },
   completado: { label: "Viaje completado", emoji: "✅", desc: "¡Has llegado a tu destino!" },
 };
@@ -65,6 +65,18 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
     chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight });
     if (chatOpen) markAsRead();
   }, [messages.length, chatOpen]);
+
+  // Toast cuando el conductor marca "Llegué"
+  const prevStatusRef = useRef<RideStatus>(status);
+  useEffect(() => {
+    if (prevStatusRef.current !== "llegado" && status === "llegado") {
+      toast({
+        title: "🛺 ¡Tu conductor está aquí!",
+        description: "Prepárate para abordar",
+      });
+    }
+    prevStatusRef.current = status;
+  }, [status]);
 
   // Sync status from DB + realtime (so pasajero auto-updates when conductor presses "Iniciar viaje")
   useEffect(() => {
@@ -190,109 +202,7 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
     );
   }
 
-  // ─── Pantalla: ¡Tu conductor está aquí! (esperando que conductor inicie viaje) ───
-  if (status === "llegado") {
-    return (
-      <div className="fixed inset-0 z-50 bg-primary text-primary-foreground flex flex-col animate-fade-in">
-        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-          <div className="relative mb-8">
-            <span className="absolute inset-0 rounded-full bg-accent/20 animate-ping" />
-            <span className="absolute inset-0 rounded-full bg-accent/10 animate-pulse" />
-            <div className="relative w-32 h-32 rounded-full bg-accent/15 border-4 border-accent flex items-center justify-center">
-              <span className="text-7xl animate-bounce">🏍️</span>
-            </div>
-          </div>
-          <h1 className="text-3xl font-extrabold text-accent mb-2">¡Tu conductor está aquí!</h1>
-          <p className="text-base text-primary-foreground/80 mb-8">Prepárate para abordar</p>
-
-          <div className="w-full max-w-sm bg-primary-foreground/10 backdrop-blur rounded-2xl border border-primary-foreground/20 p-4 flex items-center gap-3">
-            {hasPhoto ? (
-              <img src={driver.photo} alt={firstName} className="w-14 h-14 rounded-full object-cover border-2 border-accent flex-shrink-0" />
-            ) : (
-              <div className="w-14 h-14 rounded-full bg-accent border-2 border-accent flex items-center justify-center flex-shrink-0">
-                <span className="text-xl font-extrabold text-primary">{initial}</span>
-              </div>
-            )}
-            <div className="flex-1 min-w-0 text-left">
-              <p className="font-bold truncate">{firstName}</p>
-              <p className="text-xs text-primary-foreground/70 truncate">
-                <span className="mr-1">🏍️</span>{driver.model} · <span className="font-semibold">{driver.plate}</span>
-              </p>
-            </div>
-            {driver.phone && (
-              <a
-                href={`tel:${driver.phone}`}
-                className="p-2 rounded-full bg-accent/20 hover:bg-accent/30 transition-colors flex-shrink-0"
-                aria-label={`Llamar a ${firstName}`}
-              >
-                <Phone className="h-5 w-5 text-accent" />
-              </a>
-            )}
-          </div>
-
-          <p className="text-xs text-primary-foreground/60 mt-6 italic">Esperando que el conductor inicie el viaje…</p>
-        </div>
-
-        {/* Acciones: solo Chat y SOS */}
-        <div className="px-4 pb-8 grid grid-cols-2 gap-3">
-          <Button
-            variant="outline"
-            className="relative rounded-xl h-14 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground"
-            onClick={handleToggleChat}
-          >
-            <MessageCircle className="h-5 w-5 mr-2" />
-            Chat
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center shadow">
-                {unreadCount > 9 ? "9+" : unreadCount}
-              </span>
-            )}
-          </Button>
-          <Button
-            variant="outline"
-            className="rounded-xl h-14 border-destructive bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground"
-            onClick={() => setShowSOS(true)}
-          >
-            <Shield className="h-5 w-5 mr-2" />
-            SOS
-          </Button>
-        </div>
-
-        {/* Chat overlay */}
-        {chatOpen && (
-          <div className="fixed inset-x-0 bottom-0 bg-card text-foreground rounded-t-3xl border-t border-border p-4 max-h-[60vh] flex flex-col animate-slide-in-up shadow-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-bold">Chat con {firstName}</h3>
-              <button onClick={handleToggleChat} className="text-xs text-muted-foreground">Cerrar</button>
-            </div>
-            <div ref={chatScrollRef} className="flex-1 overflow-y-auto flex flex-col">
-              {messages.length === 0 && (
-                <p className="text-xs text-muted-foreground text-center py-4">Envía un mensaje para coordinar tu recogida</p>
-              )}
-              {messages.map((m) => {
-                const mine = m.remitente_id === user?.id;
-                return (
-                  <div key={m.id} className={`mb-2 text-xs px-3 py-2 rounded-xl max-w-[80%] ${mine ? "bg-accent text-accent-foreground self-end" : "bg-muted text-foreground self-start"}`}>
-                    {m.texto}
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex gap-2 mt-2">
-              <Input placeholder="Escribe un mensaje..." value={msgText} onChange={(e) => setMsgText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSend()} className="rounded-xl" />
-              <Button size="icon" variant="hero" className="rounded-xl" onClick={handleSend}>
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {showSOS && <SOSModal onClose={() => setShowSOS(false)} onShare={handleShareWhatsApp} />}
-      </div>
-    );
-  }
-
-  // ─── Pantalla normal: en_camino o en_viaje ───
+  // ─── Pantalla normal: en_camino, llegado o en_viaje ───
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col animate-fade-in">
       {/* Header */}
@@ -318,6 +228,23 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
         <span>En camino</span><span>Llegó</span><span>En viaje</span><span>Final</span>
       </div>
 
+      {/* Banner: conductor llegó */}
+      {status === "llegado" && (
+        <div className="px-4 mb-3 animate-slide-up">
+          <div className="rounded-2xl border-2 border-accent bg-accent/15 px-4 py-3 flex items-center gap-3 shadow-md">
+            <span className="text-2xl animate-bounce">🛺</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-extrabold text-foreground leading-tight">
+                ¡Tu conductor está aquí!
+              </p>
+              <p className="text-[11px] text-muted-foreground leading-tight">
+                Prepárate para abordar
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Driver info */}
       <div className="px-4">
         <div className="bg-card rounded-2xl border border-border p-4 flex items-center gap-4">
@@ -331,7 +258,7 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-foreground truncate">{firstName}</h3>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <span className="text-xs">🏍️</span>
+              <span className="text-xs">🛺</span>
               {driver.model} · <span className="font-semibold">{driver.plate}</span>
             </p>
             {driver.phone ? (
