@@ -443,9 +443,26 @@ const Perfil = () => {
               />
             </div>
             {role === "conductor" && (
-              <p className="text-[11px] text-muted-foreground text-center">
-                Placa y moto son datos verificados y no se pueden modificar.
-              </p>
+              <div className="space-y-2 pt-2 border-t border-border">
+                <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                  <Lock className="h-3 w-3" />
+                  Datos verificados — no editables
+                </p>
+                {[
+                  { label: "Cédula", value: conductor?.cedula },
+                  { label: "Placa", value: conductor?.placa },
+                  { label: "Modelo", value: conductor?.modelo_moto },
+                  { label: "Color", value: conductor?.color_moto },
+                ].map((f) => (
+                  <div key={f.label}>
+                    <Label className="flex items-center gap-1 text-xs">
+                      <Lock className="h-3 w-3 text-muted-foreground" />
+                      {f.label}
+                    </Label>
+                    <Input value={f.value || "—"} disabled readOnly className="bg-muted/50" />
+                  </div>
+                ))}
+              </div>
             )}
           </div>
           <DialogFooter>
