@@ -30,7 +30,7 @@ import { useRideChat } from "@/hooks/useRideChat";
 import LiveMap from "@/components/LiveMap";
 
 type ApplicationStatus = "none" | "pending" | "approved" | "rejected";
-type RideStatus = "en_camino" | "en_viaje" | "completado";
+type RideStatus = "en_camino" | "llegado" | "en_viaje" | "completado";
 type Step = "panel" | "apply";
 
 interface RideRequest {
@@ -59,7 +59,8 @@ interface ApplicationForm {
 
 const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: string }> = {
   en_camino: { label: "En camino al pasajero", emoji: "🚦", desc: "Dirígete a la ubicación del pasajero" },
-  en_viaje: { label: "En viaje", emoji: "🛣️", desc: "Llevando al pasajero a su destino" },
+  llegado: { label: "Esperando al pasajero", emoji: "🏍️", desc: "El pasajero confirmó tu llegada — recoge y arranca" },
+  en_viaje: { label: "En viaje 🚀", emoji: "🛣️", desc: "Llevando al pasajero a su destino" },
   completado: { label: "Viaje completado", emoji: "✅", desc: "¡Has completado el viaje!" },
 };
 
@@ -296,10 +297,41 @@ const ConductorHome = () => {
     await sendMessage(text);
   };
 
-  const advanceStatus = () => {
-    if (rideStatus === "en_camino") setRideStatus("en_viaje");
-    else if (rideStatus === "en_viaje") setRideStatus("completado");
+  const advanceStatus = async () => {
+    let next: RideStatus | null = null;
+    if (rideStatus === "en_camino") next = "llegado";
+    else if (rideStatus === "llegado") next = "en_viaje";
+    else if (rideStatus === "en_viaje") next = "completado";
+    if (!next) return;
+
+    setRideStatus(next);
+    if (activeRide?.id) {
+      const { error } = await supabase.from("viajes").update({ estado: next }).eq("id", activeRide.id);
+      if (error) console.error("❌ Error actualizando estado:", error);
+    }
   };
+
+  // Realtime: si el pasajero confirma "El conductor llegó", reflejar el estado aquí también
+  useEffect(() => {
+    const id = activeRide?.id;
+    if (!id) return;
+    const channel = supabase
+      .channel(`viaje_estado_conductor_${id}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "viajes", filter: `id=eq.${id}` },
+        (payload) => {
+          const estado = (payload.new as any)?.estado as RideStatus | undefined;
+          if (estado && ["en_camino", "llegado", "en_viaje", "completado"].includes(estado)) {
+            setRideStatus(estado);
+          }
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeRide?.id]);
 
   // Share driver GPS every 5s while ride is active (en_camino or en_viaje)
   useShareDriverLocation(
@@ -425,16 +457,16 @@ const ConductorHome = () => {
 
         {/* Progress bar */}
         <div className="px-4 py-3 flex items-center gap-2">
-          {(["en_camino", "en_viaje", "completado"] as RideStatus[]).map((s, i) => (
+          {(["en_camino", "llegado", "en_viaje", "completado"] as RideStatus[]).map((s, i) => (
             <div key={s} className="flex-1">
               <div className={`h-2 rounded-full ${
-                ["en_camino", "en_viaje", "completado"].indexOf(rideStatus) >= i ? "bg-accent" : "bg-muted"
+                ["en_camino", "llegado", "en_viaje", "completado"].indexOf(rideStatus) >= i ? "bg-accent" : "bg-muted"
               }`} />
             </div>
           ))}
         </div>
         <div className="px-4 flex justify-between text-[10px] text-muted-foreground -mt-1 mb-3">
-          <span>En camino</span><span>En viaje</span><span>Completado</span>
+          <span>En camino</span><span>Llegó</span><span>En viaje</span><span>Final</span>
         </div>
 
         {/* Passenger info */}
@@ -519,7 +551,9 @@ const ConductorHome = () => {
         {/* Demo advance */}
         <div className="mt-auto px-4 pb-6 pt-4">
           <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={advanceStatus}>
-            {rideStatus === "en_camino" ? "📍 Llegué al pasajero — Iniciar viaje" : "🏁 Completar viaje"}
+            {rideStatus === "en_camino" && "📍 He llegado al pasajero"}
+            {rideStatus === "llegado" && "▶ Iniciar viaje"}
+            {rideStatus === "en_viaje" && "🏁 Completar viaje"}
           </Button>
         </div>
       </div>
