@@ -24,6 +24,7 @@ import {
   Route,
   Camera,
   MapPin,
+  Lock,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBackButton } from "@/hooks/useBackButton";
@@ -34,6 +35,8 @@ interface ConductorData {
   foto: string | null;
   placa: string | null;
   modelo_moto: string | null;
+  color_moto: string | null;
+  cedula: string | null;
   telefono: string | null;
   calificacion_promedio: number | null;
   estado: string | null;
@@ -117,7 +120,7 @@ const Perfil = () => {
       if (role === "conductor") {
         const { data: cond } = await supabase
           .from("conductores")
-          .select("id, foto, placa, modelo_moto, telefono, calificacion_promedio, estado, created_at")
+          .select("id, foto, placa, modelo_moto, color_moto, cedula, telefono, calificacion_promedio, estado, created_at")
           .eq("usuario_id", user.id)
           .maybeSingle();
         if (cond) {
@@ -176,6 +179,22 @@ const Perfil = () => {
     const cleanNombre = toTitleCase(editNombre.trim());
     const cleanTel = editTelefono.trim();
 
+    if (!cleanNombre) {
+      toast({ title: "Nombre requerido", variant: "destructive" });
+      setSaving(false);
+      return;
+    }
+    if (cleanNombre.length > 100) {
+      toast({ title: "Nombre demasiado largo", description: "Máx. 100 caracteres", variant: "destructive" });
+      setSaving(false);
+      return;
+    }
+    if (cleanTel && !/^[+\d\s\-()]{6,20}$/.test(cleanTel)) {
+      toast({ title: "Teléfono inválido", description: "Usa solo números, espacios, +, -, ()", variant: "destructive" });
+      setSaving(false);
+      return;
+    }
+
     const { error: uErr } = await supabase
       .from("usuarios")
       .upsert(
@@ -184,26 +203,42 @@ const Perfil = () => {
       );
 
     if (uErr) {
-      console.error(uErr);
-      toast({ title: "Error", description: "No se pudo guardar.", variant: "destructive" });
+      console.error("❌ Error guardando en usuarios:", uErr);
+      toast({
+        title: "Error al guardar",
+        description: uErr.message,
+        variant: "destructive",
+      });
       setSaving(false);
       return;
     }
 
     if (role === "conductor") {
-      await supabase
+      const { error: cErr } = await supabase
         .from("conductores")
         .update({ telefono: cleanTel })
         .eq("usuario_id", user.id);
+      if (cErr) {
+        console.error("❌ Error guardando en conductores:", cErr);
+        toast({
+          title: "Error al guardar conductor",
+          description: cErr.message,
+          variant: "destructive",
+        });
+        setSaving(false);
+        return;
+      }
     }
 
-    await supabase.auth.updateUser({ data: { nombre: cleanNombre } });
+    const { error: aErr } = await supabase.auth.updateUser({ data: { nombre: cleanNombre } });
+    if (aErr) console.error("⚠️ updateUser metadata:", aErr);
 
     setNombre(cleanNombre);
     setTelefono(cleanTel);
+    setConductor((prev) => (prev ? { ...prev, telefono: cleanTel } : prev));
     setSaving(false);
     setEditOpen(false);
-    toast({ title: "Perfil actualizado" });
+    toast({ title: "✅ Perfil actualizado" });
   };
 
   return (
