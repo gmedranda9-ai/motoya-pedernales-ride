@@ -216,6 +216,23 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
         <span>En camino</span><span>Llegó</span><span>En viaje</span><span>Final</span>
       </div>
 
+      {/* Banner: conductor llegó */}
+      {status === "llegado" && (
+        <div className="px-4 mb-3 animate-slide-up">
+          <div className="rounded-2xl border-2 border-accent bg-accent/15 px-4 py-3 flex items-center gap-3 shadow-md">
+            <span className="text-2xl animate-bounce">🛺</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-extrabold text-foreground leading-tight">
+                ¡Tu conductor está aquí!
+              </p>
+              <p className="text-[11px] text-muted-foreground leading-tight">
+                Prepárate para abordar
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Driver info */}
       <div className="px-4">
         <div className="bg-card rounded-2xl border border-border p-4 flex items-center gap-4">
@@ -229,7 +246,7 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-foreground truncate">{firstName}</h3>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <span className="text-xs">🏍️</span>
+              <span className="text-xs">🛺</span>
               {driver.model} · <span className="font-semibold">{driver.plate}</span>
             </p>
             {driver.phone ? (
