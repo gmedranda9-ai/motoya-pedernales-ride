@@ -66,6 +66,18 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
     if (chatOpen) markAsRead();
   }, [messages.length, chatOpen]);
 
+  // Toast cuando el conductor marca "Llegué"
+  const prevStatusRef = useRef<RideStatus>(status);
+  useEffect(() => {
+    if (prevStatusRef.current !== "llegado" && status === "llegado") {
+      toast({
+        title: "🛺 ¡Tu conductor está aquí!",
+        description: "Prepárate para abordar",
+      });
+    }
+    prevStatusRef.current = status;
+  }, [status]);
+
   // Sync status from DB + realtime (so pasajero auto-updates when conductor presses "Iniciar viaje")
   useEffect(() => {
     if (!viajeId) return;
