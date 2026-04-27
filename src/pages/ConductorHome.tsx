@@ -423,6 +423,8 @@ const ConductorHome = () => {
     const currentStatus = STATUS_LABELS[rideStatus];
 
     if (rideStatus === "completado") {
+      const cobroLabel =
+        activeRide.costType === "city" ? "Cobro: $1.00" : "Cobro: acordado con el pasajero";
       return (
         <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center px-6 animate-fade-in">
           <div className="text-center space-y-6 max-w-sm">
@@ -433,12 +435,10 @@ const ConductorHome = () => {
             </p>
             <p className="text-sm text-muted-foreground">📍 {activeRide.destination}</p>
             <div className="bg-accent/10 rounded-xl px-4 py-3">
-              <span className="text-sm font-bold text-accent">
-                {activeRide.costType === "city" ? "Cobro: $1.00" : "Cobro acordado con el pasajero"}
-              </span>
+              <span className="text-sm font-bold text-accent">{cobroLabel}</span>
             </div>
             <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={finishRide}>
-              Volver al panel
+              Volver al inicio
             </Button>
           </div>
         </div>
