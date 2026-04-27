@@ -276,6 +276,53 @@ const ConductorHome = () => {
   const [msgText, setMsgText] = useState("");
   const { messages, sendMessage } = useRideChat(activeRide?.id ?? null, user?.id ?? null);
 
+  // Unread badge for chat
+  const readKey = activeRide?.id && user?.id ? `chat:lastRead:${user.id}:${activeRide.id}` : null;
+  const [lastReadAt, setLastReadAt] = useState<number>(() => {
+    if (!readKey) return 0;
+    try {
+      const v = localStorage.getItem(readKey);
+      return v ? new Date(v).getTime() : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  useEffect(() => {
+    if (!readKey) return;
+    try {
+      const v = localStorage.getItem(readKey);
+      setLastReadAt(v ? new Date(v).getTime() : 0);
+    } catch {
+      setLastReadAt(0);
+    }
+  }, [readKey]);
+
+  const unreadCount = messages.filter(
+    (m) => m.remitente_id !== user?.id && new Date(m.hora).getTime() > lastReadAt
+  ).length;
+
+  const markChatAsRead = () => {
+    const now = new Date();
+    setLastReadAt(now.getTime());
+    if (readKey) {
+      try {
+        localStorage.setItem(readKey, now.toISOString());
+      } catch {}
+    }
+  };
+
+  useEffect(() => {
+    if (chatOpen) markChatAsRead();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages.length, chatOpen]);
+
+  const handleToggleChat = () => {
+    const next = !chatOpen;
+    setChatOpen(next);
+    if (next) markChatAsRead();
+  };
+
   // Pick up rides accepted from the global modal (works across all screens)
   useEffect(() => {
     if (acceptedRide && !activeRide) {
@@ -542,9 +589,14 @@ const ConductorHome = () => {
 
         {/* Actions — Chat & SOS siempre visibles */}
         <div className="px-4 mt-4 grid grid-cols-3 gap-3">
-          <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={() => setChatOpen(!chatOpen)}>
+          <Button variant="outline" className="relative rounded-xl flex-col h-auto py-3 gap-1" onClick={handleToggleChat}>
             <MessageCircle className="h-5 w-5" />
             <span className="text-[10px]">Chat 💬</span>
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center shadow">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
           </Button>
           <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={() => setMapExpanded((v) => !v)}>
             <MapIcon className="h-5 w-5" />
