@@ -77,7 +77,7 @@ const PasajeroHome = () => {
         const mapped: Driver[] = (data || []).map((c: any) => ({
           id: c.id,
           name: c.nombre || "Sin nombre",
-          photo: c.foto || "https://via.placeholder.com/150",
+          photo: c.foto || "",
           plate: c.placa || "",
           model: c.modelo_moto || "",
           rating: c.calificacion_promedio ?? 5.0,
@@ -405,11 +405,19 @@ const PasajeroHome = () => {
                 >
                   <div className="bg-card rounded-2xl shadow-md p-4 border border-border animate-slide-up">
                     <div className="flex items-center gap-4">
-                      <img
-                        src={driver.photo}
-                        alt={driver.name}
-                        className="w-16 h-16 rounded-full object-cover border-2 border-accent"
-                      />
+                      {driver.photo && !driver.photo.includes("placeholder") && !driver.photo.includes("logo-motoya") ? (
+                        <img
+                          src={driver.photo}
+                          alt={driver.name}
+                          className="w-16 h-16 rounded-full object-cover border-2 border-accent"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-full bg-primary border-2 border-accent flex items-center justify-center flex-shrink-0">
+                          <span className="text-2xl font-extrabold text-accent">
+                            {(driver.name || "?").trim().charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
                           <h3 className="font-bold text-foreground truncate">{driver.name}</h3>
