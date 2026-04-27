@@ -234,10 +234,10 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
       <div className="px-4">
         <div className="bg-card rounded-2xl border border-border p-4 flex items-center gap-4">
           {hasPhoto ? (
-            <img src={driver.photo} alt={firstName} className="w-16 h-16 rounded-full object-cover border-2 border-accent flex-shrink-0" />
+            <img src={driver.photo} alt={firstName} className="w-20 h-20 rounded-full object-cover border-[3px] border-accent flex-shrink-0 shadow-md" />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-primary border-2 border-accent flex items-center justify-center flex-shrink-0">
-              <span className="text-2xl font-extrabold text-primary-foreground">{initial}</span>
+            <div className="w-20 h-20 rounded-full bg-primary border-[3px] border-accent flex items-center justify-center flex-shrink-0 shadow-md">
+              <span className="text-3xl font-extrabold text-accent">{initial}</span>
             </div>
           )}
           <div className="flex-1 min-w-0">

@@ -131,11 +131,11 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost }: DriverProf
             <img
               src={driver.photo}
               alt={driver.name}
-              className="w-24 h-24 rounded-full object-cover border-4 border-accent mx-auto mb-3"
+              className="w-36 h-36 rounded-full object-cover border-4 border-accent mx-auto mb-4 shadow-xl"
             />
           ) : (
-            <div className="w-24 h-24 rounded-full bg-primary border-4 border-accent mx-auto mb-3 flex items-center justify-center">
-              <span className="text-4xl font-extrabold text-accent leading-none">
+            <div className="w-36 h-36 rounded-full bg-primary border-4 border-accent mx-auto mb-4 flex items-center justify-center shadow-xl">
+              <span className="text-6xl font-extrabold text-accent leading-none">
                 {initial}
               </span>
             </div>
