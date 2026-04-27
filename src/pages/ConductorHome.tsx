@@ -30,7 +30,7 @@ import { useRideChat } from "@/hooks/useRideChat";
 import LiveMap from "@/components/LiveMap";
 
 type ApplicationStatus = "none" | "pending" | "approved" | "rejected";
-type RideStatus = "en_camino" | "en_viaje" | "completado";
+type RideStatus = "en_camino" | "llegado" | "en_viaje" | "completado";
 type Step = "panel" | "apply";
 
 interface RideRequest {
@@ -59,7 +59,8 @@ interface ApplicationForm {
 
 const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: string }> = {
   en_camino: { label: "En camino al pasajero", emoji: "🚦", desc: "Dirígete a la ubicación del pasajero" },
-  en_viaje: { label: "En viaje", emoji: "🛣️", desc: "Llevando al pasajero a su destino" },
+  llegado: { label: "Esperando al pasajero", emoji: "🏍️", desc: "El pasajero confirmó tu llegada — recoge y arranca" },
+  en_viaje: { label: "En viaje 🚀", emoji: "🛣️", desc: "Llevando al pasajero a su destino" },
   completado: { label: "Viaje completado", emoji: "✅", desc: "¡Has completado el viaje!" },
 };
 
