@@ -469,6 +469,19 @@ const ConductorHome = () => {
           <span>En camino</span><span>Llegó</span><span>En viaje</span><span>Final</span>
         </div>
 
+        {/* Banner: en viaje */}
+        {rideStatus === "en_viaje" && (
+          <div className="px-4 mb-3 space-y-2 animate-fade-in">
+            <div className="road-anim" aria-hidden="true">
+              <span className="road-anim__vehicle">🛺</span>
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-extrabold text-foreground">En camino al destino</p>
+              <p className="text-[11px] text-muted-foreground">Conduce con cuidado, llevas un pasajero 🙏</p>
+            </div>
+          </div>
+        )}
+
         {/* Passenger info */}
         <div className="px-4">
           <div className="bg-card rounded-2xl border border-border p-4 flex items-center gap-4">
