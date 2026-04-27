@@ -551,7 +551,9 @@ const ConductorHome = () => {
         {/* Demo advance */}
         <div className="mt-auto px-4 pb-6 pt-4">
           <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={advanceStatus}>
-            {rideStatus === "en_camino" ? "📍 Llegué al pasajero — Iniciar viaje" : "🏁 Completar viaje"}
+            {rideStatus === "en_camino" && "📍 He llegado al pasajero"}
+            {rideStatus === "llegado" && "▶ Iniciar viaje"}
+            {rideStatus === "en_viaje" && "🏁 Completar viaje"}
           </Button>
         </div>
       </div>
