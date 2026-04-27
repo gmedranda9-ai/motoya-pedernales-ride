@@ -155,52 +155,14 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
     await sendMessage(text);
   };
 
-  // Pasajero solo puede avanzar de "en_camino" -> "llegado" (confirma que llegó el conductor)
-  // y de "en_viaje" -> "completado" (llegué al destino). El paso "llegado" -> "en_viaje" lo hace el conductor.
-  const advanceStatus = async () => {
-    let next: RideStatus | null = null;
-    if (status === "en_camino") next = "llegado";
-    else if (status === "en_viaje") next = "completado";
-    if (!next) return;
-
-    setStatus(next);
-
-    if (!viajeId) return;
-    const { error } = await supabase.from("viajes").update({ estado: next }).eq("id", viajeId);
-    if (error) {
-      console.error("❌ Error actualizando estado del viaje:", error);
-      toast({ title: "Error", description: "No se pudo actualizar el estado del viaje", variant: "destructive" });
+  // El pasajero ya NO controla el estado del viaje. El conductor avanza
+  // en_camino → llegado → en_viaje → completado vía Realtime.
+  // Cuando llega a "completado", saltamos automáticamente a la pantalla de calificación.
+  useEffect(() => {
+    if (status === "completado") {
+      onFinish();
     }
-  };
-
-  // ─── Pantalla: viaje completado ───
-  if (status === "completado") {
-    return (
-      <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center px-6 animate-fade-in">
-        <div className="text-center space-y-6 max-w-sm">
-          <span className="text-6xl">✅</span>
-          <h2 className="text-xl font-extrabold text-foreground">¡Viaje completado!</h2>
-          <p className="text-sm text-muted-foreground">Has llegado a <span className="font-bold text-foreground">{destination}</span></p>
-          <div className="flex items-center justify-center gap-3">
-            {hasPhoto ? (
-              <img src={driver.photo} alt={firstName} className="w-12 h-12 rounded-full object-cover border-2 border-accent" />
-            ) : (
-              <div className="w-12 h-12 rounded-full bg-primary border-2 border-accent flex items-center justify-center">
-                <span className="text-base font-extrabold text-primary-foreground">{initial}</span>
-              </div>
-            )}
-            <div className="text-left">
-              <p className="text-sm font-bold text-foreground">{firstName}</p>
-              <p className="text-xs text-muted-foreground">{driver.plate}</p>
-            </div>
-          </div>
-          <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={onFinish}>
-            Calificar viaje ⭐
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  }, [status, onFinish]);
 
   // ─── Pantalla normal: en_camino, llegado o en_viaje ───
   return (
