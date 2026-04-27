@@ -166,44 +166,31 @@ const Perfil = () => {
   };
 
   const handlePhotoUpload = () => {
-    toast({
-      title: "Próximamente",
-      description:
-        "La subida de foto requiere activar Lovable Cloud Storage. Avísame y lo habilitamos.",
-    });
+    toast({ title: "Próximamente disponible" });
   };
 
   const saveProfile = async () => {
     if (!user) return;
     setSaving(true);
-    const cleanNombre = toTitleCase(editNombre.trim());
     const cleanTel = editTelefono.trim();
 
-    if (!cleanNombre) {
-      toast({ title: "Nombre requerido", variant: "destructive" });
-      setSaving(false);
-      return;
-    }
-    if (cleanNombre.length > 100) {
-      toast({ title: "Nombre demasiado largo", description: "Máx. 100 caracteres", variant: "destructive" });
-      setSaving(false);
-      return;
-    }
-    if (cleanTel && !/^[+\d\s\-()]{6,20}$/.test(cleanTel)) {
-      toast({ title: "Teléfono inválido", description: "Usa solo números, espacios, +, -, ()", variant: "destructive" });
+    if (!cleanTel || !/^[+\d\s\-()]{6,20}$/.test(cleanTel)) {
+      toast({
+        title: "Teléfono inválido",
+        description: "Usa solo números, espacios, +, -, () (6-20 caracteres)",
+        variant: "destructive",
+      });
       setSaving(false);
       return;
     }
 
     const { error: uErr } = await supabase
       .from("usuarios")
-      .upsert(
-        { id: user.id, email: user.email, nombre: cleanNombre, telefono: cleanTel },
-        { onConflict: "id" }
-      );
+      .update({ telefono: cleanTel })
+      .eq("id", user.id);
 
     if (uErr) {
-      console.error("❌ Error guardando en usuarios:", uErr);
+      console.error("❌ Error UPDATE usuarios:", uErr);
       toast({
         title: "Error al guardar",
         description: uErr.message,
@@ -219,7 +206,7 @@ const Perfil = () => {
         .update({ telefono: cleanTel })
         .eq("usuario_id", user.id);
       if (cErr) {
-        console.error("❌ Error guardando en conductores:", cErr);
+        console.error("❌ Error UPDATE conductores:", cErr);
         toast({
           title: "Error al guardar conductor",
           description: cErr.message,
@@ -230,15 +217,11 @@ const Perfil = () => {
       }
     }
 
-    const { error: aErr } = await supabase.auth.updateUser({ data: { nombre: cleanNombre } });
-    if (aErr) console.error("⚠️ updateUser metadata:", aErr);
-
-    setNombre(cleanNombre);
     setTelefono(cleanTel);
     setConductor((prev) => (prev ? { ...prev, telefono: cleanTel } : prev));
     setSaving(false);
     setEditOpen(false);
-    toast({ title: "✅ Perfil actualizado" });
+    toast({ title: "✅ Teléfono actualizado" });
   };
 
   return (
@@ -419,18 +402,23 @@ const Perfil = () => {
                 className="rounded-xl"
               >
                 <Camera className="h-4 w-4 mr-2" />
-                Subir foto
+                Cambiar foto
               </Button>
             </div>
 
             <div>
-              <Label htmlFor="edit-nombre">Nombre</Label>
-              <Input
-                id="edit-nombre"
-                value={editNombre}
-                onChange={(e) => setEditNombre(e.target.value)}
-                placeholder="Tu nombre"
-              />
+              <Label className="flex items-center gap-1 text-xs">
+                <Lock className="h-3 w-3 text-muted-foreground" />
+                Nombre
+              </Label>
+              <Input value={nombre || "—"} disabled readOnly className="bg-muted/50" />
+            </div>
+            <div>
+              <Label className="flex items-center gap-1 text-xs">
+                <Lock className="h-3 w-3 text-muted-foreground" />
+                Email
+              </Label>
+              <Input value={email} disabled readOnly className="bg-muted/50" />
             </div>
             <div>
               <Label htmlFor="edit-telefono">Teléfono</Label>
@@ -469,7 +457,7 @@ const Perfil = () => {
             <Button variant="outline" onClick={() => setEditOpen(false)} disabled={saving}>
               Cancelar
             </Button>
-            <Button onClick={saveProfile} disabled={saving || !editNombre.trim()}>
+            <Button onClick={saveProfile} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}
             </Button>
           </DialogFooter>
