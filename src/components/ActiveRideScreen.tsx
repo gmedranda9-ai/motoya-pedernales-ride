@@ -168,13 +168,23 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col animate-fade-in">
       {/* Header */}
-      <div className="gradient-primary px-4 pt-10 pb-6">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-2xl">{currentStatus.emoji}</span>
-          <h1 className="text-lg font-extrabold text-accent">{currentStatus.label}</h1>
+      {status === "en_viaje" ? (
+        <div className="gradient-primary px-4 pt-10 pb-5">
+          <div className="road-anim mb-3" aria-hidden="true">
+            <span className="road-anim__vehicle">🛺</span>
+          </div>
+          <h1 className="text-2xl font-extrabold text-accent leading-tight">¡En viaje!</h1>
+          <p className="text-sm text-primary-foreground/80">Disfruta tu trayecto 😊</p>
         </div>
-        <p className="text-xs text-primary-foreground/70">{currentStatus.desc}</p>
-      </div>
+      ) : (
+        <div className="gradient-primary px-4 pt-10 pb-6">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-2xl">{currentStatus.emoji}</span>
+            <h1 className="text-lg font-extrabold text-accent">{currentStatus.label}</h1>
+          </div>
+          <p className="text-xs text-primary-foreground/70">{currentStatus.desc}</p>
+        </div>
+      )}
 
       {/* Status progress */}
       <div className="px-4 py-3 flex items-center gap-2">
