@@ -598,12 +598,35 @@ const ConductorHome = () => {
 
         {/* Botón de avance de estado */}
         <div className="mt-auto px-4 pb-6 pt-4">
-          <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={advanceStatus}>
+          <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={() => setConfirmOpen(true)}>
             {rideStatus === "en_camino" && "📍 Llegué al pasajero"}
             {rideStatus === "llegado" && "▶️ Iniciar viaje"}
             {rideStatus === "en_viaje" && "🏁 Llegué al destino"}
           </Button>
         </div>
+
+        {/* Diálogo de confirmación */}
+        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <AlertDialogContent className="rounded-2xl">
+            {confirmCopy[rideStatus] && (
+              <>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{confirmCopy[rideStatus]!.title}</AlertDialogTitle>
+                  <AlertDialogDescription>{confirmCopy[rideStatus]!.desc}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="rounded-xl bg-accent text-accent-foreground hover:bg-accent/90"
+                    onClick={() => advanceStatus()}
+                  >
+                    {confirmCopy[rideStatus]!.confirm}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </>
+            )}
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }
