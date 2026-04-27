@@ -26,11 +26,19 @@ const DriverCard = ({ driver, onRequest }: DriverCardProps) => {
   return (
     <div className="bg-card rounded-2xl shadow-md p-4 border border-border animate-slide-up">
       <div className="flex items-center gap-4">
-        <img
-          src={photo}
-          alt={name}
-          className="w-16 h-16 rounded-full object-cover border-2 border-accent"
-        />
+        {photo && !photo.includes("placeholder") && !photo.includes("logo-motoya") ? (
+          <img
+            src={photo}
+            alt={name}
+            className="w-16 h-16 rounded-full object-cover border-2 border-accent"
+          />
+        ) : (
+          <div className="w-16 h-16 rounded-full bg-primary border-2 border-accent flex items-center justify-center flex-shrink-0">
+            <span className="text-2xl font-extrabold text-accent">
+              {(name || "?").trim().charAt(0).toUpperCase()}
+            </span>
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
             <h3 className="font-bold text-foreground truncate">{name}</h3>
