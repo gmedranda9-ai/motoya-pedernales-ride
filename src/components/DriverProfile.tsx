@@ -51,6 +51,7 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost }: DriverProf
   });
   const [comments, setComments] = useState<RealComment[]>([]);
   const [loadingComments, setLoadingComments] = useState(true);
+  const [showAllComments, setShowAllComments] = useState(false);
 
   const initial = (driver.name || "?").trim().charAt(0).toUpperCase();
   const showRealPhoto = !isPlaceholderPhoto(driver.photo);
@@ -83,8 +84,7 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost }: DriverProf
         .from("calificaciones")
         .select("id, comentario, estrellas, fecha, pasajero_id")
         .eq("conductor_id", driver.id)
-        .order("fecha", { ascending: false })
-        .limit(5);
+        .order("fecha", { ascending: false });
 
       if (error || !data) {
         setComments([]);
