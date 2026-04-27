@@ -322,19 +322,8 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
         </div>
       )}
 
-      {/* Bottom action — solo cuando el pasajero puede avanzar */}
-      <div className="sticky bottom-0 mt-auto px-4 pb-6 pt-4 bg-background border-t border-border">
-        {status === "en_camino" && (
-          <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={advanceStatus}>
-            El conductor llegó ✅
-          </Button>
-        )}
-        {status === "en_viaje" && (
-          <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={advanceStatus}>
-            Llegué al destino 🏁
-          </Button>
-        )}
-      </div>
+      {/* El pasajero NO controla el estado del viaje — todo lo maneja el conductor */}
+      <div className="pb-6" />
 
       {showSOS && <SOSModal onClose={() => setShowSOS(false)} onShare={handleShareWhatsApp} />}
     </div>
