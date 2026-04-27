@@ -12,6 +12,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Star,
   MapPin,
   MessageCircle,
@@ -297,6 +307,8 @@ const ConductorHome = () => {
     await sendMessage(text);
   };
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   const advanceStatus = async () => {
     let next: RideStatus | null = null;
     if (rideStatus === "en_camino") next = "llegado";
@@ -309,6 +321,25 @@ const ConductorHome = () => {
       const { error } = await supabase.from("viajes").update({ estado: next }).eq("id", activeRide.id);
       if (error) console.error("❌ Error actualizando estado:", error);
     }
+  };
+
+  const confirmCopy: Record<RideStatus, { title: string; desc: string; confirm: string } | null> = {
+    en_camino: {
+      title: "¿Ya llegaste?",
+      desc: "Avisarás al pasajero que ya estás en su ubicación",
+      confirm: "Sí, llegué ✅",
+    },
+    llegado: {
+      title: "¿Listos para salir?",
+      desc: "El viaje comenzará ahora",
+      confirm: "Sí, vamos 🚀",
+    },
+    en_viaje: {
+      title: "¿Llegaste al destino?",
+      desc: "El viaje finalizará y el pasajero podrá calificarte",
+      confirm: "Sí, finalizar 🏁",
+    },
+    completado: null,
   };
 
   // Realtime: si el pasajero confirma "El conductor llegó", reflejar el estado aquí también
