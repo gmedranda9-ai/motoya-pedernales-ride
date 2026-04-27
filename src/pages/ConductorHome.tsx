@@ -457,16 +457,16 @@ const ConductorHome = () => {
 
         {/* Progress bar */}
         <div className="px-4 py-3 flex items-center gap-2">
-          {(["en_camino", "en_viaje", "completado"] as RideStatus[]).map((s, i) => (
+          {(["en_camino", "llegado", "en_viaje", "completado"] as RideStatus[]).map((s, i) => (
             <div key={s} className="flex-1">
               <div className={`h-2 rounded-full ${
-                ["en_camino", "en_viaje", "completado"].indexOf(rideStatus) >= i ? "bg-accent" : "bg-muted"
+                ["en_camino", "llegado", "en_viaje", "completado"].indexOf(rideStatus) >= i ? "bg-accent" : "bg-muted"
               }`} />
             </div>
           ))}
         </div>
         <div className="px-4 flex justify-between text-[10px] text-muted-foreground -mt-1 mb-3">
-          <span>En camino</span><span>En viaje</span><span>Completado</span>
+          <span>En camino</span><span>Llegó</span><span>En viaje</span><span>Final</span>
         </div>
 
         {/* Passenger info */}
