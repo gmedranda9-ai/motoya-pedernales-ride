@@ -438,7 +438,7 @@ const PasajeroHome = () => {
                         </div>
 
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
-                          <img src={logoMotoya} alt="" className="w-3.5 h-3.5 object-contain inline-block" />
+                          <span className="text-xs">🏍️</span>
                           {driver.model} · <span className="font-semibold">{driver.plate}</span>
                         </p>
                       </div>
