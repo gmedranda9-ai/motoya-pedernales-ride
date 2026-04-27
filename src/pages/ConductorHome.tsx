@@ -59,7 +59,7 @@ interface ApplicationForm {
 
 const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: string }> = {
   en_camino: { label: "En camino al pasajero", emoji: "🚦", desc: "Dirígete a la ubicación del pasajero" },
-  llegado: { label: "Esperando al pasajero", emoji: "🏍️", desc: "El pasajero confirmó tu llegada — recoge y arranca" },
+  llegado: { label: "Esperando al pasajero", emoji: "🛺", desc: "El pasajero confirmó tu llegada — recoge y arranca" },
   en_viaje: { label: "En viaje 🚀", emoji: "🛣️", desc: "Llevando al pasajero a su destino" },
   completado: { label: "Viaje completado", emoji: "✅", desc: "¡Has completado el viaje!" },
 };
