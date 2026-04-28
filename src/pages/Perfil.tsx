@@ -30,6 +30,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBackButton } from "@/hooks/useBackButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import logoPoseidon from "@/assets/logo-poseidon.png";
 
 interface ConductorData {
   foto: string | null;
@@ -371,6 +372,18 @@ const Perfil = () => {
               <LogOut className="h-4 w-4 mr-2" />
               Cerrar sesión
             </Button>
+          </div>
+
+          <div className="mx-4 mt-8 flex flex-col items-center">
+            <div className="w-full h-px bg-border mb-4" />
+            <img
+              src={logoPoseidon}
+              alt="Poseidon"
+              className="h-16 w-auto opacity-80"
+            />
+            <p className="text-muted-foreground text-[11px] mt-2 opacity-70">
+              Desarrollado por Poseidon
+            </p>
           </div>
         </>
       )}
