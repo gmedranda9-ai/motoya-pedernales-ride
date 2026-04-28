@@ -540,6 +540,50 @@ const ConductorHome = () => {
     motoPhotoUrl: "foto-moto",
   };
 
+  // Carga un File en un HTMLImageElement (detecta corrupción).
+  const loadImageFromBlob = (blob: Blob): Promise<HTMLImageElement> =>
+    new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        if (!img.naturalWidth || !img.naturalHeight) {
+          reject(new Error("Imagen sin dimensiones"));
+          return;
+        }
+        resolve(img);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error("No se pudo decodificar la imagen"));
+      };
+      img.src = url;
+    });
+
+  // Comprime/convierte a JPEG usando canvas. Reduce dimensiones si es muy grande.
+  const compressToJpeg = async (file: File, quality = 0.8, maxDim = 1920): Promise<Blob> => {
+    const img = await loadImageFromBlob(file);
+    let { naturalWidth: w, naturalHeight: h } = img;
+    if (w > maxDim || h > maxDim) {
+      const ratio = Math.min(maxDim / w, maxDim / h);
+      w = Math.round(w * ratio);
+      h = Math.round(h * ratio);
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas no disponible");
+    ctx.drawImage(img, 0, 0, w, h);
+    return new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => (blob ? resolve(blob) : reject(new Error("toBlob falló"))),
+        "image/jpeg",
+        quality
+      );
+    });
+  };
+
   const handleFileSelect = (field: keyof ApplicationForm) => {
     if (!user) {
       toast({ title: "Error", description: "Debes iniciar sesión.", variant: "destructive" });
@@ -547,91 +591,139 @@ const ConductorHome = () => {
     }
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = "image/*";
+    input.accept = "image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif";
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
 
-      // Validar que el archivo no esté vacío
-      if (!file.size || file.size === 0) {
-        toast({
-          title: "Archivo vacío",
-          description: "El archivo seleccionado está vacío. Elige otra foto.",
-          variant: "destructive",
-        });
+      const showError = (msg: string, errMsg = msg) => {
+        setForm((prev) => ({ ...prev, [field]: "" }));
         setUploads((prev) => ({
           ...prev,
-          [field]: { status: "error", progress: 0, error: "Archivo vacío" },
+          [field]: { status: "error", progress: 0, error: errMsg },
         }));
+        toast({ title: "Error", description: msg, variant: "destructive" });
+      };
+
+      // 1) Validaciones iniciales
+      if (!file.size || file.size === 0) {
+        showError("El archivo seleccionado está vacío. Elige otra foto.", "Archivo vacío");
         return;
       }
 
-      // Preview temporal mientras sube
-      const preview = URL.createObjectURL(file);
-      setForm((prev) => ({ ...prev, [field]: preview }));
-      setUploads((prev) => ({ ...prev, [field]: { status: "uploading", progress: 10 } }));
+      const name = (file.name || "").toLowerCase();
+      const type = (file.type || "").toLowerCase();
+      const isHeic = type.includes("heic") || type.includes("heif") || /\.(heic|heif)$/.test(name);
+      const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+      const allowedExt = /\.(jpe?g|png|webp)$/i.test(name);
+      if (!isHeic && !allowedTypes.includes(type) && !allowedExt) {
+        showError("Formato no permitido. Usa JPG, PNG o WEBP.", "Formato no permitido");
+        return;
+      }
 
-      // Simulación de progreso (Supabase JS no expone progress en upload)
+      setUploads((prev) => ({ ...prev, [field]: { status: "uploading", progress: 5 } }));
+
+      // Progreso simulado
       const progressTimer = setInterval(() => {
         setUploads((prev) => {
           const cur = prev[field];
           if (!cur || cur.status !== "uploading") return prev;
-          const next = Math.min(cur.progress + 10, 90);
+          const next = Math.min(cur.progress + 7, 90);
           return { ...prev, [field]: { ...cur, progress: next } };
         });
       }, 200);
 
       try {
+        // 2) HEIC/HEIF → convertir vía canvas (algunos navegadores lo permiten).
+        //    Si el navegador no puede decodificar, lanzará error y se mostrará mensaje claro.
+        let processed: Blob;
+        const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+        if (isHeic) {
+          try {
+            processed = await compressToJpeg(file, 0.8);
+          } catch {
+            clearInterval(progressTimer);
+            showError(
+              "Tu navegador no puede convertir HEIC. Convierte la foto a JPG e intenta de nuevo.",
+              "HEIC no soportado"
+            );
+            return;
+          }
+        } else {
+          // Verificar que la imagen no esté corrupta cargándola
+          try {
+            await loadImageFromBlob(file);
+          } catch {
+            clearInterval(progressTimer);
+            showError(
+              "Error: la foto no se guardó correctamente. Por favor intenta con otra foto.",
+              "Imagen corrupta"
+            );
+            return;
+          }
+          // Si supera 5MB → comprimir
+          if (file.size > MAX_SIZE) {
+            processed = await compressToJpeg(file, 0.8);
+          } else if (type === "image/jpeg" || type === "image/jpg") {
+            processed = file;
+          } else {
+            // Re-encode PNG/WEBP → JPEG para uniformidad
+            processed = await compressToJpeg(file, 0.85);
+          }
+        }
+
+        // 3) Subir a Supabase Storage
         const baseName = STORAGE_PATHS[field as string] || (field as string);
         const path = `${user.id}/${baseName}.jpg`;
-        const arrayBuffer = await file.arrayBuffer();
-
         const { error: upErr } = await supabase.storage
           .from("conductores")
-          .upload(path, arrayBuffer, {
+          .upload(path, processed, {
             upsert: true,
             contentType: "image/jpeg",
             cacheControl: "3600",
           });
 
-        clearInterval(progressTimer);
-
         if (upErr) {
+          clearInterval(progressTimer);
           console.error("❌ Error subiendo foto:", upErr);
-          URL.revokeObjectURL(preview);
-          setForm((prev) => ({ ...prev, [field]: "" }));
-          setUploads((prev) => ({
-            ...prev,
-            [field]: { status: "error", progress: 0, error: upErr.message },
-          }));
-          toast({
-            title: "Error al subir foto",
-            description: "Error al subir foto. Intenta de nuevo",
-            variant: "destructive",
-          });
+          showError("Error: la foto no se guardó correctamente. Por favor intenta con otra foto.", upErr.message);
           return;
         }
 
+        // 4) Verificar accesibilidad pública con HEAD/GET
         const { data: urlData } = supabase.storage.from("conductores").getPublicUrl(path);
-        URL.revokeObjectURL(preview);
-        const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-        setForm((prev) => ({ ...prev, [field]: publicUrl }));
+        const verifyUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+        let verified = false;
+        try {
+          const resp = await fetch(verifyUrl, { method: "GET", cache: "no-store" });
+          verified = resp.ok && resp.status === 200;
+        } catch (e) {
+          console.warn("Verificación falló:", e);
+          verified = false;
+        }
+
+        clearInterval(progressTimer);
+
+        if (!verified) {
+          showError(
+            "Error: la foto no se guardó correctamente. Por favor intenta con otra foto.",
+            "Verificación fallida"
+          );
+          return;
+        }
+
+        // 5) Solo ahora mostramos preview con la URL pública verificada
+        setForm((prev) => ({ ...prev, [field]: verifyUrl }));
         setUploads((prev) => ({ ...prev, [field]: { status: "success", progress: 100 } }));
         toast({ title: "✅ Foto subida correctamente" });
       } catch (err: any) {
         clearInterval(progressTimer);
         console.error("Error inesperado upload:", err);
-        URL.revokeObjectURL(preview);
-        setForm((prev) => ({ ...prev, [field]: "" }));
-        setUploads((prev) => ({
-          ...prev,
-          [field]: { status: "error", progress: 0, error: err?.message },
-        }));
-        toast({
-          title: "Error al subir foto",
-          description: "Error al subir foto. Intenta de nuevo",
-          variant: "destructive",
-        });
+        showError(
+          "Error: la foto no se guardó correctamente. Por favor intenta con otra foto.",
+          err?.message
+        );
       }
     };
     input.click();
