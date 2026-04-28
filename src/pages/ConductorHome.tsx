@@ -39,6 +39,7 @@ import {
   Camera,
   Upload,
   Map as MapIcon,
+  ChevronDown,
 } from "lucide-react";
 import { subscribeToPush, unsubscribeFromPush } from "@/lib/onesignal";
 import { useNotificationPermission } from "@/hooks/useNotificationPermission";
