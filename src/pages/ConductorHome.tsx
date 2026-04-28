@@ -1178,10 +1178,16 @@ const ConductorHome = () => {
 
           {appStatus === "rejected" && (
             <div className="space-y-3">
-              <div className="bg-destructive/10 rounded-xl px-4 py-3 text-center">
-                <span className="text-sm font-bold text-destructive">❌ Postulación rechazada</span>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Tu postulación no fue aprobada. Puedes volver a intentarlo con documentos actualizados.
+              <div className="bg-destructive/10 border border-destructive/30 rounded-xl px-4 py-3 space-y-2">
+                <p className="text-sm font-bold text-destructive text-center">❌ Tu postulación fue rechazada</p>
+                {motivoRechazo ? (
+                  <div className="bg-background/60 rounded-lg p-3">
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Motivo:</p>
+                    <p className="text-sm text-foreground whitespace-pre-wrap break-words">{motivoRechazo}</p>
+                  </div>
+                ) : null}
+                <p className="text-xs text-muted-foreground text-center">
+                  Puedes volver a postularte corrigiendo los documentos indicados.
                 </p>
               </div>
               <Button variant="heroOutline" size="lg" className="w-full rounded-xl" onClick={() => { setAppStatus("none"); setStep("apply"); }}>
