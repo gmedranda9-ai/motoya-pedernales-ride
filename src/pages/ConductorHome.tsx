@@ -89,6 +89,8 @@ const ConductorHome = () => {
   const [totalTrips, setTotalTrips] = useState(0);
   const [monthsActive, setMonthsActive] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [subActiva, setSubActiva] = useState(false);
+  const [subVence, setSubVence] = useState<string | null>(null);
 
   // Load existing application status from Supabase
   useEffect(() => {
@@ -97,7 +99,7 @@ const ConductorHome = () => {
       try {
         const { data, error } = await supabase
           .from("conductores")
-          .select("estado, id, disponible, calificacion_promedio, created_at")
+          .select("estado, id, disponible, calificacion_promedio, created_at, suscripcion_activa, suscripcion_vence")
           .eq("usuario_id", user.id)
           .maybeSingle();
         
@@ -109,6 +111,8 @@ const ConductorHome = () => {
           setConductorId(data.id);
           setAvailable(data.disponible ?? false);
           setRating(Number(data.calificacion_promedio) || 0);
+          setSubActiva(Boolean((data as any).suscripcion_activa));
+          setSubVence((data as any).suscripcion_vence ?? null);
           if (data.created_at) {
             const created = new Date(data.created_at);
             const now = new Date();
@@ -952,6 +956,60 @@ const ConductorHome = () => {
                 <p className="text-[10px] text-muted-foreground">{stat.label}</p>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Plan MotoYa - Suscripción */}
+      {appStatus === "approved" && (
+        <div className="px-4 mt-6">
+          <div className="bg-card rounded-2xl shadow-lg border-2 border-accent/40 overflow-hidden">
+            <div className="gradient-primary px-4 py-3">
+              <h3 className="text-base font-extrabold text-accent">Plan MotoYa</h3>
+              <p className="text-xs text-primary-foreground/80">Suscripción mensual</p>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="text-center">
+                <p className="text-4xl font-extrabold text-foreground">
+                  $8.00 <span className="text-base font-medium text-muted-foreground">/ mes</span>
+                </p>
+              </div>
+              <ul className="space-y-2">
+                {[
+                  "Aparece en lista de pasajeros",
+                  "Recibe solicitudes de viaje",
+                  "Soporte prioritario",
+                  "Panel de estadísticas",
+                ].map((b) => (
+                  <li key={b} className="flex items-start gap-2 text-sm text-foreground">
+                    <span>✅</span>
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {subActiva ? (
+                <div className="bg-green-500/10 border border-green-500/40 rounded-xl px-4 py-3 text-center">
+                  <p className="text-sm font-bold text-green-700 dark:text-green-400">
+                    ✅ Suscripción activa
+                  </p>
+                  {subVence && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Vence el {new Date(subVence).toLocaleDateString("es-EC", { day: "2-digit", month: "long", year: "numeric" })}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <Button
+                  variant="hero"
+                  size="lg"
+                  className="w-full rounded-xl"
+                  onClick={() => window.open("https://ppls.me/bnmUL4mwQgikhhLX3g4drQ", "_blank", "noopener,noreferrer")}
+                >
+                  💳 Suscribirme ahora
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       )}
