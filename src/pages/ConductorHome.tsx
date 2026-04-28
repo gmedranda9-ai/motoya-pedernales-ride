@@ -89,6 +89,8 @@ const ConductorHome = () => {
   const [totalTrips, setTotalTrips] = useState(0);
   const [monthsActive, setMonthsActive] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [subActiva, setSubActiva] = useState(false);
+  const [subVence, setSubVence] = useState<string | null>(null);
 
   // Load existing application status from Supabase
   useEffect(() => {
@@ -97,7 +99,7 @@ const ConductorHome = () => {
       try {
         const { data, error } = await supabase
           .from("conductores")
-          .select("estado, id, disponible, calificacion_promedio, created_at")
+          .select("estado, id, disponible, calificacion_promedio, created_at, suscripcion_activa, suscripcion_vence")
           .eq("usuario_id", user.id)
           .maybeSingle();
         
@@ -109,6 +111,8 @@ const ConductorHome = () => {
           setConductorId(data.id);
           setAvailable(data.disponible ?? false);
           setRating(Number(data.calificacion_promedio) || 0);
+          setSubActiva(Boolean((data as any).suscripcion_activa));
+          setSubVence((data as any).suscripcion_vence ?? null);
           if (data.created_at) {
             const created = new Date(data.created_at);
             const now = new Date();
