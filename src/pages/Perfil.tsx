@@ -31,6 +31,7 @@ import { useBackButton } from "@/hooks/useBackButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import logoPoseidon from "@/assets/logo-poseidon.png";
+import UserAvatar from "@/components/UserAvatar";
 
 interface ConductorData {
   foto: string | null;
@@ -232,17 +233,7 @@ const Perfil = () => {
     <div className="min-h-screen bg-background pb-20">
       <header className="gradient-primary px-4 pt-12 pb-8">
         <div className="flex items-center gap-4">
-          {showRealPhoto ? (
-            <img
-              src={conductor!.foto as string}
-              alt={nombre}
-              className="w-16 h-16 rounded-full object-cover border-2 border-accent"
-            />
-          ) : (
-            <div className="w-16 h-16 rounded-full bg-accent/20 border-2 border-accent flex items-center justify-center">
-              <span className="text-2xl font-bold text-accent">{inicial}</span>
-            </div>
-          )}
+          <UserAvatar foto={role === "conductor" ? conductor?.foto : null} nombre={nombre || email} size="md" />
           <div className="min-w-0">
             <h1 className="text-lg font-extrabold text-primary-foreground truncate">
               {nombre || "Usuario"}
@@ -428,17 +419,7 @@ const Perfil = () => {
           <div className="space-y-4">
             {/* Avatar + subir foto */}
             <div className="flex flex-col items-center gap-2">
-              {showRealPhoto ? (
-                <img
-                  src={conductor!.foto as string}
-                  alt={nombre}
-                  className="w-20 h-20 rounded-full object-cover border-2 border-accent"
-                />
-              ) : (
-                <div className="w-20 h-20 rounded-full bg-accent/20 border-2 border-accent flex items-center justify-center">
-                  <span className="text-3xl font-bold text-accent">{inicial}</span>
-                </div>
-              )}
+              <UserAvatar foto={role === "conductor" ? conductor?.foto : null} nombre={nombre || email} size="md" className="w-20 h-20" />
               <Button
                 type="button"
                 variant="outline"

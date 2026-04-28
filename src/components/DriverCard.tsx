@@ -1,6 +1,7 @@
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import UserAvatar from "@/components/UserAvatar";
 
 
 export interface Driver {
@@ -26,19 +27,8 @@ const DriverCard = ({ driver, onRequest }: DriverCardProps) => {
   return (
     <div className="bg-card rounded-2xl shadow-md p-4 border border-border animate-slide-up">
       <div className="flex items-center gap-4">
-        {photo && !photo.includes("placeholder") && !photo.includes("logo-motoya") ? (
-          <img
-            src={photo}
-            alt={name}
-            className="w-20 h-20 rounded-full object-cover border-[3px] border-accent flex-shrink-0 shadow-md"
-          />
-        ) : (
-          <div className="w-20 h-20 rounded-full bg-primary border-[3px] border-accent flex items-center justify-center flex-shrink-0 shadow-md">
-            <span className="text-3xl font-extrabold text-accent">
-              {(name || "?").trim().charAt(0).toUpperCase()}
-            </span>
-          </div>
-        )}
+        <UserAvatar foto={photo} nombre={name} size="md" className="w-20 h-20" />
+
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
             <h3 className="font-bold text-foreground truncate">{name}</h3>

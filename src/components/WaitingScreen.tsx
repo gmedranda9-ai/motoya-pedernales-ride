@@ -3,6 +3,7 @@ import { Loader2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { Driver } from "@/components/DriverCard";
+import UserAvatar from "@/components/UserAvatar";
 
 interface WaitingScreenProps {
   driver: Driver;
@@ -126,13 +127,9 @@ const WaitingScreen = ({ driver, destination, onCancel, onTimeout, onAccepted, e
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center px-6 animate-fade-in">
       <div className="text-center space-y-6 max-w-sm">
-        <div className="relative mx-auto w-28 h-28">
-          <img
-            src={driver.photo}
-            alt={driver.name}
-            className="w-24 h-24 rounded-full object-cover border-4 border-accent mx-auto"
-          />
-          <div className="absolute -bottom-1 -right-1 bg-accent rounded-full p-1.5 animate-pulse">
+        <div className="relative mx-auto w-28 h-28 flex items-center justify-center">
+          <UserAvatar foto={driver.photo} nombre={driver.name} size="lg" className="w-24 h-24" />
+          <div className="absolute bottom-1 right-1 bg-accent rounded-full p-1.5 animate-pulse">
             <Loader2 className="h-4 w-4 text-accent-foreground animate-spin" />
           </div>
         </div>

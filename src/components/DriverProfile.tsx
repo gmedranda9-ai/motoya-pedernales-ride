@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import type { Driver } from "@/components/DriverCard";
+import UserAvatar from "@/components/UserAvatar";
 
 interface DriverProfileProps {
   driver: Driver;
@@ -127,19 +128,14 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost }: DriverProf
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          {showRealPhoto ? (
-            <img
-              src={driver.photo}
-              alt={driver.name}
-              className="w-36 h-36 rounded-full object-cover border-4 border-accent mx-auto mb-4 shadow-xl"
+          <div className="flex justify-center mb-4">
+            <UserAvatar
+              foto={driver.photo}
+              nombre={driver.name}
+              size="lg"
+              className="w-36 h-36 border-4 shadow-xl"
             />
-          ) : (
-            <div className="w-36 h-36 rounded-full bg-primary border-4 border-accent mx-auto mb-4 flex items-center justify-center shadow-xl">
-              <span className="text-6xl font-extrabold text-accent leading-none">
-                {initial}
-              </span>
-            </div>
-          )}
+          </div>
           <h2 className="text-xl font-extrabold text-primary-foreground">
             {driver.name}
           </h2>

@@ -9,6 +9,7 @@ import { useRideChat } from "@/hooks/useRideChat";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import logoMotoya from "@/assets/logo-motoya.png";
+import UserAvatar from "@/components/UserAvatar";
 
 type RideStatus = "en_camino" | "llegado" | "en_viaje" | "completado";
 
@@ -234,13 +235,7 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
       {/* Driver info */}
       <div className="px-4">
         <div className="bg-card rounded-2xl border border-border p-4 flex items-center gap-4">
-          {hasPhoto ? (
-            <img src={driver.photo} alt={firstName} className="w-20 h-20 rounded-full object-cover border-[3px] border-accent flex-shrink-0 shadow-md" />
-          ) : (
-            <div className="w-20 h-20 rounded-full bg-primary border-[3px] border-accent flex items-center justify-center flex-shrink-0 shadow-md">
-              <span className="text-3xl font-extrabold text-accent">{initial}</span>
-            </div>
-          )}
+          <UserAvatar foto={driver.photo} nombre={firstName} size="md" className="w-20 h-20" />
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-foreground truncate">{firstName}</h3>
             <p className="text-xs text-muted-foreground flex items-center gap-1">

@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, MapPin, Star, XCircle, ExternalLink } from "lucide-react";
+import UserAvatar from "@/components/UserAvatar";
 
 export interface IncomingRideRequest {
   id: string;
@@ -257,11 +258,7 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
             <h2 className="text-lg font-extrabold text-foreground">¡Nueva solicitud de viaje!</h2>
 
             <div className="flex items-center justify-center gap-3">
-              <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center border-2 border-accent flex-shrink-0">
-                <span className="text-2xl font-extrabold text-primary-foreground">
-                  {incomingRequest.passengerName.charAt(0).toUpperCase()}
-                </span>
-              </div>
+              <UserAvatar nombre={incomingRequest.passengerName} size="md" />
               <div className="text-left">
                 <p className="font-bold text-foreground">{incomingRequest.passengerName}</p>
                 {incomingRequest.passengerTrips < 3 ? (
