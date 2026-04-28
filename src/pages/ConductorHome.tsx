@@ -184,7 +184,7 @@ const ConductorHome = () => {
 
       const list = (data as any[]) || [];
       const viajes = list.length;
-      const ingresos = viajes * 6.0;
+      const ingresos = viajes * 1.0;
       const ratings = list
         .map((v) => Number(v.calificacion_pasajero))
         .filter((r) => !isNaN(r) && r > 0);
