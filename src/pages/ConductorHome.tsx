@@ -1441,10 +1441,12 @@ const ConductorHome = () => {
         <DialogContent className="max-w-sm rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-extrabold text-foreground text-center">
-              Plan MotoYa $6.00/mes
+              🔒 Suscripción requerida
             </DialogTitle>
             <DialogDescription className="text-center">
-              Activa tu plan para empezar a recibir viajes
+              Necesitas una suscripción activa para recibir viajes.
+              <br />
+              <span className="font-bold text-foreground">Plan MotoYa: $6.00/mes</span>
             </DialogDescription>
           </DialogHeader>
           <ul className="space-y-2 py-2">
@@ -1453,7 +1455,6 @@ const ConductorHome = () => {
               "Recibe solicitudes de viaje",
               "Soporte prioritario",
               "Panel de estadísticas",
-              "Reporte diario de ingresos",
             ].map((b) => (
               <li key={b} className="flex items-start gap-2 text-sm text-foreground">
                 <span>✅</span>
@@ -1461,17 +1462,27 @@ const ConductorHome = () => {
               </li>
             ))}
           </ul>
-          <Button
-            variant="hero"
-            size="lg"
-            className="w-full rounded-xl"
-            onClick={() => {
-              window.open("https://ppls.me/zmZ5khhGGQFnW0pTrhtPA", "_blank", "noopener,noreferrer");
-              setPlanOpen(false);
-            }}
-          >
-            💳 Suscribirme ahora
-          </Button>
+          <div className="space-y-2">
+            <Button
+              variant="hero"
+              size="lg"
+              className="w-full rounded-xl"
+              onClick={() => {
+                window.open("https://ppls.me/zmZ5khhGGQFnW0pTrhtPA", "_blank", "noopener,noreferrer");
+                setPlanOpen(false);
+              }}
+            >
+              💳 Suscribirme ahora
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full rounded-xl"
+              onClick={() => setPlanOpen(false)}
+            >
+              Cerrar
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
