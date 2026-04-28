@@ -103,9 +103,12 @@ const ConductoresTab = () => {
 
   const filtered = items.filter((i) => (i.estado || "pendiente") === filter);
 
-  const updateEstado = async (id: string, estado: "aprobado" | "rechazado") => {
+  const updateEstado = async (id: string, estado: "aprobado" | "rechazado", motivo?: string) => {
     setActing(id);
-    const { error } = await supabase.from("conductores").update({ estado }).eq("id", id);
+    const payload: any = { estado };
+    if (estado === "rechazado") payload.motivo_rechazo = motivo || null;
+    if (estado === "aprobado") payload.motivo_rechazo = null;
+    const { error } = await supabase.from("conductores").update(payload).eq("id", id);
     setActing(null);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -113,6 +116,18 @@ const ConductoresTab = () => {
     }
     toast({ title: estado === "aprobado" ? "✅ Conductor aprobado" : "❌ Conductor rechazado" });
     load();
+  };
+
+  const confirmReject = async () => {
+    if (!rejectTarget) return;
+    const motivo = rejectReason.trim();
+    if (!motivo) {
+      toast({ title: "Motivo requerido", description: "Escribe el motivo del rechazo.", variant: "destructive" });
+      return;
+    }
+    await updateEstado(rejectTarget.id, "rechazado", motivo);
+    setRejectTarget(null);
+    setRejectReason("");
   };
 
   return (
