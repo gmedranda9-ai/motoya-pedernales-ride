@@ -541,25 +541,31 @@ const ConductorHome = () => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
 
-      // Preview inmediato con blob mientras sube
+      // Preview temporal mientras sube (se reemplaza por URL real o se limpia si falla)
       const preview = URL.createObjectURL(file);
       setForm((prev) => ({ ...prev, [field]: preview }));
 
       try {
-        const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
         const baseName = STORAGE_PATHS[field as string] || (field as string);
-        const path = `${user.id}/${baseName}.${ext}`;
+        // Forzar siempre .jpg para tener una ruta estable por usuario
+        const path = `${user.id}/${baseName}.jpg`;
+
+        // Convertir a ArrayBuffer y subir como image/jpeg
+        const arrayBuffer = await file.arrayBuffer();
 
         const { error: upErr } = await supabase.storage
           .from("conductores")
-          .upload(path, file, {
-            cacheControl: "3600",
+          .upload(path, arrayBuffer, {
             upsert: true,
-            contentType: file.type || "image/jpeg",
+            contentType: "image/jpeg",
+            cacheControl: "3600",
           });
 
         if (upErr) {
           console.error("❌ Error subiendo foto:", upErr);
+          // Limpiar preview blob para no guardarlo nunca en BD
+          URL.revokeObjectURL(preview);
+          setForm((prev) => ({ ...prev, [field]: "" }));
           toast({
             title: "Error subiendo foto",
             description: upErr.message,
@@ -568,13 +574,19 @@ const ConductorHome = () => {
           return;
         }
 
-        const { data: pub } = supabase.storage.from("conductores").getPublicUrl(path);
-        // Bust cache para que se vea la nueva al re-subir
-        const publicUrl = `${pub.publicUrl}?t=${Date.now()}`;
+        const { data: urlData } = supabase.storage
+          .from("conductores")
+          .getPublicUrl(path);
+
+        URL.revokeObjectURL(preview);
+        // Bust cache para mostrar la nueva versión al re-subir
+        const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
         setForm((prev) => ({ ...prev, [field]: publicUrl }));
         toast({ title: "✅ Foto subida" });
       } catch (err: any) {
         console.error("Error inesperado upload:", err);
+        URL.revokeObjectURL(preview);
+        setForm((prev) => ({ ...prev, [field]: "" }));
         toast({
           title: "Error inesperado",
           description: err?.message || "No se pudo subir la foto",
@@ -597,6 +609,17 @@ const ConductorHome = () => {
     }
     if (!user) {
       toast({ title: "Error", description: "Debes iniciar sesión.", variant: "destructive" });
+      return;
+    }
+
+    // Nunca enviar URLs blob:// a la base de datos
+    const isBlob = (u?: string) => !!u && u.startsWith("blob:");
+    if (isBlob(form.photoUrl) || isBlob(form.cedulaPhotoUrl) || isBlob(form.motoPhotoUrl)) {
+      toast({
+        title: "Fotos no subidas",
+        description: "Espera a que terminen de subir las fotos o vuelve a intentarlo.",
+        variant: "destructive",
+      });
       return;
     }
 
