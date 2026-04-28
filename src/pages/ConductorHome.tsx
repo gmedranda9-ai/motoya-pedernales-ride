@@ -100,6 +100,13 @@ const ConductorHome = () => {
   const [subActiva, setSubActiva] = useState(false);
   const [subVence, setSubVence] = useState<string | null>(null);
   const [planOpen, setPlanOpen] = useState(false);
+  const [reporteOpen, setReporteOpen] = useState(false);
+  const [reporte, setReporte] = useState<{
+    viajes: number;
+    ingresos: number;
+    rating: number;
+    horaPico: string | null;
+  }>({ viajes: 0, ingresos: 0, rating: 0, horaPico: null });
 
   // Load existing application status from Supabase
   useEffect(() => {
