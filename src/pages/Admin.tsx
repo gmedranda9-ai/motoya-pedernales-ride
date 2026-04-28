@@ -68,6 +68,8 @@ const ConductoresTab = () => {
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<{ id: string; nombre: string } | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   const load = async () => {
     setLoading(true);
