@@ -7,13 +7,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRideChat } from "@/hooks/useRideChat";
 
 interface Conversation {
-  viaje_id: string;
+  viajeIds: string[];
   otherKey: string;
   otherName: string;
   lastMsg: string;
   time: string;
   iso: string;
   unread: number;
+}
+
+interface ChatMessage {
+  id: string;
+  viaje_id: string;
+  remitente_id: string;
+  texto: string;
+  hora: string;
 }
 
 const formatTime = (iso: string) => {
