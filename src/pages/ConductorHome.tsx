@@ -960,6 +960,60 @@ const ConductorHome = () => {
         </div>
       )}
 
+      {/* Plan MotoYa - Suscripción */}
+      {appStatus === "approved" && (
+        <div className="px-4 mt-6">
+          <div className="bg-card rounded-2xl shadow-lg border-2 border-accent/40 overflow-hidden">
+            <div className="gradient-primary px-4 py-3">
+              <h3 className="text-base font-extrabold text-accent">Plan MotoYa</h3>
+              <p className="text-xs text-primary-foreground/80">Suscripción mensual</p>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="text-center">
+                <p className="text-4xl font-extrabold text-foreground">
+                  $8.00 <span className="text-base font-medium text-muted-foreground">/ mes</span>
+                </p>
+              </div>
+              <ul className="space-y-2">
+                {[
+                  "Aparece en lista de pasajeros",
+                  "Recibe solicitudes de viaje",
+                  "Soporte prioritario",
+                  "Panel de estadísticas",
+                ].map((b) => (
+                  <li key={b} className="flex items-start gap-2 text-sm text-foreground">
+                    <span>✅</span>
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {subActiva ? (
+                <div className="bg-green-500/10 border border-green-500/40 rounded-xl px-4 py-3 text-center">
+                  <p className="text-sm font-bold text-green-700 dark:text-green-400">
+                    ✅ Suscripción activa
+                  </p>
+                  {subVence && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Vence el {new Date(subVence).toLocaleDateString("es-EC", { day: "2-digit", month: "long", year: "numeric" })}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <Button
+                  variant="hero"
+                  size="lg"
+                  className="w-full rounded-xl"
+                  onClick={() => window.open("https://ppls.me/bnmUL4mwQgikhhLX3g4drQ", "_blank", "noopener,noreferrer")}
+                >
+                  💳 Suscribirme ahora
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Tips */}
       <div className="px-4 mt-6 mb-4">
         <h3 className="text-sm font-bold text-foreground mb-3">Consejos</h3>
