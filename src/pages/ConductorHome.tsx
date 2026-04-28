@@ -699,11 +699,15 @@ const ConductorHome = () => {
         foto_cedula: form.cedulaPhotoUrl || null,
         foto_moto: form.motoPhotoUrl || null,
         estado: "pendiente",
+        motivo_rechazo: null,
       };
 
-      console.log("📤 Datos enviados a Supabase (conductores):", JSON.stringify(insertData, null, 2));
+      console.log("📤 Datos enviados a Supabase (conductores) [upsert]:", JSON.stringify(insertData, null, 2));
 
-      const { data, error } = await supabase.from("conductores").insert(insertData).select();
+      const { data, error } = await supabase
+        .from("conductores")
+        .upsert(insertData, { onConflict: "usuario_id" })
+        .select();
 
       if (error) {
         console.error("❌ Error al guardar postulación:", {
