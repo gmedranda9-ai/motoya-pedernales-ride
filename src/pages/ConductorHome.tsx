@@ -268,6 +268,11 @@ const ConductorHome = () => {
     if (!user) return;
 
     if (value) {
+      // Require active subscription BEFORE allowing toggle on.
+      if (!subActiva) {
+        setPlanOpen(true);
+        return;
+      }
       // Require notification permission BEFORE flipping the toggle on.
       refreshNotif();
       if (notifBlocked) {
