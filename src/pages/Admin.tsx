@@ -68,6 +68,8 @@ const ConductoresTab = () => {
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<{ id: string; nombre: string } | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -101,9 +103,12 @@ const ConductoresTab = () => {
 
   const filtered = items.filter((i) => (i.estado || "pendiente") === filter);
 
-  const updateEstado = async (id: string, estado: "aprobado" | "rechazado") => {
+  const updateEstado = async (id: string, estado: "aprobado" | "rechazado", motivo?: string) => {
     setActing(id);
-    const { error } = await supabase.from("conductores").update({ estado }).eq("id", id);
+    const payload: any = { estado };
+    if (estado === "rechazado") payload.motivo_rechazo = motivo || null;
+    if (estado === "aprobado") payload.motivo_rechazo = null;
+    const { error } = await supabase.from("conductores").update(payload).eq("id", id);
     setActing(null);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -111,6 +116,18 @@ const ConductoresTab = () => {
     }
     toast({ title: estado === "aprobado" ? "✅ Conductor aprobado" : "❌ Conductor rechazado" });
     load();
+  };
+
+  const confirmReject = async () => {
+    if (!rejectTarget) return;
+    const motivo = rejectReason.trim();
+    if (!motivo) {
+      toast({ title: "Motivo requerido", description: "Escribe el motivo del rechazo.", variant: "destructive" });
+      return;
+    }
+    await updateEstado(rejectTarget.id, "rechazado", motivo);
+    setRejectTarget(null);
+    setRejectReason("");
   };
 
   return (
@@ -262,7 +279,7 @@ const ConductoresTab = () => {
                     <Button
                       variant="outline"
                       className="rounded-xl border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                      onClick={() => updateEstado(c.id, "rechazado")}
+                      onClick={() => { setRejectReason(""); setRejectTarget({ id: c.id, nombre: c.nombre || "este conductor" }); }}
                       disabled={acting === c.id}
                     >
                       {acting === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (<><XCircle className="h-4 w-4 mr-1" /> Rechazar</>)}
@@ -332,6 +349,73 @@ const ConductoresTab = () => {
             className="max-w-full max-h-full object-contain rounded-lg"
             onClick={(e) => e.stopPropagation()}
           />
+        </div>
+      )}
+
+      {/* Modal de rechazo con motivo */}
+      {rejectTarget && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 flex items-end sm:items-center justify-center p-4"
+          onClick={() => { if (acting !== rejectTarget.id) { setRejectTarget(null); setRejectReason(""); } }}
+        >
+          <div
+            className="bg-card rounded-2xl border border-border w-full max-w-md p-5 space-y-4 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div>
+              <h3 className="text-base font-bold text-foreground">¿Por qué rechazas esta postulación?</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                {rejectTarget.nombre} verá este motivo y podrá volver a postular corrigiendo lo indicado.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                "Foto de perfil no visible",
+                "Foto de cédula ilegible",
+                "Placa no coincide con foto",
+                "Datos incompletos",
+                "Foto de moto no muestra la placa",
+              ].map((sug) => (
+                <button
+                  key={sug}
+                  type="button"
+                  onClick={() => setRejectReason(sug)}
+                  className="text-[11px] px-2.5 py-1 rounded-full bg-muted hover:bg-muted/70 text-foreground border border-border"
+                >
+                  {sug}
+                </button>
+              ))}
+            </div>
+
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value.slice(0, 500))}
+              placeholder="Escribe el motivo del rechazo…"
+              rows={4}
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent resize-none"
+            />
+            <p className="text-[10px] text-muted-foreground text-right">{rejectReason.length}/500</p>
+
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                className="rounded-xl"
+                onClick={() => { setRejectTarget(null); setRejectReason(""); }}
+                disabled={acting === rejectTarget.id}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="outline"
+                className="rounded-xl border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                onClick={confirmReject}
+                disabled={acting === rejectTarget.id || !rejectReason.trim()}
+              >
+                {acting === rejectTarget.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirmar rechazo ❌"}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -95,6 +95,7 @@ const ConductorHome = () => {
 
   const [step, setStep] = useState<Step>("panel");
   const [appStatus, setAppStatus] = useState<ApplicationStatus>("none");
+  const [motivoRechazo, setMotivoRechazo] = useState<string | null>(null);
   const [available, setAvailable] = useState(false);
   const [conductorId, setConductorId] = useState<string | null>(null);
   const [rating, setRating] = useState(0);
@@ -125,7 +126,7 @@ const ConductorHome = () => {
       try {
         const { data, error } = await supabase
           .from("conductores")
-          .select("estado, id, disponible, calificacion_promedio, created_at, suscripcion_activa, suscripcion_vence")
+          .select("estado, id, disponible, calificacion_promedio, created_at, suscripcion_activa, suscripcion_vence, motivo_rechazo")
           .eq("usuario_id", user.id)
           .maybeSingle();
         
@@ -161,6 +162,7 @@ const ConductorHome = () => {
             rechazado: "rejected",
           };
           setAppStatus(statusMap[data.estado] || "pending");
+          setMotivoRechazo((data as any).motivo_rechazo ?? null);
         }
       } catch (err) {
         console.error("Unexpected error loading conductor:", err);
@@ -1176,10 +1178,16 @@ const ConductorHome = () => {
 
           {appStatus === "rejected" && (
             <div className="space-y-3">
-              <div className="bg-destructive/10 rounded-xl px-4 py-3 text-center">
-                <span className="text-sm font-bold text-destructive">❌ Postulación rechazada</span>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Tu postulación no fue aprobada. Puedes volver a intentarlo con documentos actualizados.
+              <div className="bg-destructive/10 border border-destructive/30 rounded-xl px-4 py-3 space-y-2">
+                <p className="text-sm font-bold text-destructive text-center">❌ Tu postulación fue rechazada</p>
+                {motivoRechazo ? (
+                  <div className="bg-background/60 rounded-lg p-3">
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Motivo:</p>
+                    <p className="text-sm text-foreground whitespace-pre-wrap break-words">{motivoRechazo}</p>
+                  </div>
+                ) : null}
+                <p className="text-xs text-muted-foreground text-center">
+                  Puedes volver a postularte corrigiendo los documentos indicados.
                 </p>
               </div>
               <Button variant="heroOutline" size="lg" className="w-full rounded-xl" onClick={() => { setAppStatus("none"); setStep("apply"); }}>
