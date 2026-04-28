@@ -682,74 +682,7 @@ const PasajeroHome = () => {
         </div>
       </div>
 
-      {/* Cómo funciona */}
-      <div className="px-4 mt-6">
-        <h3 className="text-sm font-bold text-foreground mb-3">
-          ¿Cómo usar MotoYa?
-        </h3>
-        <div className="bg-card rounded-2xl border border-border p-4 shadow-sm">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex flex-col items-center text-center flex-1">
-              <span className="text-3xl mb-1">1️⃣</span>
-              <p className="text-[11px] font-medium text-foreground leading-tight">
-                Elige destino
-              </p>
-            </div>
-            <span className="text-accent text-xl font-bold">→</span>
-            <div className="flex flex-col items-center text-center flex-1">
-              <span className="text-3xl mb-1">2️⃣</span>
-              <p className="text-[11px] font-medium text-foreground leading-tight">
-                Elige conductor
-              </p>
-            </div>
-            <span className="text-accent text-xl font-bold">→</span>
-            <div className="flex flex-col items-center text-center flex-1">
-              <span className="text-3xl mb-1">3️⃣</span>
-              <p className="text-[11px] font-medium text-foreground leading-tight">
-                Viaja seguro
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Frequent Destinations (collapsible) */}
-      <div className="px-4 mt-6">
-        <button
-          onClick={() => setDestinationsOpen((v) => !v)}
-          className="flex items-center justify-between w-full text-left py-2"
-          aria-expanded={destinationsOpen}
-        >
-          <span className="text-sm font-bold text-foreground">
-            📍 Destinos frecuentes
-          </span>
-          <span
-            className={`text-foreground transition-transform duration-200 ${
-              destinationsOpen ? "rotate-180" : ""
-            }`}
-          >
-            ▼
-          </span>
-        </button>
-
-        {destinationsOpen && (
-          <div className="grid grid-cols-2 gap-2 mt-2 animate-fade-in">
-            {FREQUENT_DESTINATIONS.map((place) => (
-              <button
-                key={place}
-                onClick={() => {
-                  setDestination(place);
-                  setDestinationsOpen(false);
-                }}
-                className="flex items-center gap-2 text-left py-2.5 px-3 rounded-xl bg-muted hover:bg-muted/70 transition-colors"
-              >
-                <MapPin className="h-4 w-4 text-accent flex-shrink-0" />
-                <span className="text-xs text-foreground leading-tight">{place}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
 
       {/* Why MotoYa */}
       <div className="px-4 mt-6 mb-4">
