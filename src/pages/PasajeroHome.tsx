@@ -610,7 +610,7 @@ const PasajeroHome = () => {
             onClick={handleSearch}
             disabled={!canSearch}
           >
-            🔍 Buscar mototaxis disponibles
+            🛺 Ver conductores disponibles
           </Button>
 
           {!canSearch && (
