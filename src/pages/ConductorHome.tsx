@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +42,8 @@ import {
   Upload,
   Map as MapIcon,
   ChevronDown,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 import { subscribeToPush, unsubscribeFromPush } from "@/lib/onesignal";
 import { useNotificationPermission } from "@/hooks/useNotificationPermission";
@@ -98,6 +101,12 @@ const ConductorHome = () => {
   const [totalTrips, setTotalTrips] = useState(0);
   const [monthsActive, setMonthsActive] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  type UploadState = { status: "idle" | "uploading" | "success" | "error"; progress: number; error?: string };
+  const [uploads, setUploads] = useState<Record<string, UploadState>>({
+    photoUrl: { status: "idle", progress: 0 },
+    cedulaPhotoUrl: { status: "idle", progress: 0 },
+    motoPhotoUrl: { status: "idle", progress: 0 },
+  });
   const [subActiva, setSubActiva] = useState(false);
   const [subVence, setSubVence] = useState<string | null>(null);
   const [planOpen, setPlanOpen] = useState(false);
@@ -541,16 +550,38 @@ const ConductorHome = () => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
 
-      // Preview temporal mientras sube (se reemplaza por URL real o se limpia si falla)
+      // Validar que el archivo no esté vacío
+      if (!file.size || file.size === 0) {
+        toast({
+          title: "Archivo vacío",
+          description: "El archivo seleccionado está vacío. Elige otra foto.",
+          variant: "destructive",
+        });
+        setUploads((prev) => ({
+          ...prev,
+          [field]: { status: "error", progress: 0, error: "Archivo vacío" },
+        }));
+        return;
+      }
+
+      // Preview temporal mientras sube
       const preview = URL.createObjectURL(file);
       setForm((prev) => ({ ...prev, [field]: preview }));
+      setUploads((prev) => ({ ...prev, [field]: { status: "uploading", progress: 10 } }));
+
+      // Simulación de progreso (Supabase JS no expone progress en upload)
+      const progressTimer = setInterval(() => {
+        setUploads((prev) => {
+          const cur = prev[field];
+          if (!cur || cur.status !== "uploading") return prev;
+          const next = Math.min(cur.progress + 10, 90);
+          return { ...prev, [field]: { ...cur, progress: next } };
+        });
+      }, 200);
 
       try {
         const baseName = STORAGE_PATHS[field as string] || (field as string);
-        // Forzar siempre .jpg para tener una ruta estable por usuario
         const path = `${user.id}/${baseName}.jpg`;
-
-        // Convertir a ArrayBuffer y subir como image/jpeg
         const arrayBuffer = await file.arrayBuffer();
 
         const { error: upErr } = await supabase.storage
@@ -561,35 +592,42 @@ const ConductorHome = () => {
             cacheControl: "3600",
           });
 
+        clearInterval(progressTimer);
+
         if (upErr) {
           console.error("❌ Error subiendo foto:", upErr);
-          // Limpiar preview blob para no guardarlo nunca en BD
           URL.revokeObjectURL(preview);
           setForm((prev) => ({ ...prev, [field]: "" }));
+          setUploads((prev) => ({
+            ...prev,
+            [field]: { status: "error", progress: 0, error: upErr.message },
+          }));
           toast({
-            title: "Error subiendo foto",
-            description: upErr.message,
+            title: "Error al subir foto",
+            description: "Error al subir foto. Intenta de nuevo",
             variant: "destructive",
           });
           return;
         }
 
-        const { data: urlData } = supabase.storage
-          .from("conductores")
-          .getPublicUrl(path);
-
+        const { data: urlData } = supabase.storage.from("conductores").getPublicUrl(path);
         URL.revokeObjectURL(preview);
-        // Bust cache para mostrar la nueva versión al re-subir
         const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
         setForm((prev) => ({ ...prev, [field]: publicUrl }));
-        toast({ title: "✅ Foto subida" });
+        setUploads((prev) => ({ ...prev, [field]: { status: "success", progress: 100 } }));
+        toast({ title: "✅ Foto subida correctamente" });
       } catch (err: any) {
+        clearInterval(progressTimer);
         console.error("Error inesperado upload:", err);
         URL.revokeObjectURL(preview);
         setForm((prev) => ({ ...prev, [field]: "" }));
+        setUploads((prev) => ({
+          ...prev,
+          [field]: { status: "error", progress: 0, error: err?.message },
+        }));
         toast({
-          title: "Error inesperado",
-          description: err?.message || "No se pudo subir la foto",
+          title: "Error al subir foto",
+          description: "Error al subir foto. Intenta de nuevo",
           variant: "destructive",
         });
       }
@@ -618,6 +656,30 @@ const ConductorHome = () => {
       toast({
         title: "Fotos no subidas",
         description: "Espera a que terminen de subir las fotos o vuelve a intentarlo.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Bloquear si alguna subida está en curso o falló
+    const anyUploading = Object.values(uploads).some((u) => u.status === "uploading");
+    if (anyUploading) {
+      toast({
+        title: "Subida en progreso",
+        description: "Espera a que terminen de subir todas las fotos.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const anyError = Object.values(uploads).some((u) => u.status === "error");
+    const allRequiredUploaded =
+      uploads.photoUrl.status === "success" &&
+      uploads.cedulaPhotoUrl.status === "success" &&
+      uploads.motoPhotoUrl.status === "success";
+    if (anyError || !allRequiredUploaded || !form.photoUrl || !form.cedulaPhotoUrl || !form.motoPhotoUrl) {
+      toast({
+        title: "Fotos incompletas",
+        description: "Una o más fotos no se subieron correctamente. Vuelve a intentarlo.",
         variant: "destructive",
       });
       return;
@@ -874,10 +936,16 @@ const ConductorHome = () => {
             <Label className="text-sm font-bold text-foreground mb-2 block">Foto personal *</Label>
             <button
               onClick={() => handleFileSelect("photoUrl")}
-              className="w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl py-6 hover:border-accent transition-colors"
+              disabled={uploads.photoUrl.status === "uploading"}
+              className="w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl py-6 hover:border-accent transition-colors disabled:opacity-60"
             >
-              {form.photoUrl ? (
-                <img src={form.photoUrl} alt="Foto personal" className="w-20 h-20 rounded-full object-cover border-2 border-accent" />
+              {form.photoUrl && uploads.photoUrl.status === "success" ? (
+                <div className="relative">
+                  <img src={form.photoUrl} alt="Foto personal" className="w-20 h-20 rounded-full object-cover border-2 border-accent" />
+                  <CheckCircle2 className="h-6 w-6 text-green-500 bg-background rounded-full absolute -bottom-1 -right-1" />
+                </div>
+              ) : uploads.photoUrl.status === "uploading" ? (
+                <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
               ) : (
                 <>
                   <Camera className="h-8 w-8 text-muted-foreground" />
@@ -885,6 +953,18 @@ const ConductorHome = () => {
                 </>
               )}
             </button>
+            {uploads.photoUrl.status === "uploading" && (
+              <div className="mt-2 space-y-1">
+                <Progress value={uploads.photoUrl.progress} className="h-2" />
+                <p className="text-[11px] text-muted-foreground text-center">Subiendo... {uploads.photoUrl.progress}%</p>
+              </div>
+            )}
+            {uploads.photoUrl.status === "error" && (
+              <div className="mt-2 flex items-center gap-1.5 text-destructive">
+                <AlertCircle className="h-4 w-4" />
+                <p className="text-xs font-medium">Error al subir foto. Intenta de nuevo</p>
+              </div>
+            )}
           </div>
 
           {/* Cédula */}
@@ -903,10 +983,16 @@ const ConductorHome = () => {
               <Label className="text-sm font-bold text-foreground mb-1.5 block">Foto de la cédula *</Label>
               <button
                 onClick={() => handleFileSelect("cedulaPhotoUrl")}
-                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl py-4 hover:border-accent transition-colors"
+                disabled={uploads.cedulaPhotoUrl.status === "uploading"}
+                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl py-4 hover:border-accent transition-colors disabled:opacity-60"
               >
-                {form.cedulaPhotoUrl ? (
-                  <img src={form.cedulaPhotoUrl} alt="Cédula" className="h-20 rounded-lg object-cover" />
+                {form.cedulaPhotoUrl && uploads.cedulaPhotoUrl.status === "success" ? (
+                  <div className="relative">
+                    <img src={form.cedulaPhotoUrl} alt="Cédula" className="h-20 rounded-lg object-cover" />
+                    <CheckCircle2 className="h-5 w-5 text-green-500 bg-background rounded-full absolute -top-1 -right-1" />
+                  </div>
+                ) : uploads.cedulaPhotoUrl.status === "uploading" ? (
+                  <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
                 ) : (
                   <>
                     <Upload className="h-5 w-5 text-muted-foreground" />
@@ -914,6 +1000,18 @@ const ConductorHome = () => {
                   </>
                 )}
               </button>
+              {uploads.cedulaPhotoUrl.status === "uploading" && (
+                <div className="mt-2 space-y-1">
+                  <Progress value={uploads.cedulaPhotoUrl.progress} className="h-2" />
+                  <p className="text-[11px] text-muted-foreground text-center">Subiendo... {uploads.cedulaPhotoUrl.progress}%</p>
+                </div>
+              )}
+              {uploads.cedulaPhotoUrl.status === "error" && (
+                <div className="mt-2 flex items-center gap-1.5 text-destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <p className="text-xs font-medium">Error al subir foto. Intenta de nuevo</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -963,10 +1061,16 @@ const ConductorHome = () => {
               <Label className="text-xs text-muted-foreground mb-1.5 block">Foto de la moto (placa visible) *</Label>
               <button
                 onClick={() => handleFileSelect("motoPhotoUrl")}
-                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl py-4 hover:border-accent transition-colors"
+                disabled={uploads.motoPhotoUrl.status === "uploading"}
+                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl py-4 hover:border-accent transition-colors disabled:opacity-60"
               >
-                {form.motoPhotoUrl ? (
-                  <img src={form.motoPhotoUrl} alt="Moto" className="h-20 rounded-lg object-cover" />
+                {form.motoPhotoUrl && uploads.motoPhotoUrl.status === "success" ? (
+                  <div className="relative">
+                    <img src={form.motoPhotoUrl} alt="Moto" className="h-20 rounded-lg object-cover" />
+                    <CheckCircle2 className="h-5 w-5 text-green-500 bg-background rounded-full absolute -top-1 -right-1" />
+                  </div>
+                ) : uploads.motoPhotoUrl.status === "uploading" ? (
+                  <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
                 ) : (
                   <>
                     <Upload className="h-5 w-5 text-muted-foreground" />
@@ -974,11 +1078,23 @@ const ConductorHome = () => {
                   </>
                 )}
               </button>
+              {uploads.motoPhotoUrl.status === "uploading" && (
+                <div className="mt-2 space-y-1">
+                  <Progress value={uploads.motoPhotoUrl.progress} className="h-2" />
+                  <p className="text-[11px] text-muted-foreground text-center">Subiendo... {uploads.motoPhotoUrl.progress}%</p>
+                </div>
+              )}
+              {uploads.motoPhotoUrl.status === "error" && (
+                <div className="mt-2 flex items-center gap-1.5 text-destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <p className="text-xs font-medium">Error al subir foto. Intenta de nuevo</p>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Submit */}
-          <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={handleSubmitApplication} disabled={submitting}>
+          <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={handleSubmitApplication} disabled={submitting || Object.values(uploads).some((u) => u.status === "uploading")}>
             {submitting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Enviando...</> : "📋 Enviar postulación"}
           </Button>
 
