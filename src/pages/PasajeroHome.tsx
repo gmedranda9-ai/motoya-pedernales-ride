@@ -514,12 +514,18 @@ const PasajeroHome = () => {
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
       <header className="gradient-primary px-4 pt-10 pb-8">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-2">
           <img src={logoMotoya} alt="MotoYa" className="h-10 w-10" />
-          <div>
+          <div className="min-w-0 flex-1">
             <h1 className="text-xl font-extrabold text-accent">MotoYa</h1>
             <p className="text-sm text-primary-foreground/90">
               Hola, {userName} 👋
+            </p>
+            <p
+              key={phraseIdx}
+              className="text-xs text-primary-foreground/80 mt-1 animate-fade-in"
+            >
+              {ROTATING_PHRASES[phraseIdx]}
             </p>
           </div>
         </div>
