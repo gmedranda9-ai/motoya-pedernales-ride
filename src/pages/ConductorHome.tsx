@@ -523,15 +523,63 @@ const ConductorHome = () => {
     setRideStatus("en_camino");
   };
 
+  const STORAGE_PATHS: Record<string, string> = {
+    photoUrl: "foto-perfil",
+    cedulaPhotoUrl: "foto-cedula",
+    motoPhotoUrl: "foto-moto",
+  };
+
   const handleFileSelect = (field: keyof ApplicationForm) => {
+    if (!user) {
+      toast({ title: "Error", description: "Debes iniciar sesión.", variant: "destructive" });
+      return;
+    }
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        const url = URL.createObjectURL(file);
-        setForm((prev) => ({ ...prev, [field]: url }));
+      if (!file) return;
+
+      // Preview inmediato con blob mientras sube
+      const preview = URL.createObjectURL(file);
+      setForm((prev) => ({ ...prev, [field]: preview }));
+
+      try {
+        const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+        const baseName = STORAGE_PATHS[field as string] || (field as string);
+        const path = `${user.id}/${baseName}.${ext}`;
+
+        const { error: upErr } = await supabase.storage
+          .from("conductores")
+          .upload(path, file, {
+            cacheControl: "3600",
+            upsert: true,
+            contentType: file.type || "image/jpeg",
+          });
+
+        if (upErr) {
+          console.error("❌ Error subiendo foto:", upErr);
+          toast({
+            title: "Error subiendo foto",
+            description: upErr.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const { data: pub } = supabase.storage.from("conductores").getPublicUrl(path);
+        // Bust cache para que se vea la nueva al re-subir
+        const publicUrl = `${pub.publicUrl}?t=${Date.now()}`;
+        setForm((prev) => ({ ...prev, [field]: publicUrl }));
+        toast({ title: "✅ Foto subida" });
+      } catch (err: any) {
+        console.error("Error inesperado upload:", err);
+        toast({
+          title: "Error inesperado",
+          description: err?.message || "No se pudo subir la foto",
+          variant: "destructive",
+        });
       }
     };
     input.click();
