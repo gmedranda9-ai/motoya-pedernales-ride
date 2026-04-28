@@ -621,23 +621,42 @@ const PasajeroHome = () => {
         </div>
       </div>
 
-      {/* Frequent Destinations */}
+      {/* Frequent Destinations (collapsible) */}
       <div className="px-4 mt-6">
-        <h3 className="text-sm font-bold text-foreground mb-3">
-          Destinos frecuentes en Pedernales
-        </h3>
-        <div className="space-y-1.5">
-          {FREQUENT_DESTINATIONS.map((place) => (
-            <button
-              key={place}
-              onClick={() => setDestination(place)}
-              className="flex items-center gap-2.5 w-full text-left py-2.5 px-3 rounded-xl hover:bg-muted transition-colors"
-            >
-              <MapPin className="h-4 w-4 text-accent flex-shrink-0" />
-              <span className="text-sm text-foreground">{place}</span>
-            </button>
-          ))}
-        </div>
+        <button
+          onClick={() => setDestinationsOpen((v) => !v)}
+          className="flex items-center justify-between w-full text-left py-2"
+          aria-expanded={destinationsOpen}
+        >
+          <span className="text-sm font-bold text-foreground">
+            📍 Destinos frecuentes
+          </span>
+          <span
+            className={`text-foreground transition-transform duration-200 ${
+              destinationsOpen ? "rotate-180" : ""
+            }`}
+          >
+            ▼
+          </span>
+        </button>
+
+        {destinationsOpen && (
+          <div className="grid grid-cols-2 gap-2 mt-2 animate-fade-in">
+            {FREQUENT_DESTINATIONS.map((place) => (
+              <button
+                key={place}
+                onClick={() => {
+                  setDestination(place);
+                  setDestinationsOpen(false);
+                }}
+                className="flex items-center gap-2 text-left py-2.5 px-3 rounded-xl bg-muted hover:bg-muted/70 transition-colors"
+              >
+                <MapPin className="h-4 w-4 text-accent flex-shrink-0" />
+                <span className="text-xs text-foreground leading-tight">{place}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Why MotoYa */}
