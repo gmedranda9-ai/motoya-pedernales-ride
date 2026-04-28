@@ -936,10 +936,16 @@ const ConductorHome = () => {
             <Label className="text-sm font-bold text-foreground mb-2 block">Foto personal *</Label>
             <button
               onClick={() => handleFileSelect("photoUrl")}
-              className="w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl py-6 hover:border-accent transition-colors"
+              disabled={uploads.photoUrl.status === "uploading"}
+              className="w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl py-6 hover:border-accent transition-colors disabled:opacity-60"
             >
-              {form.photoUrl ? (
-                <img src={form.photoUrl} alt="Foto personal" className="w-20 h-20 rounded-full object-cover border-2 border-accent" />
+              {form.photoUrl && uploads.photoUrl.status === "success" ? (
+                <div className="relative">
+                  <img src={form.photoUrl} alt="Foto personal" className="w-20 h-20 rounded-full object-cover border-2 border-accent" />
+                  <CheckCircle2 className="h-6 w-6 text-green-500 bg-background rounded-full absolute -bottom-1 -right-1" />
+                </div>
+              ) : uploads.photoUrl.status === "uploading" ? (
+                <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
               ) : (
                 <>
                   <Camera className="h-8 w-8 text-muted-foreground" />
@@ -947,6 +953,18 @@ const ConductorHome = () => {
                 </>
               )}
             </button>
+            {uploads.photoUrl.status === "uploading" && (
+              <div className="mt-2 space-y-1">
+                <Progress value={uploads.photoUrl.progress} className="h-2" />
+                <p className="text-[11px] text-muted-foreground text-center">Subiendo... {uploads.photoUrl.progress}%</p>
+              </div>
+            )}
+            {uploads.photoUrl.status === "error" && (
+              <div className="mt-2 flex items-center gap-1.5 text-destructive">
+                <AlertCircle className="h-4 w-4" />
+                <p className="text-xs font-medium">Error al subir foto. Intenta de nuevo</p>
+              </div>
+            )}
           </div>
 
           {/* Cédula */}
