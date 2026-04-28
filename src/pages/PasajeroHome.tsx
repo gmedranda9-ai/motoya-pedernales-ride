@@ -69,6 +69,15 @@ const PasajeroHome = () => {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loadingDrivers, setLoadingDrivers] = useState(false);
   const [viajeId, setViajeId] = useState<string | undefined>();
+  const [phraseIdx, setPhraseIdx] = useState(0);
+  const [destinationsOpen, setDestinationsOpen] = useState(false);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setPhraseIdx((i) => (i + 1) % ROTATING_PHRASES.length);
+    }, 3000);
+    return () => clearInterval(id);
+  }, []);
 
   const userName =
     user?.user_metadata?.nombre || user?.email?.split("@")[0] || "Pasajero";
