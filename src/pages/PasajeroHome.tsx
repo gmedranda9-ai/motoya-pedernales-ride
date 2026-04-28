@@ -28,7 +28,21 @@ const FREQUENT_DESTINATIONS = [
   "Hospital Básico",
   "Mercado Municipal",
   "Parque Central",
-  "Colegio 5 de Junio",
+  "Plaza Pedernales",
+  "Municipio de Pedernales",
+  "Oficinas Poseidon",
+  "Empresa Eléctrica",
+  "Empresa de Agua",
+  "Estadio",
+  "Palmar del Río",
+  "Gasolinera",
+];
+
+const ROTATING_PHRASES = [
+  "¿A dónde te escapas hoy? 🛺",
+  "Tu destino te espera 🗺️",
+  "Rápido, seguro y económico ⚡",
+  "¿Listo para tu próximo viaje? 🚀",
 ];
 
 const CITY_DESTINATIONS = new Set(FREQUENT_DESTINATIONS);
@@ -55,6 +69,15 @@ const PasajeroHome = () => {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loadingDrivers, setLoadingDrivers] = useState(false);
   const [viajeId, setViajeId] = useState<string | undefined>();
+  const [phraseIdx, setPhraseIdx] = useState(0);
+  const [destinationsOpen, setDestinationsOpen] = useState(false);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setPhraseIdx((i) => (i + 1) % ROTATING_PHRASES.length);
+    }, 3000);
+    return () => clearInterval(id);
+  }, []);
 
   const userName =
     user?.user_metadata?.nombre || user?.email?.split("@")[0] || "Pasajero";
@@ -491,12 +514,18 @@ const PasajeroHome = () => {
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
       <header className="gradient-primary px-4 pt-10 pb-8">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-2">
           <img src={logoMotoya} alt="MotoYa" className="h-10 w-10" />
-          <div>
+          <div className="min-w-0 flex-1">
             <h1 className="text-xl font-extrabold text-accent">MotoYa</h1>
             <p className="text-sm text-primary-foreground/90">
               Hola, {userName} 👋
+            </p>
+            <p
+              key={phraseIdx}
+              className="text-xs text-primary-foreground/80 mt-1 animate-fade-in"
+            >
+              {ROTATING_PHRASES[phraseIdx]}
             </p>
           </div>
         </div>
@@ -518,7 +547,7 @@ const PasajeroHome = () => {
             >
               <div className="w-3 h-3 rounded-full bg-[hsl(var(--success))] animate-pulse flex-shrink-0" />
               <span className={`flex-1 text-sm ${locationAddress ? "text-foreground font-medium" : "text-muted-foreground"}`}>
-                {detectingLocation ? "Detectando ubicación..." : locationAddress || "Usar mi ubicación actual"}
+                {detectingLocation ? "Detectando ubicación..." : locationAddress || "📍 Toca aquí para detectar tu ubicación"}
               </span>
               {detectingLocation ? (
                 <Loader2 className="h-4 w-4 text-accent animate-spin" />
@@ -581,7 +610,7 @@ const PasajeroHome = () => {
             onClick={handleSearch}
             disabled={!canSearch}
           >
-            🔍 Buscar mototaxis disponibles
+            🛺 Ver conductores disponibles
           </Button>
 
           {!canSearch && (
@@ -592,23 +621,42 @@ const PasajeroHome = () => {
         </div>
       </div>
 
-      {/* Frequent Destinations */}
+      {/* Frequent Destinations (collapsible) */}
       <div className="px-4 mt-6">
-        <h3 className="text-sm font-bold text-foreground mb-3">
-          Destinos frecuentes en Pedernales
-        </h3>
-        <div className="space-y-1.5">
-          {FREQUENT_DESTINATIONS.map((place) => (
-            <button
-              key={place}
-              onClick={() => setDestination(place)}
-              className="flex items-center gap-2.5 w-full text-left py-2.5 px-3 rounded-xl hover:bg-muted transition-colors"
-            >
-              <MapPin className="h-4 w-4 text-accent flex-shrink-0" />
-              <span className="text-sm text-foreground">{place}</span>
-            </button>
-          ))}
-        </div>
+        <button
+          onClick={() => setDestinationsOpen((v) => !v)}
+          className="flex items-center justify-between w-full text-left py-2"
+          aria-expanded={destinationsOpen}
+        >
+          <span className="text-sm font-bold text-foreground">
+            📍 Destinos frecuentes
+          </span>
+          <span
+            className={`text-foreground transition-transform duration-200 ${
+              destinationsOpen ? "rotate-180" : ""
+            }`}
+          >
+            ▼
+          </span>
+        </button>
+
+        {destinationsOpen && (
+          <div className="grid grid-cols-2 gap-2 mt-2 animate-fade-in">
+            {FREQUENT_DESTINATIONS.map((place) => (
+              <button
+                key={place}
+                onClick={() => {
+                  setDestination(place);
+                  setDestinationsOpen(false);
+                }}
+                className="flex items-center gap-2 text-left py-2.5 px-3 rounded-xl bg-muted hover:bg-muted/70 transition-colors"
+              >
+                <MapPin className="h-4 w-4 text-accent flex-shrink-0" />
+                <span className="text-xs text-foreground leading-tight">{place}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Why MotoYa */}
