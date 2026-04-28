@@ -159,6 +159,55 @@ const ConductorHome = () => {
     loadStatus();
   }, [user]);
 
+  // Reporte diario: cargar viajes completados HOY del conductor
+  useEffect(() => {
+    if (!conductorId) return;
+    const loadReporte = async () => {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      const end = new Date();
+      end.setHours(23, 59, 59, 999);
+
+      const { data } = await supabase
+        .from("viajes")
+        .select("id, calificacion_pasajero, completado_at, created_at")
+        .eq("conductor_id", conductorId)
+        .eq("estado", "completado")
+        .gte("created_at", start.toISOString())
+        .lte("created_at", end.toISOString());
+
+      const list = (data as any[]) || [];
+      const viajes = list.length;
+      const ingresos = viajes * 1.0;
+      const ratings = list
+        .map((v) => Number(v.calificacion_pasajero))
+        .filter((r) => !isNaN(r) && r > 0);
+      const rating = ratings.length
+        ? ratings.reduce((a, b) => a + b, 0) / ratings.length
+        : 0;
+
+      // Hora con más viajes
+      const hours: Record<number, number> = {};
+      list.forEach((v) => {
+        const iso = v.completado_at || v.created_at;
+        if (!iso) return;
+        const h = new Date(iso).getHours();
+        hours[h] = (hours[h] || 0) + 1;
+      });
+      let horaPico: string | null = null;
+      let max = 0;
+      Object.entries(hours).forEach(([h, c]) => {
+        if (c > max) {
+          max = c;
+          horaPico = `${h.padStart(2, "0")}:00`;
+        }
+      });
+
+      setReporte({ viajes, ingresos, rating, horaPico });
+    };
+    loadReporte();
+  }, [conductorId, refreshTrigger]);
+
   const persistAvailability = async (value: boolean, playerId?: string | null) => {
     if (!user) return false;
     const updatePayload: Record<string, any> = { disponible: value };
