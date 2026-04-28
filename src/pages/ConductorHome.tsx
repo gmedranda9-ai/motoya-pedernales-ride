@@ -162,6 +162,7 @@ const ConductorHome = () => {
             rechazado: "rejected",
           };
           setAppStatus(statusMap[data.estado] || "pending");
+          setMotivoRechazo((data as any).motivo_rechazo ?? null);
         }
       } catch (err) {
         console.error("Unexpected error loading conductor:", err);
