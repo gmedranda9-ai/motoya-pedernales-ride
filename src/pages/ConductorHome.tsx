@@ -1075,28 +1075,36 @@ const ConductorHome = () => {
                   Sin viajes hoy aún 🛺
                 </p>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-muted rounded-xl p-3">
-                    <p className="text-[10px] text-muted-foreground">Viajes hoy</p>
-                    <p className="text-xl font-extrabold text-foreground">{reporte.viajes}</p>
+                <div className="space-y-3">
+                  <div className="bg-muted rounded-xl p-3 space-y-1.5">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Viajes completados hoy</span>
+                      <span className="font-extrabold text-foreground">{reporte.viajes}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Valor por viaje</span>
+                      <span className="font-bold text-foreground">$1.00</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm pt-1.5 border-t border-border">
+                      <span className="font-bold text-foreground">Total estimado</span>
+                      <span className="font-extrabold text-accent">
+                        ${reporte.ingresos.toFixed(2)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="bg-muted rounded-xl p-3">
-                    <p className="text-[10px] text-muted-foreground">Ingresos estimados</p>
-                    <p className="text-xl font-extrabold text-foreground">
-                      ${reporte.ingresos.toFixed(2)}
-                    </p>
-                  </div>
-                  <div className="bg-muted rounded-xl p-3">
-                    <p className="text-[10px] text-muted-foreground">Calificación del día</p>
-                    <p className="text-xl font-extrabold text-foreground">
-                      {reporte.rating > 0 ? `⭐ ${reporte.rating.toFixed(1)}` : "—"}
-                    </p>
-                  </div>
-                  <div className="bg-muted rounded-xl p-3">
-                    <p className="text-[10px] text-muted-foreground">Hora pico</p>
-                    <p className="text-xl font-extrabold text-foreground">
-                      {reporte.horaPico || "—"}
-                    </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-muted rounded-xl p-3">
+                      <p className="text-[10px] text-muted-foreground">Calificación del día</p>
+                      <p className="text-xl font-extrabold text-foreground">
+                        {reporte.rating > 0 ? `⭐ ${reporte.rating.toFixed(1)}` : "—"}
+                      </p>
+                    </div>
+                    <div className="bg-muted rounded-xl p-3">
+                      <p className="text-[10px] text-muted-foreground">Hora pico</p>
+                      <p className="text-xl font-extrabold text-foreground">
+                        {reporte.horaPico || "—"}
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
