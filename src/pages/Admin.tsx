@@ -279,7 +279,7 @@ const ConductoresTab = () => {
                     <Button
                       variant="outline"
                       className="rounded-xl border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                      onClick={() => updateEstado(c.id, "rechazado")}
+                      onClick={() => { setRejectReason(""); setRejectTarget({ id: c.id, nombre: c.nombre || "este conductor" }); }}
                       disabled={acting === c.id}
                     >
                       {acting === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (<><XCircle className="h-4 w-4 mr-1" /> Rechazar</>)}
