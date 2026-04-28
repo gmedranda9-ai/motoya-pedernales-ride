@@ -612,6 +612,17 @@ const ConductorHome = () => {
       return;
     }
 
+    // Nunca enviar URLs blob:// a la base de datos
+    const isBlob = (u?: string) => !!u && u.startsWith("blob:");
+    if (isBlob(form.photoUrl) || isBlob(form.cedulaPhotoUrl) || isBlob(form.motoPhotoUrl)) {
+      toast({
+        title: "Fotos no subidas",
+        description: "Espera a que terminen de subir las fotos o vuelve a intentarlo.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSubmitting(true);
     try {
       const insertData = {
