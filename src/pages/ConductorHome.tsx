@@ -661,6 +661,30 @@ const ConductorHome = () => {
       return;
     }
 
+    // Bloquear si alguna subida está en curso o falló
+    const anyUploading = Object.values(uploads).some((u) => u.status === "uploading");
+    if (anyUploading) {
+      toast({
+        title: "Subida en progreso",
+        description: "Espera a que terminen de subir todas las fotos.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const anyError = Object.values(uploads).some((u) => u.status === "error");
+    const allRequiredUploaded =
+      uploads.photoUrl.status === "success" &&
+      uploads.cedulaPhotoUrl.status === "success" &&
+      uploads.motoPhotoUrl.status === "success";
+    if (anyError || !allRequiredUploaded || !form.photoUrl || !form.cedulaPhotoUrl || !form.motoPhotoUrl) {
+      toast({
+        title: "Fotos incompletas",
+        description: "Una o más fotos no se subieron correctamente. Vuelve a intentarlo.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSubmitting(true);
     try {
       const insertData = {
