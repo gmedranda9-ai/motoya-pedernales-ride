@@ -162,23 +162,29 @@ const ConductorHome = () => {
   // Reporte diario: cargar viajes completados HOY del conductor
   useEffect(() => {
     if (!conductorId) return;
+
     const loadReporte = async () => {
       const start = new Date();
       start.setHours(0, 0, 0, 0);
       const end = new Date();
       end.setHours(23, 59, 59, 999);
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("viajes")
-        .select("id, calificacion_pasajero, completado_at, created_at")
+        .select("*")
         .eq("conductor_id", conductorId)
         .eq("estado", "completado")
         .gte("created_at", start.toISOString())
         .lte("created_at", end.toISOString());
 
+      if (error) {
+        console.error("❌ Error cargando reporte diario:", error);
+        return;
+      }
+
       const list = (data as any[]) || [];
       const viajes = list.length;
-      const ingresos = viajes * 1.0;
+      const ingresos = viajes * 6.0;
       const ratings = list
         .map((v) => Number(v.calificacion_pasajero))
         .filter((r) => !isNaN(r) && r > 0);
@@ -205,7 +211,30 @@ const ConductorHome = () => {
 
       setReporte({ viajes, ingresos, rating, horaPico });
     };
+
     loadReporte();
+
+    // Refrescar automáticamente cuando se completa un viaje del conductor
+    const channel = supabase
+      .channel(`reporte_diario_${conductorId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "viajes",
+          filter: `conductor_id=eq.${conductorId}`,
+        },
+        (payload) => {
+          const estado = (payload.new as any)?.estado || (payload.old as any)?.estado;
+          if (estado === "completado") loadReporte();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [conductorId]);
 
   const persistAvailability = async (value: boolean, playerId?: string | null) => {
