@@ -28,7 +28,21 @@ const FREQUENT_DESTINATIONS = [
   "Hospital Básico",
   "Mercado Municipal",
   "Parque Central",
-  "Colegio 5 de Junio",
+  "Plaza Pedernales",
+  "Municipio de Pedernales",
+  "Oficinas Poseidon",
+  "Empresa Eléctrica",
+  "Empresa de Agua",
+  "Estadio",
+  "Palmar del Río",
+  "Gasolinera",
+];
+
+const ROTATING_PHRASES = [
+  "¿A dónde te escapas hoy? 🛺",
+  "Tu destino te espera 🗺️",
+  "Rápido, seguro y económico ⚡",
+  "¿Listo para tu próximo viaje? 🚀",
 ];
 
 const CITY_DESTINATIONS = new Set(FREQUENT_DESTINATIONS);
