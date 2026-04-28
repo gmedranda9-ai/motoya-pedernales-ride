@@ -305,32 +305,39 @@ const Mensajes = () => {
         }
       }
 
-      // Group by other party (conductor_id for pasajero, pasajero_id for conductor)
-      // Keep only the most recent viaje per other party that has messages.
+      // Group by other party — accumulate ALL viajeIds with that party (full historial)
       const grouped: Record<string, Conversation> = {};
-      (viajes as any[])
-        .filter((v) => lastByViaje[v.id])
-        .forEach((v) => {
-          const otherKey = role === "conductor" ? v.pasajero_id : v.conductor_id;
-          if (!otherKey) return;
-          const last = lastByViaje[v.id];
-          const existing = grouped[otherKey];
-          // Sum unread across all viajes with this other party
-          const unreadForThis = unreadByViaje[v.id] || 0;
-          if (!existing || existing.iso < last.hora) {
-            grouped[otherKey] = {
-              viaje_id: v.id,
-              otherKey,
-              otherName: nameMap[otherKey] || "—",
-              lastMsg: last.texto,
-              time: formatTime(last.hora),
-              iso: last.hora,
-              unread: (existing?.unread || 0) + unreadForThis,
-            };
-          } else {
-            existing.unread += unreadForThis;
+      (viajes as any[]).forEach((v) => {
+        const otherKey = role === "conductor" ? v.pasajero_id : v.conductor_id;
+        if (!otherKey) return;
+        const last = lastByViaje[v.id];
+        const unreadForThis = unreadByViaje[v.id] || 0;
+        const existing = grouped[otherKey];
+        if (!existing) {
+          grouped[otherKey] = {
+            viajeIds: [v.id],
+            otherKey,
+            otherName: nameMap[otherKey] || "—",
+            lastMsg: last?.texto || "",
+            time: last ? formatTime(last.hora) : "",
+            iso: last?.hora || "",
+            unread: unreadForThis,
+          };
+        } else {
+          existing.viajeIds.push(v.id);
+          existing.unread += unreadForThis;
+          if (last && (!existing.iso || existing.iso < last.hora)) {
+            existing.lastMsg = last.texto;
+            existing.time = formatTime(last.hora);
+            existing.iso = last.hora;
           }
-        });
+        }
+      });
+
+      // Solo mostrar conversaciones que tienen al menos un mensaje
+      Object.keys(grouped).forEach((k) => {
+        if (!grouped[k].iso) delete grouped[k];
+      });
 
       const list: Conversation[] = Object.values(grouped).sort((a, b) =>
         a.iso < b.iso ? 1 : -1
@@ -384,10 +391,12 @@ const Mensajes = () => {
             <button
               key={chat.otherKey}
               onClick={() => {
-                setOpenChat({ viajeId: chat.viaje_id, name: chat.otherName });
+                setOpenChat({ viajeIds: chat.viajeIds, name: chat.otherName });
                 if (user?.id) {
                   try {
-                    localStorage.setItem(readKey(chat.viaje_id, user.id), new Date().toISOString());
+                    chat.viajeIds.forEach((vid) =>
+                      localStorage.setItem(readKey(vid, user.id), new Date().toISOString())
+                    );
                   } catch {}
                 }
               }}
@@ -421,7 +430,7 @@ const Mensajes = () => {
 
       {openChat && (
         <ChatPanel
-          viajeId={openChat.viajeId}
+          viajeIds={openChat.viajeIds}
           otherName={openChat.name}
           onClose={() => {
             setOpenChat(null);
