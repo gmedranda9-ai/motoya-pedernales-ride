@@ -1298,13 +1298,17 @@ const ConductorHome = () => {
               <div className="flex items-center justify-between bg-muted rounded-xl px-4 py-3">
                 <div>
                   <p className="text-sm font-bold text-foreground">
-                    {available ? "🟢 Disponible" : "⚫ No disponible"}
+                    {!subActiva ? "🔒 Disponible (bloqueado)" : available ? "🟢 Disponible" : "⚫ No disponible"}
                   </p>
                   <p className="text-[10px] text-muted-foreground">
-                    {available ? "Apareces en la lista de pasajeros" : "No recibirás solicitudes"}
+                    {!subActiva
+                      ? "Necesitas suscripción activa para activarlo"
+                      : available
+                      ? "Apareces en la lista de pasajeros"
+                      : "No recibirás solicitudes"}
                   </p>
                 </div>
-                <Switch checked={available} onCheckedChange={handleToggleAvailable} />
+                <Switch checked={available && subActiva} onCheckedChange={handleToggleAvailable} />
               </div>
 
               {available && (
