@@ -268,6 +268,11 @@ const ConductorHome = () => {
     if (!user) return;
 
     if (value) {
+      // Require active subscription BEFORE allowing toggle on.
+      if (!subActiva) {
+        setPlanOpen(true);
+        return;
+      }
       // Require notification permission BEFORE flipping the toggle on.
       refreshNotif();
       if (notifBlocked) {
@@ -1293,13 +1298,17 @@ const ConductorHome = () => {
               <div className="flex items-center justify-between bg-muted rounded-xl px-4 py-3">
                 <div>
                   <p className="text-sm font-bold text-foreground">
-                    {available ? "🟢 Disponible" : "⚫ No disponible"}
+                    {!subActiva ? "🔒 Disponible (bloqueado)" : available ? "🟢 Disponible" : "⚫ No disponible"}
                   </p>
                   <p className="text-[10px] text-muted-foreground">
-                    {available ? "Apareces en la lista de pasajeros" : "No recibirás solicitudes"}
+                    {!subActiva
+                      ? "Necesitas suscripción activa para activarlo"
+                      : available
+                      ? "Apareces en la lista de pasajeros"
+                      : "No recibirás solicitudes"}
                   </p>
                 </div>
-                <Switch checked={available} onCheckedChange={handleToggleAvailable} />
+                <Switch checked={available && subActiva} onCheckedChange={handleToggleAvailable} />
               </div>
 
               {available && (
@@ -1432,10 +1441,12 @@ const ConductorHome = () => {
         <DialogContent className="max-w-sm rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-extrabold text-foreground text-center">
-              Plan MotoYa $6.00/mes
+              🔒 Suscripción requerida
             </DialogTitle>
             <DialogDescription className="text-center">
-              Activa tu plan para empezar a recibir viajes
+              Necesitas una suscripción activa para recibir viajes.
+              <br />
+              <span className="font-bold text-foreground">Plan MotoYa: $6.00/mes</span>
             </DialogDescription>
           </DialogHeader>
           <ul className="space-y-2 py-2">
@@ -1444,7 +1455,6 @@ const ConductorHome = () => {
               "Recibe solicitudes de viaje",
               "Soporte prioritario",
               "Panel de estadísticas",
-              "Reporte diario de ingresos",
             ].map((b) => (
               <li key={b} className="flex items-start gap-2 text-sm text-foreground">
                 <span>✅</span>
@@ -1452,17 +1462,27 @@ const ConductorHome = () => {
               </li>
             ))}
           </ul>
-          <Button
-            variant="hero"
-            size="lg"
-            className="w-full rounded-xl"
-            onClick={() => {
-              window.open("https://ppls.me/zmZ5khhGGQFnW0pTrhtPA", "_blank", "noopener,noreferrer");
-              setPlanOpen(false);
-            }}
-          >
-            💳 Suscribirme ahora
-          </Button>
+          <div className="space-y-2">
+            <Button
+              variant="hero"
+              size="lg"
+              className="w-full rounded-xl"
+              onClick={() => {
+                window.open("https://ppls.me/zmZ5khhGGQFnW0pTrhtPA", "_blank", "noopener,noreferrer");
+                setPlanOpen(false);
+              }}
+            >
+              💳 Suscribirme ahora
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full rounded-xl"
+              onClick={() => setPlanOpen(false)}
+            >
+              Cerrar
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
