@@ -119,15 +119,18 @@ const Perfil = () => {
         setTelefono(tel);
       }
       if (role === "conductor") {
-        const { data: cond } = await supabase
+        const { data: cond, error: condErr } = await supabase
           .from("conductores")
-          .select("id, foto, placa, modelo_moto, color_moto, cedula, telefono, calificacion_promedio, estado, created_at")
+          .select("*")
           .eq("usuario_id", user.id)
           .maybeSingle();
+        if (condErr) {
+          console.error("❌ Error cargando conductor:", condErr);
+        }
         if (cond) {
-          setConductor(cond as ConductorData);
+          setConductor(cond as any as ConductorData);
           setConductorId((cond as any).id);
-          if (!tel && cond.telefono) setTelefono(cond.telefono);
+          if (!tel && (cond as any).telefono) setTelefono((cond as any).telefono);
 
           // Total de viajes completados como conductor
           const { count } = await supabase
