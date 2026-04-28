@@ -344,24 +344,25 @@ const Perfil = () => {
             )}
             {role === "conductor" && (
               <>
-                <div className="flex items-center gap-3 py-3 border-t border-border">
-                  <Bike className="h-5 w-5 text-accent shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-muted-foreground">Moto (verificada)</p>
-                    <p className="text-sm text-foreground truncate">
-                      {conductor?.modelo_moto || "—"}
-                    </p>
+                {[
+                  { label: "Cédula", value: conductor?.cedula, icon: "🪪" },
+                  { label: "Placa", value: conductor?.placa, icon: "#" },
+                  { label: "Modelo moto", value: conductor?.modelo_moto, icon: "🛵" },
+                  { label: "Color moto", value: conductor?.color_moto, icon: "🎨" },
+                ].map((f) => (
+                  <div key={f.label} className="flex items-center gap-3 py-3 border-t border-border">
+                    <span className="text-base w-5 text-center shrink-0">{f.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                        {f.label}
+                        <Lock className="h-2.5 w-2.5" />
+                      </p>
+                      <p className="text-sm font-bold text-foreground truncate">
+                        {f.value || "—"}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3 py-3 border-t border-border">
-                  <span className="text-accent font-bold text-sm w-5 text-center">#</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-muted-foreground">Placa (verificada)</p>
-                    <p className="text-sm font-bold text-foreground truncate">
-                      {conductor?.placa || "—"}
-                    </p>
-                  </div>
-                </div>
+                ))}
               </>
             )}
           </div>
