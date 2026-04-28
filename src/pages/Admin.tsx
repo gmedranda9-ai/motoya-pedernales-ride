@@ -67,12 +67,13 @@ const ConductoresTab = () => {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
     const { data: conds } = await supabase
       .from("conductores")
-      .select("id, usuario_id, foto, cedula, placa, modelo_moto, color, telefono, estado, created_at")
+      .select("id, usuario_id, foto, foto_cedula, foto_moto, cedula, placa, modelo_moto, color, telefono, estado, created_at")
       .order("created_at", { ascending: false });
 
     const ids = Array.from(new Set((conds || []).map((c: any) => c.usuario_id).filter(Boolean)));
@@ -143,25 +144,153 @@ const ConductoresTab = () => {
       ) : (
         filtered.map((c) => {
           const showPhoto = !isPlaceholder(c.foto);
+          const showCedula = !isPlaceholder(c.foto_cedula);
+          const showMoto = !isPlaceholder(c.foto_moto);
           const initial = (c.nombre || "?").charAt(0).toUpperCase();
+          const isPendiente = (c.estado || "pendiente") === "pendiente";
+
           return (
-            <div key={c.id} className="bg-card rounded-2xl border border-border p-4">
-              <div className="flex items-start gap-3">
-                {showPhoto ? (
-                  <img
-                    src={c.foto}
-                    alt={c.nombre}
-                    className="w-14 h-14 rounded-full object-cover border-2 border-accent shrink-0"
-                  />
-                ) : (
-                  <div className="w-14 h-14 rounded-full bg-primary border-2 border-accent flex items-center justify-center shrink-0">
-                    <span className="text-xl font-extrabold text-accent">{initial}</span>
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
+            <div key={c.id} className="bg-card rounded-2xl border border-border p-4 space-y-3">
+              {/* Cabecera con estado */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
                   <h3 className="font-bold text-foreground truncate">{c.nombre}</h3>
                   <p className="text-[11px] text-muted-foreground truncate">{c.email}</p>
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-[11px]">
+                </div>
+                <span
+                  className={`text-[10px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap ${
+                    c.estado === "aprobado"
+                      ? "bg-[hsl(var(--success))]/20 text-[hsl(var(--success))]"
+                      : c.estado === "rechazado"
+                      ? "bg-destructive/20 text-destructive"
+                      : "bg-accent/20 text-accent"
+                  }`}
+                >
+                  {c.estado === "aprobado" ? "✅ Aprobado" : c.estado === "rechazado" ? "❌ Rechazado" : "⏳ Pendiente"}
+                </span>
+              </div>
+
+              {isPendiente ? (
+                <>
+                  {/* Foto personal grande */}
+                  <div className="flex justify-center">
+                    {showPhoto ? (
+                      <button
+                        type="button"
+                        onClick={() => setLightbox(c.foto)}
+                        className="rounded-2xl overflow-hidden border-2 border-accent shadow-md focus:outline-none focus:ring-2 focus:ring-accent"
+                      >
+                        <img
+                          src={c.foto}
+                          alt={`Foto de ${c.nombre}`}
+                          className="w-40 h-40 object-cover"
+                        />
+                      </button>
+                    ) : (
+                      <div className="w-40 h-40 rounded-2xl bg-primary border-2 border-accent flex items-center justify-center">
+                        <span className="text-6xl font-extrabold text-accent">{initial}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Datos personales */}
+                  <div className="bg-muted/30 rounded-xl p-3 space-y-1.5 text-sm">
+                    <p className="flex items-center gap-2">
+                      <CreditCard className="h-4 w-4 text-accent shrink-0" />
+                      <span className="text-muted-foreground">Cédula:</span>
+                      <span className="font-mono font-semibold">{c.cedula || "—"}</span>
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-accent shrink-0" />
+                      <span className="text-muted-foreground">Teléfono:</span>
+                      <span className="font-semibold">{c.telefono || "—"}</span>
+                    </p>
+                  </div>
+
+                  {/* Foto de cédula */}
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground mb-1">📄 Foto de cédula</p>
+                    {showCedula ? (
+                      <button
+                        type="button"
+                        onClick={() => setLightbox(c.foto_cedula)}
+                        className="w-full rounded-xl overflow-hidden border border-border focus:outline-none focus:ring-2 focus:ring-accent"
+                      >
+                        <img src={c.foto_cedula} alt="Cédula" className="w-full h-44 object-cover" />
+                      </button>
+                    ) : (
+                      <div className="w-full h-24 rounded-xl bg-muted/40 border border-dashed border-border flex items-center justify-center text-xs text-muted-foreground">
+                        Sin foto de cédula
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Datos de moto */}
+                  <div className="bg-muted/30 rounded-xl p-3 space-y-1.5 text-sm">
+                    <p className="flex items-center gap-2">
+                      <Bike className="h-4 w-4 text-accent shrink-0" />
+                      <span className="text-muted-foreground">Modelo:</span>
+                      <span className="font-semibold">{c.modelo_moto || "—"}</span>
+                      {c.color && <span className="text-muted-foreground">· {c.color}</span>}
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <span className="text-muted-foreground">Placa:</span>
+                      <span className="font-mono font-bold text-accent">#{c.placa || "—"}</span>
+                    </p>
+                  </div>
+
+                  {/* Foto moto */}
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground mb-1">🏍️ Foto de la moto</p>
+                    {showMoto ? (
+                      <button
+                        type="button"
+                        onClick={() => setLightbox(c.foto_moto)}
+                        className="w-full rounded-xl overflow-hidden border border-border focus:outline-none focus:ring-2 focus:ring-accent"
+                      >
+                        <img src={c.foto_moto} alt="Moto" className="w-full h-48 object-cover" />
+                      </button>
+                    ) : (
+                      <div className="w-full h-24 rounded-xl bg-muted/40 border border-dashed border-border flex items-center justify-center text-xs text-muted-foreground">
+                        Sin foto de moto
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Botones */}
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <Button
+                      variant="outline"
+                      className="rounded-xl border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      onClick={() => updateEstado(c.id, "rechazado")}
+                      disabled={acting === c.id}
+                    >
+                      {acting === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (<><XCircle className="h-4 w-4 mr-1" /> Rechazar</>)}
+                    </Button>
+                    <Button
+                      variant="hero"
+                      className="rounded-xl"
+                      onClick={() => updateEstado(c.id, "aprobado")}
+                      disabled={acting === c.id}
+                    >
+                      {acting === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (<><CheckCircle className="h-4 w-4 mr-1" /> Aprobar</>)}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-start gap-3">
+                  {showPhoto ? (
+                    <img
+                      src={c.foto}
+                      alt={c.nombre}
+                      className="w-14 h-14 rounded-full object-cover border-2 border-accent shrink-0"
+                    />
+                  ) : (
+                    <div className="w-14 h-14 rounded-full bg-primary border-2 border-accent flex items-center justify-center shrink-0">
+                      <span className="text-xl font-extrabold text-accent">{initial}</span>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
                     <p className="flex items-center gap-1">
                       <CreditCard className="h-3 w-3 text-accent" />
                       <span className="font-mono">{c.cedula || "—"}</span>
@@ -177,42 +306,33 @@ const ConductoresTab = () => {
                     <p className="font-bold">#{c.placa || "—"}</p>
                   </div>
                 </div>
-                <span
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap ${
-                    c.estado === "aprobado"
-                      ? "bg-[hsl(var(--success))]/20 text-[hsl(var(--success))]"
-                      : c.estado === "rechazado"
-                      ? "bg-destructive/20 text-destructive"
-                      : "bg-accent/20 text-accent"
-                  }`}
-                >
-                  {c.estado === "aprobado" ? "✅ Aprobado" : c.estado === "rechazado" ? "❌ Rechazado" : "⏳ Pendiente"}
-                </span>
-              </div>
-
-              {(c.estado || "pendiente") === "pendiente" && (
-                <div className="grid grid-cols-2 gap-2 mt-3">
-                  <Button
-                    variant="outline"
-                    className="rounded-xl border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                    onClick={() => updateEstado(c.id, "rechazado")}
-                    disabled={acting === c.id}
-                  >
-                    {acting === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (<><XCircle className="h-4 w-4 mr-1" /> Rechazar</>)}
-                  </Button>
-                  <Button
-                    variant="hero"
-                    className="rounded-xl"
-                    onClick={() => updateEstado(c.id, "aprobado")}
-                    disabled={acting === c.id}
-                  >
-                    {acting === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (<><CheckCircle className="h-4 w-4 mr-1" /> Aprobar</>)}
-                  </Button>
-                </div>
               )}
             </div>
           );
         })
+      )}
+
+      {/* Lightbox para imágenes */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightbox(null)}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center text-xl"
+            aria-label="Cerrar"
+          >
+            ✕
+          </button>
+          <img
+            src={lightbox}
+            alt="Vista ampliada"
+            className="max-w-full max-h-full object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
       )}
     </div>
   );
