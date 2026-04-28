@@ -22,6 +22,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
   Star,
   MapPin,
   MessageCircle,
@@ -91,6 +98,7 @@ const ConductorHome = () => {
   const [submitting, setSubmitting] = useState(false);
   const [subActiva, setSubActiva] = useState(false);
   const [subVence, setSubVence] = useState<string | null>(null);
+  const [planOpen, setPlanOpen] = useState(false);
 
   // Load existing application status from Supabase
   useEffect(() => {
@@ -960,59 +968,72 @@ const ConductorHome = () => {
         </div>
       )}
 
-      {/* Plan MotoYa - Suscripción */}
+      {/* Plan MotoYa - Suscripción (compacto) */}
       {appStatus === "approved" && (
         <div className="px-4 mt-6">
-          <div className="bg-card rounded-2xl shadow-lg border-2 border-accent/40 overflow-hidden">
-            <div className="gradient-primary px-4 py-3">
-              <h3 className="text-base font-extrabold text-accent">Plan MotoYa</h3>
-              <p className="text-xs text-primary-foreground/80">Suscripción mensual</p>
-            </div>
-            <div className="p-5 space-y-4">
-              <div className="text-center">
-                <p className="text-4xl font-extrabold text-foreground">
-                  $8.00 <span className="text-base font-medium text-muted-foreground">/ mes</span>
+          {subActiva ? (
+            <div className="flex flex-col items-start gap-1">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/15 border border-green-500/40 px-3 py-1 text-xs font-bold text-green-700 dark:text-green-400">
+                ✅ Plan activo
+              </span>
+              {subVence && (
+                <p className="text-[11px] text-muted-foreground pl-1">
+                  Vence el {new Date(subVence).toLocaleDateString("es-EC", { day: "2-digit", month: "long", year: "numeric" })}
                 </p>
-              </div>
-              <ul className="space-y-2">
-                {[
-                  "Aparece en lista de pasajeros",
-                  "Recibe solicitudes de viaje",
-                  "Soporte prioritario",
-                  "Panel de estadísticas",
-                ].map((b) => (
-                  <li key={b} className="flex items-start gap-2 text-sm text-foreground">
-                    <span>✅</span>
-                    <span>{b}</span>
-                  </li>
-                ))}
-              </ul>
-
-              {subActiva ? (
-                <div className="bg-green-500/10 border border-green-500/40 rounded-xl px-4 py-3 text-center">
-                  <p className="text-sm font-bold text-green-700 dark:text-green-400">
-                    ✅ Suscripción activa
-                  </p>
-                  {subVence && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Vence el {new Date(subVence).toLocaleDateString("es-EC", { day: "2-digit", month: "long", year: "numeric" })}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <Button
-                  variant="hero"
-                  size="lg"
-                  className="w-full rounded-xl"
-                  onClick={() => window.open("https://ppls.me/bnmUL4mwQgikhhLX3g4drQ", "_blank", "noopener,noreferrer")}
-                >
-                  💳 Suscribirme ahora
-                </Button>
               )}
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3 bg-accent/15 border border-accent/40 rounded-xl px-3 py-2">
+              <p className="text-xs font-bold text-foreground">💳 Sin suscripción activa</p>
+              <button
+                onClick={() => setPlanOpen(true)}
+                className="text-xs font-bold text-accent-foreground bg-accent hover:bg-accent/90 rounded-lg px-3 py-1.5 transition-colors"
+              >
+                Ver plan →
+              </button>
+            </div>
+          )}
         </div>
       )}
+
+      {/* Modal Plan MotoYa */}
+      <Dialog open={planOpen} onOpenChange={setPlanOpen}>
+        <DialogContent className="max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-extrabold text-foreground text-center">
+              Plan MotoYa $8.00/mes
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              Activa tu plan para empezar a recibir viajes
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="space-y-2 py-2">
+            {[
+              "Aparece en lista de pasajeros",
+              "Recibe solicitudes de viaje",
+              "Soporte prioritario",
+              "Panel de estadísticas",
+              "Reporte diario de ingresos",
+            ].map((b) => (
+              <li key={b} className="flex items-start gap-2 text-sm text-foreground">
+                <span>✅</span>
+                <span>{b}</span>
+              </li>
+            ))}
+          </ul>
+          <Button
+            variant="hero"
+            size="lg"
+            className="w-full rounded-xl"
+            onClick={() => {
+              window.open("https://ppls.me/bnmUL4mwQgikhhLX3g4drQ", "_blank", "noopener,noreferrer");
+              setPlanOpen(false);
+            }}
+          >
+            💳 Suscribirme ahora
+          </Button>
+        </DialogContent>
+      </Dialog>
 
       {/* Tips */}
       <div className="px-4 mt-6 mb-4">
