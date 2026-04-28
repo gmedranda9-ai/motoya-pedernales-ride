@@ -550,16 +550,38 @@ const ConductorHome = () => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
 
-      // Preview temporal mientras sube (se reemplaza por URL real o se limpia si falla)
+      // Validar que el archivo no esté vacío
+      if (!file.size || file.size === 0) {
+        toast({
+          title: "Archivo vacío",
+          description: "El archivo seleccionado está vacío. Elige otra foto.",
+          variant: "destructive",
+        });
+        setUploads((prev) => ({
+          ...prev,
+          [field]: { status: "error", progress: 0, error: "Archivo vacío" },
+        }));
+        return;
+      }
+
+      // Preview temporal mientras sube
       const preview = URL.createObjectURL(file);
       setForm((prev) => ({ ...prev, [field]: preview }));
+      setUploads((prev) => ({ ...prev, [field]: { status: "uploading", progress: 10 } }));
+
+      // Simulación de progreso (Supabase JS no expone progress en upload)
+      const progressTimer = setInterval(() => {
+        setUploads((prev) => {
+          const cur = prev[field];
+          if (!cur || cur.status !== "uploading") return prev;
+          const next = Math.min(cur.progress + 10, 90);
+          return { ...prev, [field]: { ...cur, progress: next } };
+        });
+      }, 200);
 
       try {
         const baseName = STORAGE_PATHS[field as string] || (field as string);
-        // Forzar siempre .jpg para tener una ruta estable por usuario
         const path = `${user.id}/${baseName}.jpg`;
-
-        // Convertir a ArrayBuffer y subir como image/jpeg
         const arrayBuffer = await file.arrayBuffer();
 
         const { error: upErr } = await supabase.storage
@@ -570,35 +592,42 @@ const ConductorHome = () => {
             cacheControl: "3600",
           });
 
+        clearInterval(progressTimer);
+
         if (upErr) {
           console.error("❌ Error subiendo foto:", upErr);
-          // Limpiar preview blob para no guardarlo nunca en BD
           URL.revokeObjectURL(preview);
           setForm((prev) => ({ ...prev, [field]: "" }));
+          setUploads((prev) => ({
+            ...prev,
+            [field]: { status: "error", progress: 0, error: upErr.message },
+          }));
           toast({
-            title: "Error subiendo foto",
-            description: upErr.message,
+            title: "Error al subir foto",
+            description: "Error al subir foto. Intenta de nuevo",
             variant: "destructive",
           });
           return;
         }
 
-        const { data: urlData } = supabase.storage
-          .from("conductores")
-          .getPublicUrl(path);
-
+        const { data: urlData } = supabase.storage.from("conductores").getPublicUrl(path);
         URL.revokeObjectURL(preview);
-        // Bust cache para mostrar la nueva versión al re-subir
         const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
         setForm((prev) => ({ ...prev, [field]: publicUrl }));
-        toast({ title: "✅ Foto subida" });
+        setUploads((prev) => ({ ...prev, [field]: { status: "success", progress: 100 } }));
+        toast({ title: "✅ Foto subida correctamente" });
       } catch (err: any) {
+        clearInterval(progressTimer);
         console.error("Error inesperado upload:", err);
         URL.revokeObjectURL(preview);
         setForm((prev) => ({ ...prev, [field]: "" }));
+        setUploads((prev) => ({
+          ...prev,
+          [field]: { status: "error", progress: 0, error: err?.message },
+        }));
         toast({
-          title: "Error inesperado",
-          description: err?.message || "No se pudo subir la foto",
+          title: "Error al subir foto",
+          description: "Error al subir foto. Intenta de nuevo",
           variant: "destructive",
         });
       }
