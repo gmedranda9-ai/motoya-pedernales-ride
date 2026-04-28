@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +42,8 @@ import {
   Upload,
   Map as MapIcon,
   ChevronDown,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 import { subscribeToPush, unsubscribeFromPush } from "@/lib/onesignal";
 import { useNotificationPermission } from "@/hooks/useNotificationPermission";
@@ -98,6 +101,12 @@ const ConductorHome = () => {
   const [totalTrips, setTotalTrips] = useState(0);
   const [monthsActive, setMonthsActive] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  type UploadState = { status: "idle" | "uploading" | "success" | "error"; progress: number; error?: string };
+  const [uploads, setUploads] = useState<Record<string, UploadState>>({
+    photoUrl: { status: "idle", progress: 0 },
+    cedulaPhotoUrl: { status: "idle", progress: 0 },
+    motoPhotoUrl: { status: "idle", progress: 0 },
+  });
   const [subActiva, setSubActiva] = useState(false);
   const [subVence, setSubVence] = useState<string | null>(null);
   const [planOpen, setPlanOpen] = useState(false);
