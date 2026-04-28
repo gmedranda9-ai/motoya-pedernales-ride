@@ -250,12 +250,27 @@ const Perfil = () => {
             <p className="text-xs text-primary-foreground/70 capitalize">{role}</p>
             {role === "conductor" && (
               <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <div className="flex items-center gap-1">
-                  <Star className="h-3.5 w-3.5 fill-accent text-accent" />
-                  <span className="text-sm font-medium text-accent">
-                    {(conductor?.calificacion_promedio ?? 0).toFixed(1)}
+                {(conductor?.calificacion_promedio ?? 0) > 0 ? (
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Star
+                        key={i}
+                        className={`h-3.5 w-3.5 ${
+                          i <= Math.round(conductor?.calificacion_promedio ?? 0)
+                            ? "fill-accent text-accent"
+                            : "text-accent/30"
+                        }`}
+                      />
+                    ))}
+                    <span className="text-sm font-medium text-accent ml-1">
+                      {(conductor?.calificacion_promedio ?? 0).toFixed(1)}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[11px] text-primary-foreground/70 italic">
+                    Sin calificaciones aún
                   </span>
-                </div>
+                )}
                 {isVerified && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))]">
                     <BadgeCheck className="h-3 w-3" />
