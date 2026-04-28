@@ -72,7 +72,7 @@ const ConductoresTab = () => {
     setLoading(true);
     const { data: conds } = await supabase
       .from("conductores")
-      .select("id, usuario_id, foto, cedula, placa, modelo_moto, color, telefono, estado, created_at")
+      .select("id, usuario_id, foto, foto_cedula, foto_moto, cedula, placa, modelo_moto, color, telefono, estado, created_at")
       .order("created_at", { ascending: false });
 
     const ids = Array.from(new Set((conds || []).map((c: any) => c.usuario_id).filter(Boolean)));
