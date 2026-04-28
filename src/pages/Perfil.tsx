@@ -119,15 +119,18 @@ const Perfil = () => {
         setTelefono(tel);
       }
       if (role === "conductor") {
-        const { data: cond } = await supabase
+        const { data: cond, error: condErr } = await supabase
           .from("conductores")
-          .select("id, foto, placa, modelo_moto, color_moto, cedula, telefono, calificacion_promedio, estado, created_at")
+          .select("*")
           .eq("usuario_id", user.id)
           .maybeSingle();
+        if (condErr) {
+          console.error("❌ Error cargando conductor:", condErr);
+        }
         if (cond) {
-          setConductor(cond as ConductorData);
+          setConductor(cond as any as ConductorData);
           setConductorId((cond as any).id);
-          if (!tel && cond.telefono) setTelefono(cond.telefono);
+          if (!tel && (cond as any).telefono) setTelefono((cond as any).telefono);
 
           // Total de viajes completados como conductor
           const { count } = await supabase
@@ -247,12 +250,27 @@ const Perfil = () => {
             <p className="text-xs text-primary-foreground/70 capitalize">{role}</p>
             {role === "conductor" && (
               <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <div className="flex items-center gap-1">
-                  <Star className="h-3.5 w-3.5 fill-accent text-accent" />
-                  <span className="text-sm font-medium text-accent">
-                    {(conductor?.calificacion_promedio ?? 0).toFixed(1)}
+                {(conductor?.calificacion_promedio ?? 0) > 0 ? (
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Star
+                        key={i}
+                        className={`h-3.5 w-3.5 ${
+                          i <= Math.round(conductor?.calificacion_promedio ?? 0)
+                            ? "fill-accent text-accent"
+                            : "text-accent/30"
+                        }`}
+                      />
+                    ))}
+                    <span className="text-sm font-medium text-accent ml-1">
+                      {(conductor?.calificacion_promedio ?? 0).toFixed(1)}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[11px] text-primary-foreground/70 italic">
+                    Sin calificaciones aún
                   </span>
-                </div>
+                )}
                 {isVerified && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))]">
                     <BadgeCheck className="h-3 w-3" />
@@ -286,10 +304,16 @@ const Perfil = () => {
               </div>
               <p className="text-base font-extrabold text-foreground leading-none">
                 {role === "conductor"
-                  ? (conductor?.calificacion_promedio ?? 0).toFixed(1)
+                  ? (conductor?.calificacion_promedio ?? 0) > 0
+                    ? (conductor?.calificacion_promedio ?? 0).toFixed(1)
+                    : "—"
                   : "—"}
               </p>
-              <p className="text-[10px] text-muted-foreground mt-1">Calificación</p>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                {role === "conductor" && (conductor?.calificacion_promedio ?? 0) === 0
+                  ? "Sin calificar"
+                  : "Calificación"}
+              </p>
             </div>
             <div className="bg-card rounded-2xl shadow-md border border-border p-3 flex flex-col items-center text-center">
               <div className="w-9 h-9 rounded-full bg-accent/15 flex items-center justify-center mb-1">
