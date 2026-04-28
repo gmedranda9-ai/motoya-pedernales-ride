@@ -68,11 +68,11 @@ const isPlaceholderPhoto = (url: string | null | undefined) => {
 const formatJoinDate = (iso: string | null | undefined) => {
   if (!iso) return "—";
   try {
-    return new Date(iso).toLocaleDateString("es-EC", {
-      day: "2-digit",
+    const formatted = new Date(iso).toLocaleDateString("es-EC", {
       month: "long",
       year: "numeric",
     });
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
   } catch {
     return "—";
   }
@@ -272,24 +272,31 @@ const Perfil = () => {
       ) : (
         <>
           {/* Stats */}
-          <div className="mx-4 -mt-4 grid grid-cols-2 gap-3">
-            <div className="bg-card rounded-2xl shadow-md border border-border p-3 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-accent/15 flex items-center justify-center shrink-0">
-                <Route className="h-5 w-5 text-accent" />
+          <div className="mx-4 -mt-4 grid grid-cols-3 gap-2">
+            <div className="bg-card rounded-2xl shadow-md border border-border p-3 flex flex-col items-center text-center">
+              <div className="w-9 h-9 rounded-full bg-accent/15 flex items-center justify-center mb-1">
+                <Route className="h-4 w-4 text-accent" />
               </div>
-              <div className="min-w-0">
-                <p className="text-[10px] text-muted-foreground">Viajes completados</p>
-                <p className="text-base font-extrabold text-foreground">{tripsCount}</p>
-              </div>
+              <p className="text-base font-extrabold text-foreground leading-none">{tripsCount}</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Viajes</p>
             </div>
-            <div className="bg-card rounded-2xl shadow-md border border-border p-3 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-accent/15 flex items-center justify-center shrink-0">
-                <CalendarDays className="h-5 w-5 text-accent" />
+            <div className="bg-card rounded-2xl shadow-md border border-border p-3 flex flex-col items-center text-center">
+              <div className="w-9 h-9 rounded-full bg-accent/15 flex items-center justify-center mb-1">
+                <Star className="h-4 w-4 text-accent fill-accent" />
               </div>
-              <div className="min-w-0">
-                <p className="text-[10px] text-muted-foreground">En MotoYa desde</p>
-                <p className="text-sm font-bold text-foreground truncate">{joinDate}</p>
+              <p className="text-base font-extrabold text-foreground leading-none">
+                {role === "conductor"
+                  ? (conductor?.calificacion_promedio ?? 0).toFixed(1)
+                  : "—"}
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-1">Calificación</p>
+            </div>
+            <div className="bg-card rounded-2xl shadow-md border border-border p-3 flex flex-col items-center text-center">
+              <div className="w-9 h-9 rounded-full bg-accent/15 flex items-center justify-center mb-1">
+                <CalendarDays className="h-4 w-4 text-accent" />
               </div>
+              <p className="text-xs font-bold text-foreground leading-tight">{joinDate}</p>
+              <p className="text-[10px] text-muted-foreground mt-1">En MotoYa</p>
             </div>
           </div>
 
