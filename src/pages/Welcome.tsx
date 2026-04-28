@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import logoMotoya from '@/assets/logo-motoya.png';
+import logoPoseidon from '@/assets/logo-poseidon.png';
 
 const Welcome = () => {
   const navigate = useNavigate();
@@ -39,6 +40,18 @@ const Welcome = () => {
       <p className="text-primary-foreground/50 text-xs mt-8">
         Pedernales, Ecuador
       </p>
+
+      <div className="w-full max-w-xs mt-10 flex flex-col items-center">
+        <div className="w-full h-px bg-primary-foreground/15 mb-4" />
+        <img
+          src={logoPoseidon}
+          alt="Poseidon"
+          className="h-16 w-auto opacity-80"
+        />
+        <p className="text-primary-foreground/70 text-[11px] mt-2">
+          Desarrollado por Poseidon
+        </p>
+      </div>
     </div>
   );
 };
