@@ -67,6 +67,7 @@ const ConductoresTab = () => {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
