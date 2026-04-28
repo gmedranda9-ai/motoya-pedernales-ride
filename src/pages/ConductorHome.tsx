@@ -1146,7 +1146,7 @@ const ConductorHome = () => {
         <DialogContent className="max-w-sm rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-extrabold text-foreground text-center">
-              Plan MotoYa $8.00/mes
+              Plan MotoYa $6.00/mes
             </DialogTitle>
             <DialogDescription className="text-center">
               Activa tu plan para empezar a recibir viajes
@@ -1171,7 +1171,7 @@ const ConductorHome = () => {
             size="lg"
             className="w-full rounded-xl"
             onClick={() => {
-              window.open("https://ppls.me/bnmUL4mwQgikhhLX3g4drQ", "_blank", "noopener,noreferrer");
+              window.open("https://ppls.me/zmZ5khhGGQFnW0pTrhtPA", "_blank", "noopener,noreferrer");
               setPlanOpen(false);
             }}
           >
