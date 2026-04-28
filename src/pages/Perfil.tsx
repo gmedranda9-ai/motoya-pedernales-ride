@@ -304,10 +304,16 @@ const Perfil = () => {
               </div>
               <p className="text-base font-extrabold text-foreground leading-none">
                 {role === "conductor"
-                  ? (conductor?.calificacion_promedio ?? 0).toFixed(1)
+                  ? (conductor?.calificacion_promedio ?? 0) > 0
+                    ? (conductor?.calificacion_promedio ?? 0).toFixed(1)
+                    : "—"
                   : "—"}
               </p>
-              <p className="text-[10px] text-muted-foreground mt-1">Calificación</p>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                {role === "conductor" && (conductor?.calificacion_promedio ?? 0) === 0
+                  ? "Sin calificar"
+                  : "Calificación"}
+              </p>
             </div>
             <div className="bg-card rounded-2xl shadow-md border border-border p-3 flex flex-col items-center text-center">
               <div className="w-9 h-9 rounded-full bg-accent/15 flex items-center justify-center mb-1">
