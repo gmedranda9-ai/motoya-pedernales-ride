@@ -4,7 +4,7 @@ import { Loader2, ArrowLeft } from "lucide-react";
 import { useBackButton } from "@/hooks/useBackButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useRideChat } from "@/hooks/useRideChat";
+
 
 interface Conversation {
   viajeIds: string[];
