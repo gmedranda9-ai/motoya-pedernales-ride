@@ -1025,6 +1025,57 @@ const ConductorHome = () => {
         </div>
       )}
 
+      {/* Reporte diario */}
+      {appStatus === "approved" && (
+        <div className="px-4 mt-4">
+          <button
+            type="button"
+            onClick={() => setReporteOpen((v) => !v)}
+            className="w-full bg-card rounded-2xl border border-border shadow-sm px-4 py-3 flex items-center justify-between"
+          >
+            <span className="text-sm font-bold text-foreground">📊 Tu día de hoy</span>
+            <ChevronDown
+              className={`h-4 w-4 text-muted-foreground transition-transform ${reporteOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          {reporteOpen && (
+            <div className="mt-2 bg-card rounded-2xl border border-border shadow-sm p-4 animate-fade-in">
+              {reporte.viajes === 0 ? (
+                <p className="text-sm text-center text-muted-foreground py-4">
+                  Aún no has completado viajes hoy 🛺
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-muted rounded-xl p-3">
+                    <p className="text-[10px] text-muted-foreground">Viajes hoy</p>
+                    <p className="text-xl font-extrabold text-foreground">{reporte.viajes}</p>
+                  </div>
+                  <div className="bg-muted rounded-xl p-3">
+                    <p className="text-[10px] text-muted-foreground">Ingresos estimados</p>
+                    <p className="text-xl font-extrabold text-foreground">
+                      ${reporte.ingresos.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="bg-muted rounded-xl p-3">
+                    <p className="text-[10px] text-muted-foreground">Calificación del día</p>
+                    <p className="text-xl font-extrabold text-foreground">
+                      {reporte.rating > 0 ? `⭐ ${reporte.rating.toFixed(1)}` : "—"}
+                    </p>
+                  </div>
+                  <div className="bg-muted rounded-xl p-3">
+                    <p className="text-[10px] text-muted-foreground">Hora pico</p>
+                    <p className="text-xl font-extrabold text-foreground">
+                      {reporte.horaPico || "—"}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Plan MotoYa - Suscripción (compacto) */}
       {appStatus === "approved" && (
         <div className="px-4 mt-6">
