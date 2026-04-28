@@ -551,7 +551,7 @@ const ConductorHome = () => {
         {rideStatus === "en_viaje" && (
           <div className="px-4 mb-3 space-y-2 animate-fade-in">
             <div className="road-anim" aria-hidden="true">
-              <span className="road-anim__vehicle">🛺</span>
+              <img src={logoMotoya} alt="MotoYa" className="road-anim__vehicle" />
             </div>
             <div className="text-center">
               <p className="text-sm font-extrabold text-foreground">En camino al destino</p>

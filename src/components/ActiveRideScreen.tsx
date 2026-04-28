@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRideChat } from "@/hooks/useRideChat";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import logoMotoya from "@/assets/logo-motoya.png";
 
 type RideStatus = "en_camino" | "llegado" | "en_viaje" | "completado";
 
@@ -171,7 +172,7 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
       {status === "en_viaje" ? (
         <div className="gradient-primary px-4 pt-10 pb-5">
           <div className="road-anim mb-3" aria-hidden="true">
-            <span className="road-anim__vehicle">🛺</span>
+            <img src={logoMotoya} alt="MotoYa" className="road-anim__vehicle" />
           </div>
           <h1 className="text-2xl font-extrabold text-accent leading-tight">¡En viaje!</h1>
           <p className="text-sm text-primary-foreground/80">Disfruta tu trayecto 😊</p>
