@@ -206,7 +206,7 @@ const ConductorHome = () => {
       setReporte({ viajes, ingresos, rating, horaPico });
     };
     loadReporte();
-  }, [conductorId, refreshTrigger]);
+  }, [conductorId]);
 
   const persistAvailability = async (value: boolean, playerId?: string | null) => {
     if (!user) return false;
