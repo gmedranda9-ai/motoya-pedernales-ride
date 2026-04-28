@@ -39,6 +39,7 @@ import {
   Camera,
   Upload,
   Map as MapIcon,
+  ChevronDown,
 } from "lucide-react";
 import { subscribeToPush, unsubscribeFromPush } from "@/lib/onesignal";
 import { useNotificationPermission } from "@/hooks/useNotificationPermission";
@@ -99,6 +100,13 @@ const ConductorHome = () => {
   const [subActiva, setSubActiva] = useState(false);
   const [subVence, setSubVence] = useState<string | null>(null);
   const [planOpen, setPlanOpen] = useState(false);
+  const [reporteOpen, setReporteOpen] = useState(false);
+  const [reporte, setReporte] = useState<{
+    viajes: number;
+    ingresos: number;
+    rating: number;
+    horaPico: string | null;
+  }>({ viajes: 0, ingresos: 0, rating: 0, horaPico: null });
 
   // Load existing application status from Supabase
   useEffect(() => {
@@ -150,6 +158,55 @@ const ConductorHome = () => {
     };
     loadStatus();
   }, [user]);
+
+  // Reporte diario: cargar viajes completados HOY del conductor
+  useEffect(() => {
+    if (!conductorId) return;
+    const loadReporte = async () => {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      const end = new Date();
+      end.setHours(23, 59, 59, 999);
+
+      const { data } = await supabase
+        .from("viajes")
+        .select("id, calificacion_pasajero, completado_at, created_at")
+        .eq("conductor_id", conductorId)
+        .eq("estado", "completado")
+        .gte("created_at", start.toISOString())
+        .lte("created_at", end.toISOString());
+
+      const list = (data as any[]) || [];
+      const viajes = list.length;
+      const ingresos = viajes * 1.0;
+      const ratings = list
+        .map((v) => Number(v.calificacion_pasajero))
+        .filter((r) => !isNaN(r) && r > 0);
+      const rating = ratings.length
+        ? ratings.reduce((a, b) => a + b, 0) / ratings.length
+        : 0;
+
+      // Hora con más viajes
+      const hours: Record<number, number> = {};
+      list.forEach((v) => {
+        const iso = v.completado_at || v.created_at;
+        if (!iso) return;
+        const h = new Date(iso).getHours();
+        hours[h] = (hours[h] || 0) + 1;
+      });
+      let horaPico: string | null = null;
+      let max = 0;
+      Object.entries(hours).forEach(([h, c]) => {
+        if (c > max) {
+          max = c;
+          horaPico = `${h.padStart(2, "0")}:00`;
+        }
+      });
+
+      setReporte({ viajes, ingresos, rating, horaPico });
+    };
+    loadReporte();
+  }, [conductorId]);
 
   const persistAvailability = async (value: boolean, playerId?: string | null) => {
     if (!user) return false;
@@ -965,6 +1022,57 @@ const ConductorHome = () => {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Reporte diario */}
+      {appStatus === "approved" && (
+        <div className="px-4 mt-4">
+          <button
+            type="button"
+            onClick={() => setReporteOpen((v) => !v)}
+            className="w-full bg-card rounded-2xl border border-border shadow-sm px-4 py-3 flex items-center justify-between"
+          >
+            <span className="text-sm font-bold text-foreground">📊 Tu día de hoy</span>
+            <ChevronDown
+              className={`h-4 w-4 text-muted-foreground transition-transform ${reporteOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          {reporteOpen && (
+            <div className="mt-2 bg-card rounded-2xl border border-border shadow-sm p-4 animate-fade-in">
+              {reporte.viajes === 0 ? (
+                <p className="text-sm text-center text-muted-foreground py-4">
+                  Aún no has completado viajes hoy 🛺
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-muted rounded-xl p-3">
+                    <p className="text-[10px] text-muted-foreground">Viajes hoy</p>
+                    <p className="text-xl font-extrabold text-foreground">{reporte.viajes}</p>
+                  </div>
+                  <div className="bg-muted rounded-xl p-3">
+                    <p className="text-[10px] text-muted-foreground">Ingresos estimados</p>
+                    <p className="text-xl font-extrabold text-foreground">
+                      ${reporte.ingresos.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="bg-muted rounded-xl p-3">
+                    <p className="text-[10px] text-muted-foreground">Calificación del día</p>
+                    <p className="text-xl font-extrabold text-foreground">
+                      {reporte.rating > 0 ? `⭐ ${reporte.rating.toFixed(1)}` : "—"}
+                    </p>
+                  </div>
+                  <div className="bg-muted rounded-xl p-3">
+                    <p className="text-[10px] text-muted-foreground">Hora pico</p>
+                    <p className="text-xl font-extrabold text-foreground">
+                      {reporte.horaPico || "—"}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

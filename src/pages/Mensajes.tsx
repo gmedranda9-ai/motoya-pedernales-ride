@@ -4,16 +4,24 @@ import { Loader2, ArrowLeft } from "lucide-react";
 import { useBackButton } from "@/hooks/useBackButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useRideChat } from "@/hooks/useRideChat";
+
 
 interface Conversation {
-  viaje_id: string;
+  viajeIds: string[];
   otherKey: string;
   otherName: string;
   lastMsg: string;
   time: string;
   iso: string;
   unread: number;
+}
+
+interface ChatMessage {
+  id: string;
+  viaje_id: string;
+  remitente_id: string;
+  texto: string;
+  hora: string;
 }
 
 const formatTime = (iso: string) => {
@@ -45,26 +53,93 @@ const Avatar = ({ name }: { name: string }) => (
 );
 
 const ChatPanel = ({
-  viajeId,
+  viajeIds,
   otherName,
   onClose,
 }: {
-  viajeId: string;
+  viajeIds: string[];
   otherName: string;
   onClose: () => void;
 }) => {
   const { user } = useAuth();
-  const { messages, loading } = useRideChat(viajeId, user?.id);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setLoading(true);
+      if (!viajeIds.length) {
+        setMessages([]);
+        setLoading(false);
+        return;
+      }
+      const { data } = await supabase
+        .from("mensajes")
+        .select("id, viaje_id, remitente_id, texto, hora")
+        .in("viaje_id", viajeIds)
+        .order("hora", { ascending: true });
+      if (!cancelled) {
+        setMessages((data as ChatMessage[]) || []);
+        setLoading(false);
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [viajeIds]);
+
+  useEffect(() => {
+    if (!viajeIds.length) return;
+    const channel = supabase
+      .channel(`chat-multi-${viajeIds[0]}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "mensajes" },
+        (payload: any) => {
+          const m = payload.new as ChatMessage;
+          if (viajeIds.includes(m.viaje_id)) {
+            setMessages((prev) => [...prev, m]);
+          }
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [viajeIds]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
     if (user?.id && messages.length) {
       try {
-        localStorage.setItem(readKey(viajeId, user.id), new Date().toISOString());
+        viajeIds.forEach((vid) =>
+          localStorage.setItem(readKey(vid, user.id), new Date().toISOString())
+        );
       } catch {}
     }
-  }, [messages, viajeId, user?.id]);
+  }, [messages, viajeIds, user?.id]);
+
+  const grouped = useMemo(() => {
+    const out: { viajeId: string; date: string; items: ChatMessage[] }[] = [];
+    let currentVid = "";
+    messages.forEach((m) => {
+      const date = new Date(m.hora).toLocaleDateString("es-EC", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      });
+      if (m.viaje_id !== currentVid) {
+        out.push({ viajeId: m.viaje_id, date, items: [m] });
+        currentVid = m.viaje_id;
+      } else {
+        out[out.length - 1].items.push(m);
+      }
+    });
+    return out;
+  }, [messages]);
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
@@ -75,7 +150,9 @@ const ChatPanel = ({
         <Avatar name={otherName} />
         <div className="flex-1 min-w-0">
           <h2 className="text-base font-bold text-accent truncate">{otherName}</h2>
-          <p className="text-[10px] text-primary-foreground/70">Historial del viaje</p>
+          <p className="text-[10px] text-primary-foreground/70">
+            Historial · {viajeIds.length} {viajeIds.length === 1 ? "viaje" : "viajes"}
+          </p>
         </div>
       </header>
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
@@ -84,31 +161,42 @@ const ChatPanel = ({
             <Loader2 className="h-5 w-5 text-accent animate-spin" />
           </div>
         ) : messages.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground py-8">Sin mensajes en este viaje</p>
+          <p className="text-center text-sm text-muted-foreground py-8">Sin mensajes aún</p>
         ) : (
-          messages.map((m) => {
-            const mine = m.remitente_id === user?.id;
-            return (
-              <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-                <div
-                  className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
-                    mine
-                      ? "bg-accent text-accent-foreground rounded-br-sm"
-                      : "bg-muted text-foreground rounded-bl-sm"
-                  }`}
-                >
-                  <p className="break-words">{m.texto}</p>
-                  <p className={`text-[10px] mt-0.5 ${mine ? "text-accent-foreground/70" : "text-muted-foreground"}`}>
-                    {new Date(m.hora).toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit" })}
-                  </p>
-                </div>
+          grouped.map((g, idx) => (
+            <div key={`${g.viajeId}-${idx}`} className="space-y-2">
+              <div className="flex items-center gap-2 my-2">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">
+                  Viaje · {g.date}
+                </span>
+                <div className="flex-1 h-px bg-border" />
               </div>
-            );
-          })
+              {g.items.map((m) => {
+                const mine = m.remitente_id === user?.id;
+                return (
+                  <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                    <div
+                      className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
+                        mine
+                          ? "bg-accent text-accent-foreground rounded-br-sm"
+                          : "bg-muted text-foreground rounded-bl-sm"
+                      }`}
+                    >
+                      <p className="break-words">{m.texto}</p>
+                      <p className={`text-[10px] mt-0.5 ${mine ? "text-accent-foreground/70" : "text-muted-foreground"}`}>
+                        {new Date(m.hora).toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))
         )}
       </div>
       <div className="border-t border-border bg-card p-3 text-center">
-        <p className="text-[11px] text-muted-foreground">Solo lectura · Historial del viaje</p>
+        <p className="text-[11px] text-muted-foreground">Solo lectura · Historial completo</p>
       </div>
     </div>
   );
@@ -119,7 +207,7 @@ const Mensajes = () => {
   const { user } = useAuth();
   const [convos, setConvos] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [openChat, setOpenChat] = useState<{ viajeId: string; name: string } | null>(null);
+  const [openChat, setOpenChat] = useState<{ viajeIds: string[]; name: string } | null>(null);
   const [refreshTick, setRefreshTick] = useState(0);
   const role: "pasajero" | "conductor" = useMemo(
     () => ((user?.user_metadata?.rol as any) === "conductor" ? "conductor" : "pasajero"),
@@ -217,32 +305,39 @@ const Mensajes = () => {
         }
       }
 
-      // Group by other party (conductor_id for pasajero, pasajero_id for conductor)
-      // Keep only the most recent viaje per other party that has messages.
+      // Group by other party — accumulate ALL viajeIds with that party (full historial)
       const grouped: Record<string, Conversation> = {};
-      (viajes as any[])
-        .filter((v) => lastByViaje[v.id])
-        .forEach((v) => {
-          const otherKey = role === "conductor" ? v.pasajero_id : v.conductor_id;
-          if (!otherKey) return;
-          const last = lastByViaje[v.id];
-          const existing = grouped[otherKey];
-          // Sum unread across all viajes with this other party
-          const unreadForThis = unreadByViaje[v.id] || 0;
-          if (!existing || existing.iso < last.hora) {
-            grouped[otherKey] = {
-              viaje_id: v.id,
-              otherKey,
-              otherName: nameMap[otherKey] || "—",
-              lastMsg: last.texto,
-              time: formatTime(last.hora),
-              iso: last.hora,
-              unread: (existing?.unread || 0) + unreadForThis,
-            };
-          } else {
-            existing.unread += unreadForThis;
+      (viajes as any[]).forEach((v) => {
+        const otherKey = role === "conductor" ? v.pasajero_id : v.conductor_id;
+        if (!otherKey) return;
+        const last = lastByViaje[v.id];
+        const unreadForThis = unreadByViaje[v.id] || 0;
+        const existing = grouped[otherKey];
+        if (!existing) {
+          grouped[otherKey] = {
+            viajeIds: [v.id],
+            otherKey,
+            otherName: nameMap[otherKey] || "—",
+            lastMsg: last?.texto || "",
+            time: last ? formatTime(last.hora) : "",
+            iso: last?.hora || "",
+            unread: unreadForThis,
+          };
+        } else {
+          existing.viajeIds.push(v.id);
+          existing.unread += unreadForThis;
+          if (last && (!existing.iso || existing.iso < last.hora)) {
+            existing.lastMsg = last.texto;
+            existing.time = formatTime(last.hora);
+            existing.iso = last.hora;
           }
-        });
+        }
+      });
+
+      // Solo mostrar conversaciones que tienen al menos un mensaje
+      Object.keys(grouped).forEach((k) => {
+        if (!grouped[k].iso) delete grouped[k];
+      });
 
       const list: Conversation[] = Object.values(grouped).sort((a, b) =>
         a.iso < b.iso ? 1 : -1
@@ -296,10 +391,12 @@ const Mensajes = () => {
             <button
               key={chat.otherKey}
               onClick={() => {
-                setOpenChat({ viajeId: chat.viaje_id, name: chat.otherName });
+                setOpenChat({ viajeIds: chat.viajeIds, name: chat.otherName });
                 if (user?.id) {
                   try {
-                    localStorage.setItem(readKey(chat.viaje_id, user.id), new Date().toISOString());
+                    chat.viajeIds.forEach((vid) =>
+                      localStorage.setItem(readKey(vid, user.id), new Date().toISOString())
+                    );
                   } catch {}
                 }
               }}
@@ -333,7 +430,7 @@ const Mensajes = () => {
 
       {openChat && (
         <ChatPanel
-          viajeId={openChat.viajeId}
+          viajeIds={openChat.viajeIds}
           otherName={openChat.name}
           onClose={() => {
             setOpenChat(null);
