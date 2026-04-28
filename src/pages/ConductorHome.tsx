@@ -95,6 +95,7 @@ const ConductorHome = () => {
 
   const [step, setStep] = useState<Step>("panel");
   const [appStatus, setAppStatus] = useState<ApplicationStatus>("none");
+  const [motivoRechazo, setMotivoRechazo] = useState<string | null>(null);
   const [available, setAvailable] = useState(false);
   const [conductorId, setConductorId] = useState<string | null>(null);
   const [rating, setRating] = useState(0);
