@@ -983,10 +983,16 @@ const ConductorHome = () => {
               <Label className="text-sm font-bold text-foreground mb-1.5 block">Foto de la cédula *</Label>
               <button
                 onClick={() => handleFileSelect("cedulaPhotoUrl")}
-                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl py-4 hover:border-accent transition-colors"
+                disabled={uploads.cedulaPhotoUrl.status === "uploading"}
+                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl py-4 hover:border-accent transition-colors disabled:opacity-60"
               >
-                {form.cedulaPhotoUrl ? (
-                  <img src={form.cedulaPhotoUrl} alt="Cédula" className="h-20 rounded-lg object-cover" />
+                {form.cedulaPhotoUrl && uploads.cedulaPhotoUrl.status === "success" ? (
+                  <div className="relative">
+                    <img src={form.cedulaPhotoUrl} alt="Cédula" className="h-20 rounded-lg object-cover" />
+                    <CheckCircle2 className="h-5 w-5 text-green-500 bg-background rounded-full absolute -top-1 -right-1" />
+                  </div>
+                ) : uploads.cedulaPhotoUrl.status === "uploading" ? (
+                  <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
                 ) : (
                   <>
                     <Upload className="h-5 w-5 text-muted-foreground" />
@@ -994,6 +1000,18 @@ const ConductorHome = () => {
                   </>
                 )}
               </button>
+              {uploads.cedulaPhotoUrl.status === "uploading" && (
+                <div className="mt-2 space-y-1">
+                  <Progress value={uploads.cedulaPhotoUrl.progress} className="h-2" />
+                  <p className="text-[11px] text-muted-foreground text-center">Subiendo... {uploads.cedulaPhotoUrl.progress}%</p>
+                </div>
+              )}
+              {uploads.cedulaPhotoUrl.status === "error" && (
+                <div className="mt-2 flex items-center gap-1.5 text-destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <p className="text-xs font-medium">Error al subir foto. Intenta de nuevo</p>
+                </div>
+              )}
             </div>
           </div>
 
