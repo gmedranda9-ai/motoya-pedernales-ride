@@ -1072,7 +1072,7 @@ const ConductorHome = () => {
             <div className="mt-2 bg-card rounded-2xl border border-border shadow-sm p-4 animate-fade-in">
               {reporte.viajes === 0 ? (
                 <p className="text-sm text-center text-muted-foreground py-4">
-                  Aún no has completado viajes hoy 🛺
+                  Sin viajes hoy aún 🛺
                 </p>
               ) : (
                 <div className="grid grid-cols-2 gap-3">
