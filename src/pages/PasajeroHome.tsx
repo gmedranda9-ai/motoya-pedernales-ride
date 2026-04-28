@@ -664,20 +664,25 @@ const PasajeroHome = () => {
       {/* Viaja seguro */}
       <div className="px-4 mt-6">
         <div className="rounded-2xl p-5 bg-primary text-primary-foreground shadow-lg">
-          <h3 className="text-base font-bold mb-3">🔒 Viaja con confianza</h3>
-          <ul className="space-y-2 text-sm">
-            <li className="flex items-start gap-2">
-              <span>✅</span>
-              <span>Conductores verificados por Poseidon</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span>⭐</span>
-              <span>Calificaciones reales de usuarios</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span>🆘</span>
-              <span>Botón SOS disponible en cada viaje</span>
-            </li>
+          <h3 className="text-base font-bold mb-4">🔒 Viaja con confianza</h3>
+          <ul className="space-y-3">
+            {[
+              { icon: "✅", title: "Conductores verificados", desc: "Aprobados por Poseidon" },
+              { icon: "⭐", title: "Calificaciones reales", desc: "Opiniones de usuarios" },
+              { icon: "🆘", title: "Botón SOS", desc: "Disponible en cada viaje" },
+              { icon: "📤", title: "Comparte tu viaje", desc: "Con un familiar en tiempo real" },
+              { icon: "🗺️", title: "Sigue tu ruta", desc: "En el mapa en vivo" },
+            ].map((f) => (
+              <li key={f.title} className="flex items-start gap-3">
+                <span className="text-xl leading-none flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-primary-foreground/10">
+                  {f.icon}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold leading-tight">{f.title}</p>
+                  <p className="text-xs text-primary-foreground/75 leading-tight mt-0.5">{f.desc}</p>
+                </div>
+              </li>
+            ))}
           </ul>
         </div>
       </div>
