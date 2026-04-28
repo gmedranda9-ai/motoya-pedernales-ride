@@ -184,7 +184,7 @@ const ConductorHome = () => {
 
       const list = (data as any[]) || [];
       const viajes = list.length;
-      const ingresos = viajes * 6.0;
+      const ingresos = viajes * 1.0;
       const ratings = list
         .map((v) => Number(v.calificacion_pasajero))
         .filter((r) => !isNaN(r) && r > 0);
@@ -1075,28 +1075,36 @@ const ConductorHome = () => {
                   Sin viajes hoy aún 🛺
                 </p>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-muted rounded-xl p-3">
-                    <p className="text-[10px] text-muted-foreground">Viajes hoy</p>
-                    <p className="text-xl font-extrabold text-foreground">{reporte.viajes}</p>
+                <div className="space-y-3">
+                  <div className="bg-muted rounded-xl p-3 space-y-1.5">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Viajes completados hoy</span>
+                      <span className="font-extrabold text-foreground">{reporte.viajes}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Valor por viaje</span>
+                      <span className="font-bold text-foreground">$1.00</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm pt-1.5 border-t border-border">
+                      <span className="font-bold text-foreground">Total estimado</span>
+                      <span className="font-extrabold text-accent">
+                        ${reporte.ingresos.toFixed(2)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="bg-muted rounded-xl p-3">
-                    <p className="text-[10px] text-muted-foreground">Ingresos estimados</p>
-                    <p className="text-xl font-extrabold text-foreground">
-                      ${reporte.ingresos.toFixed(2)}
-                    </p>
-                  </div>
-                  <div className="bg-muted rounded-xl p-3">
-                    <p className="text-[10px] text-muted-foreground">Calificación del día</p>
-                    <p className="text-xl font-extrabold text-foreground">
-                      {reporte.rating > 0 ? `⭐ ${reporte.rating.toFixed(1)}` : "—"}
-                    </p>
-                  </div>
-                  <div className="bg-muted rounded-xl p-3">
-                    <p className="text-[10px] text-muted-foreground">Hora pico</p>
-                    <p className="text-xl font-extrabold text-foreground">
-                      {reporte.horaPico || "—"}
-                    </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-muted rounded-xl p-3">
+                      <p className="text-[10px] text-muted-foreground">Calificación del día</p>
+                      <p className="text-xl font-extrabold text-foreground">
+                        {reporte.rating > 0 ? `⭐ ${reporte.rating.toFixed(1)}` : "—"}
+                      </p>
+                    </div>
+                    <div className="bg-muted rounded-xl p-3">
+                      <p className="text-[10px] text-muted-foreground">Hora pico</p>
+                      <p className="text-xl font-extrabold text-foreground">
+                        {reporte.horaPico || "—"}
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1138,7 +1146,7 @@ const ConductorHome = () => {
         <DialogContent className="max-w-sm rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-extrabold text-foreground text-center">
-              Plan MotoYa $8.00/mes
+              Plan MotoYa $6.00/mes
             </DialogTitle>
             <DialogDescription className="text-center">
               Activa tu plan para empezar a recibir viajes
@@ -1163,7 +1171,7 @@ const ConductorHome = () => {
             size="lg"
             className="w-full rounded-xl"
             onClick={() => {
-              window.open("https://ppls.me/bnmUL4mwQgikhhLX3g4drQ", "_blank", "noopener,noreferrer");
+              window.open("https://ppls.me/zmZ5khhGGQFnW0pTrhtPA", "_blank", "noopener,noreferrer");
               setPlanOpen(false);
             }}
           >
