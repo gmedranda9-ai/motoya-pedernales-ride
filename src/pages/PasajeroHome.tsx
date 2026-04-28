@@ -621,6 +621,58 @@ const PasajeroHome = () => {
         </div>
       </div>
 
+      {/* Viaja seguro */}
+      <div className="px-4 mt-6">
+        <div className="rounded-2xl p-5 bg-primary text-primary-foreground shadow-lg">
+          <h3 className="text-base font-bold mb-3">🔒 Viaja con confianza</h3>
+          <ul className="space-y-2 text-sm">
+            <li className="flex items-start gap-2">
+              <span>✅</span>
+              <span>Conductores verificados por Poseidon</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span>⭐</span>
+              <span>Calificaciones reales de usuarios</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span>🆘</span>
+              <span>Botón SOS disponible en cada viaje</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Cómo funciona */}
+      <div className="px-4 mt-6">
+        <h3 className="text-sm font-bold text-foreground mb-3">
+          ¿Cómo usar MotoYa?
+        </h3>
+        <div className="bg-card rounded-2xl border border-border p-4 shadow-sm">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-col items-center text-center flex-1">
+              <span className="text-3xl mb-1">1️⃣</span>
+              <p className="text-[11px] font-medium text-foreground leading-tight">
+                Elige destino
+              </p>
+            </div>
+            <span className="text-accent text-xl font-bold">→</span>
+            <div className="flex flex-col items-center text-center flex-1">
+              <span className="text-3xl mb-1">2️⃣</span>
+              <p className="text-[11px] font-medium text-foreground leading-tight">
+                Elige conductor
+              </p>
+            </div>
+            <span className="text-accent text-xl font-bold">→</span>
+            <div className="flex flex-col items-center text-center flex-1">
+              <span className="text-3xl mb-1">3️⃣</span>
+              <p className="text-[11px] font-medium text-foreground leading-tight">
+                Viaja seguro
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Frequent Destinations (collapsible) */}
       <div className="px-4 mt-6">
         <button
