@@ -7,7 +7,7 @@ import WaitingScreen from "@/components/WaitingScreen";
 import ActiveRideScreen from "@/components/ActiveRideScreen";
 import RatingScreen from "@/components/RatingScreen";
 import BottomNav from "@/components/BottomNav";
-import { useBackHandler } from "@/hooks/useBackButton";
+
 import logoMotoya from "@/assets/logo-motoya.png";
 import pedernalesMototaxi from "@/assets/pedernales-mototaxi.png";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,13 +80,6 @@ const PasajeroHome = () => {
     }, 3000);
     return () => clearInterval(id);
   }, []);
-
-  // Device back button steps back through the request flow instead of
-  // triggering the global "exit app?" dialog. "active" is handled by the
-  // active-ride lock; "rating" intentionally has no back.
-  useBackHandler(step === "drivers", () => setStep("home"));
-  useBackHandler(step === "profile", () => setStep("drivers"));
-  useBackHandler(step === "waiting", () => setStep("profile"));
 
   const userName =
     user?.user_metadata?.nombre || user?.email?.split("@")[0] || "Pasajero";

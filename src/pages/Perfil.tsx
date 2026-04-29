@@ -27,7 +27,7 @@ import {
   Lock,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useBackButton } from "@/hooks/useBackButton";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import logoPoseidon from "@/assets/logo-poseidon.png";
@@ -83,7 +83,6 @@ const Perfil = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  useBackButton();
 
   const role: "pasajero" | "conductor" =
     (user?.user_metadata?.rol as any) === "conductor" ? "conductor" : "pasajero";

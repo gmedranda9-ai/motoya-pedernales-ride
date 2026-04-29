@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import BottomNav from "@/components/BottomNav";
 import { Clock, Loader2, MapPin } from "lucide-react";
-import { useBackButton } from "@/hooks/useBackButton";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -45,7 +45,6 @@ const costLabel = (tipo: string | null) => {
 };
 
 const Viajes = () => {
-  useBackButton();
   const { user } = useAuth();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);

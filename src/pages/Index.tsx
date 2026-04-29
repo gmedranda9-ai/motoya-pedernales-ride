@@ -7,11 +7,9 @@ import RideRequestCard from "@/components/RideRequestCard";
 import BottomNav from "@/components/BottomNav";
 import logoMotoya from "@/assets/logo-motoya.png";
 import heroImage from "@/assets/hero-mototaxi.jpg";
-import { useBackButton } from "@/hooks/useBackButton";
 
 const Index = () => {
   const { user } = useAuth();
-  useBackButton();
   const role = user?.user_metadata?.rol;
 
   // First-time OAuth users without a role yet
