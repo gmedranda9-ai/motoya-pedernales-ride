@@ -81,12 +81,53 @@ const PasajeroHome = () => {
     return () => clearInterval(id);
   }, []);
 
-  // Verificar si hay un viaje completado sin calificar al abrir la app
+  // Verificar si hay un viaje activo del pasajero al abrir la app
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
     (async () => {
       try {
+        const { data: activos } = await supabase
+          .from("viajes")
+          .select("id, conductor_id, destino, origen_lat, origen_lng, estado")
+          .eq("pasajero_id", user.id)
+          .in("estado", ["aceptado", "en_camino", "llegado", "en_viaje"])
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (cancelled) return;
+
+        const activo = activos?.[0];
+        if (activo) {
+          const { data: cond } = await supabase
+            .from("conductores")
+            .select("*")
+            .eq("id", activo.conductor_id)
+            .maybeSingle();
+          if (cancelled) return;
+          if (cond) {
+            const driver: Driver = {
+              id: cond.id,
+              name: cond.nombre || "Conductor",
+              photo: cond.foto || "",
+              plate: cond.placa || "",
+              model: cond.modelo_moto || "",
+              rating: cond.calificacion_promedio ?? 5.0,
+              available: cond.disponible ?? true,
+              phone: cond.telefono || "",
+              color: cond.color || "",
+            };
+            setSelectedDriver(driver);
+            setDestination(activo.destino || "");
+            setViajeId(activo.id);
+            if (activo.origen_lat != null && activo.origen_lng != null) {
+              setLocationCoords({ lat: Number(activo.origen_lat), lng: Number(activo.origen_lng) });
+            }
+            setStep("active");
+            return;
+          }
+        }
+
         const { data: viajes } = await supabase
           .from("viajes")
           .select("id, conductor_id, destino")
