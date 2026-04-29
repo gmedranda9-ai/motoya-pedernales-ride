@@ -17,6 +17,7 @@ export interface IncomingRideRequest {
   originCoords?: { lat: number; lng: number };
   destination: string;
   costType: "city" | "outside";
+  createdAt: string;
 }
 
 interface RideContextValue {
