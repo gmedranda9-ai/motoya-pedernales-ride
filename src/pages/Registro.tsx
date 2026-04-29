@@ -14,7 +14,7 @@ const Registro = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [nombre, setNombre] = useState('');
-  const [rol, setRol] = useState<'pasajero' | 'conductor'>('pasajero');
+  const [rol, setRol] = useState<'pasajero' | 'conductor' | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
