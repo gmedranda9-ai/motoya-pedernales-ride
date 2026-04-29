@@ -171,6 +171,27 @@ const ConductorHome = () => {
     loadStatus();
   }, [user]);
 
+  // Deep link: si la URL trae ?accion=solicitud, buscar viaje pendiente y mostrar pantalla
+  useEffect(() => {
+    if (!conductorId) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("accion") !== "solicitud") return;
+
+    (async () => {
+      const found = await checkPendingRequest();
+      if (!found) {
+        toast({
+          title: "Sin solicitudes pendientes",
+          description: "No hay viajes esperando tu respuesta en este momento.",
+        });
+      }
+      // Limpiar el parámetro para que no se vuelva a disparar
+      const url = new URL(window.location.href);
+      url.searchParams.delete("accion");
+      window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+    })();
+  }, [conductorId, checkPendingRequest, toast]);
+
   // Reporte diario: cargar viajes completados HOY del conductor
   useEffect(() => {
     if (!conductorId) return;
