@@ -95,6 +95,93 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [user]);
 
+  // Builds an IncomingRideRequest from a viajes row, fetching passenger info
+  const buildRequestFromViaje = useCallback(async (viaje: any): Promise<IncomingRideRequest> => {
+    let passengerName = viaje.pasajero_nombre || "";
+    let passengerRating = 0;
+    let passengerTrips = 0;
+
+    if (!passengerName) {
+      try {
+        const { data: pasajero } = await supabase
+          .from("usuarios")
+          .select("nombre")
+          .eq("id", viaje.pasajero_id)
+          .maybeSingle();
+        if (pasajero?.nombre) passengerName = pasajero.nombre;
+      } catch (e) {
+        console.error("usuarios fetch:", e);
+      }
+    }
+    if (!passengerName) passengerName = "Pasajero";
+
+    try {
+      const { count } = await supabase
+        .from("viajes")
+        .select("id", { count: "exact", head: true })
+        .eq("pasajero_id", viaje.pasajero_id)
+        .eq("estado", "completado");
+      passengerTrips = count ?? 0;
+    } catch (e) {
+      console.error("trips count:", e);
+    }
+
+    try {
+      const { data: calificaciones } = await supabase
+        .from("calificaciones")
+        .select("estrellas")
+        .eq("pasajero_id", viaje.pasajero_id);
+      if (calificaciones && calificaciones.length > 0) {
+        const sum = calificaciones.reduce((acc: number, c: any) => acc + (c.estrellas || 0), 0);
+        passengerRating = sum / calificaciones.length;
+      }
+    } catch (e) {
+      console.error("ratings fetch:", e);
+    }
+
+    return {
+      id: viaje.id,
+      passengerId: viaje.pasajero_id,
+      passengerName,
+      passengerRating,
+      passengerTrips,
+      origin: viaje.origen || "Origen no especificado",
+      originCoords:
+        viaje.origen_lat && viaje.origen_lng
+          ? { lat: viaje.origen_lat, lng: viaje.origen_lng }
+          : undefined,
+      destination: viaje.destino || "Destino no especificado",
+      costType: viaje.tipo_cobro === "fuera" ? "outside" : "city",
+    };
+  }, []);
+
+  // Manually check DB for a pending viaje (used when conductor opens app via push deep link)
+  const checkPendingRequest = useCallback(async (): Promise<boolean> => {
+    if (!conductorId) return false;
+    try {
+      const { data, error } = await supabase
+        .from("viajes")
+        .select("*")
+        .eq("conductor_id", conductorId)
+        .eq("estado", "pendiente")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) {
+        console.error("checkPendingRequest error:", error);
+        return false;
+      }
+      if (!data) return false;
+      const req = await buildRequestFromViaje(data);
+      setIncomingRequest(req);
+      setRequestTimer(REQUEST_TIMEOUT_SECONDS);
+      return true;
+    } catch (e) {
+      console.error("checkPendingRequest exception:", e);
+      return false;
+    }
+  }, [conductorId, buildRequestFromViaje]);
+
   // Global subscription to new ride requests for this conductor
   useEffect(() => {
     if (!conductorId || !isApprovedAvailable) return;
@@ -112,67 +199,12 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
         async (payload) => {
           const viaje = payload.new as any;
           if (viaje.estado !== "pendiente") return;
-
-          let passengerName = viaje.pasajero_nombre || "";
-          let passengerRating = 0;
-          let passengerTrips = 0;
-
-          if (!passengerName) {
-            try {
-              const { data: pasajero } = await supabase
-                .from("usuarios")
-                .select("nombre")
-                .eq("id", viaje.pasajero_id)
-                .maybeSingle();
-              if (pasajero?.nombre) passengerName = pasajero.nombre;
-            } catch (e) {
-              console.error("usuarios fetch:", e);
-            }
-          }
-          if (!passengerName) passengerName = "Pasajero";
-
-          try {
-            const { count } = await supabase
-              .from("viajes")
-              .select("id", { count: "exact", head: true })
-              .eq("pasajero_id", viaje.pasajero_id)
-              .eq("estado", "completado");
-            passengerTrips = count ?? 0;
-          } catch (e) {
-            console.error("trips count:", e);
-          }
-
-          try {
-            const { data: calificaciones } = await supabase
-              .from("calificaciones")
-              .select("estrellas")
-              .eq("pasajero_id", viaje.pasajero_id);
-            if (calificaciones && calificaciones.length > 0) {
-              const sum = calificaciones.reduce((acc: number, c: any) => acc + (c.estrellas || 0), 0);
-              passengerRating = sum / calificaciones.length;
-            }
-          } catch (e) {
-            console.error("ratings fetch:", e);
-          }
-
-          setIncomingRequest({
-            id: viaje.id,
-            passengerId: viaje.pasajero_id,
-            passengerName,
-            passengerRating,
-            passengerTrips,
-            origin: viaje.origen || "Origen no especificado",
-            originCoords:
-              viaje.origen_lat && viaje.origen_lng
-                ? { lat: viaje.origen_lat, lng: viaje.origen_lng }
-                : undefined,
-            destination: viaje.destino || "Destino no especificado",
-            costType: viaje.tipo_cobro === "fuera" ? "outside" : "city",
-          });
+          const req = await buildRequestFromViaje(viaje);
+          setIncomingRequest(req);
           setRequestTimer(REQUEST_TIMEOUT_SECONDS);
           toast({
             title: "🔔 Nueva solicitud de viaje",
-            description: `${passengerName} necesita un viaje`,
+            description: `${req.passengerName} necesita un viaje`,
           });
         },
       )
