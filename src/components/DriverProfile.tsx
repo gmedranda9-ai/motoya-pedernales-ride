@@ -276,17 +276,32 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost }: DriverProf
 
           {/* Pricing */}
           <div className="bg-accent/10 rounded-xl border border-accent/30 p-4">
-            <p className="text-sm font-bold text-foreground mb-1">💰 Costo del viaje</p>
-            {estimatedCost === "city" ? (
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">Tarifa fija dentro de la ciudad</p>
-                <span className="text-lg font-extrabold text-accent">$1.00</span>
+            <p className="text-sm font-bold text-foreground mb-3">💰 Tarifas de referencia</p>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-foreground flex items-center gap-1.5">
+                  <span>🏙️</span> Dentro de la ciudad
+                </span>
+                <span className="text-sm font-extrabold text-accent whitespace-nowrap">$1.00</span>
               </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                Depende la distancia, el conductor te informará el costo
-              </p>
-            )}
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-foreground flex items-center gap-1.5">
+                  <span>🏘️</span> Extremos de la ciudad
+                </span>
+                <span className="text-sm font-extrabold text-accent whitespace-nowrap">$1.50</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-foreground flex items-center gap-1.5">
+                  <span>🌄</span> Fuera de la ciudad
+                </span>
+                <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
+                  Acordado con el conductor
+                </span>
+              </div>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-3 italic">
+              El pago se realiza en efectivo al finalizar el viaje
+            </p>
           </div>
 
           {/* Request Button */}
