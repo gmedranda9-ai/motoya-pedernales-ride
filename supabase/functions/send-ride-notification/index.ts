@@ -25,8 +25,8 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    let { player_id, conductor_id, passenger_name, destination, cost } = body ?? {};
-    console.log("📥 Payload recibido:", { player_id, conductor_id, passenger_name, destination, cost });
+    let { player_id, conductor_id, passenger_name, destination, cost, url } = body ?? {};
+    console.log("📥 Payload recibido:", { player_id, conductor_id, passenger_name, destination, cost, url });
 
     // Fallback: resolve player_id from conductor_id via Supabase
     if (!player_id && conductor_id) {
