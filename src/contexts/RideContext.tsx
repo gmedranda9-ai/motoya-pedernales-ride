@@ -232,7 +232,7 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conductorId, isApprovedAvailable, toast]);
+  }, [conductorId, isApprovedAvailable, toast, incomingRequest, acceptedRide, buildRequestFromViaje]);
 
   // Countdown — cancels the viaje in DB if the conductor doesn't respond in 60s
   useEffect(() => {
