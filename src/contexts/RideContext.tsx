@@ -243,7 +243,7 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
         .then(({ error }) => {
           if (error) console.error("Error cancelando viaje expirado:", error);
         });
-      toast({ title: "Solicitud expirada", description: "No respondiste a tiempo." });
+      toast({ title: "Solicitud expirada", description: "El tiempo para responder terminó." });
       return;
     }
     const t = setTimeout(() => setRequestTimer((s) => s - 1), 1000);
