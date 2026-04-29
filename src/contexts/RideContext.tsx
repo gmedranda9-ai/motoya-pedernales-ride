@@ -183,7 +183,10 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
       if (remaining <= 0) {
         // Expired — mark as cancelled, do not show modal
         await supabase.from("viajes").update({ estado: "cancelado" }).eq("id", data.id).eq("estado", "pendiente");
-        toast({ title: "Esta solicitud ya expiró", description: "El pasajero está esperando demasiado." });
+        toast({
+          title: "Tenías una solicitud pendiente",
+          description: "Pero ya expiró. Espera la próxima.",
+        });
         return false;
       }
       const req = await buildRequestFromViaje(data);
