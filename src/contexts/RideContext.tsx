@@ -153,6 +153,7 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
           : undefined,
       destination: viaje.destino || "Destino no especificado",
       costType: viaje.tipo_cobro === "fuera" ? "outside" : "city",
+      createdAt: viaje.created_at,
     };
   }, []);
 
