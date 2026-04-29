@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import BottomNav from "@/components/BottomNav";
 import { Loader2, ArrowLeft } from "lucide-react";
-import { useBackButton } from "@/hooks/useBackButton";
+import { useBackHandler } from "@/hooks/useBackButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -65,6 +65,9 @@ const ChatPanel = ({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Device back button closes the chat overlay.
+  useBackHandler(true, onClose);
 
   useEffect(() => {
     let cancelled = false;
@@ -203,7 +206,7 @@ const ChatPanel = ({
 };
 
 const Mensajes = () => {
-  useBackButton();
+  // Back button on the conversation list opens the global exit dialog (main route).
   const { user } = useAuth();
   const [convos, setConvos] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
