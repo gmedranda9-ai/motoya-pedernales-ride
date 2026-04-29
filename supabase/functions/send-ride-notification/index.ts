@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
       ? mensaje
       : `${safeName} necesita una carrera urgente hacia ${safeDest}`).slice(0, 180);
 
-    const BASE_URL = "https://motoya-pedernales-ride.lovable.app";
+    const BASE_URL = "https://motoya.mkposeidon.com";
     let finalUrl = url || "/?accion=solicitud";
     if (typeof finalUrl === "string" && finalUrl.startsWith("/")) {
       finalUrl = BASE_URL + finalUrl;
