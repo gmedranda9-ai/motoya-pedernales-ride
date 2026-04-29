@@ -1398,8 +1398,8 @@ const ConductorHome = () => {
                       <span className="font-extrabold text-foreground">{reporte.viajes}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Valor por viaje</span>
-                      <span className="font-bold text-foreground">$1.00</span>
+                      <span className="text-muted-foreground">Tarifa base</span>
+                      <span className="font-bold text-foreground">desde $1.00</span>
                     </div>
                     <div className="flex items-center justify-between text-sm pt-1.5 border-t border-border">
                       <span className="font-bold text-foreground">Total estimado</span>
