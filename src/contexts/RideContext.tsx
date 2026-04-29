@@ -252,10 +252,45 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
 
   const handleAccept = useCallback(async () => {
     if (!incomingRequest) return;
+
+    // Validar tiempo restante real
+    const remaining = REQUEST_TIMEOUT_SECONDS - Math.floor((Date.now() - new Date(incomingRequest.createdAt).getTime()) / 1000);
+    if (remaining <= 0) {
+      toast({ title: "Solicitud expirada", description: "Esta solicitud ya expiró", variant: "destructive" });
+      setIncomingRequest(null);
+      return;
+    }
+
+    // Verificar estado actual del viaje antes de aceptar
+    const { data: current, error: fetchErr } = await supabase
+      .from("viajes")
+      .select("estado")
+      .eq("id", incomingRequest.id)
+      .maybeSingle();
+
+    if (fetchErr) {
+      console.error("❌ Error verificando estado del viaje:", fetchErr);
+      toast({ title: "Error", description: "No se pudo aceptar el viaje.", variant: "destructive" });
+      return;
+    }
+
+    if (!current || current.estado === "cancelado") {
+      toast({ title: "El pasajero canceló la solicitud", description: "Esta solicitud ya no está disponible.", variant: "destructive" });
+      setIncomingRequest(null);
+      return;
+    }
+
+    if (current.estado !== "pendiente") {
+      toast({ title: "Solicitud no disponible", description: `Estado actual: ${current.estado}`, variant: "destructive" });
+      setIncomingRequest(null);
+      return;
+    }
+
     const { error } = await supabase
       .from("viajes")
       .update({ estado: "aceptado" })
-      .eq("id", incomingRequest.id);
+      .eq("id", incomingRequest.id)
+      .eq("estado", "pendiente");
     if (error) {
       console.error("❌ Error al aceptar viaje:", error);
       toast({ title: "Error", description: "No se pudo aceptar el viaje.", variant: "destructive" });
