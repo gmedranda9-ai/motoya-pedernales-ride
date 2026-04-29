@@ -160,7 +160,7 @@ const Registro = () => {
           </div>
         </div>
 
-        <Button type="submit" variant="hero" size="lg" className="w-full mt-2" disabled={loading}>
+        <Button type="submit" variant="hero" size="lg" className="w-full mt-2" disabled={loading || !rol}>
           {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
         </Button>
 
