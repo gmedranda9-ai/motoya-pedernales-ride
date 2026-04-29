@@ -194,7 +194,7 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
       console.error("checkPendingRequest exception:", e);
       return false;
     }
-  }, [conductorId, buildRequestFromViaje, toast]);
+  }, [conductorId, buildRequestFromViaje, toast, incomingRequest, acceptedRide]);
 
   // Global subscription to new ride requests for this conductor
   useEffect(() => {
