@@ -161,6 +161,8 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
   // o al cargar ConductorHome — verifica viajes pendientes en los últimos 2 minutos)
   const checkPendingRequest = useCallback(async (): Promise<boolean> => {
     if (!conductorId) return false;
+    // Si ya hay un modal abierto o un viaje aceptado, no mostrar otra solicitud
+    if (incomingRequest || acceptedRide) return false;
     try {
       const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
       const { data, error } = await supabase
