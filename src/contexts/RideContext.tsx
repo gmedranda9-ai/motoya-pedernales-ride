@@ -23,12 +23,14 @@ interface RideContextValue {
   incomingRequest: IncomingRideRequest | null;
   acceptedRide: IncomingRideRequest | null;
   consumeAcceptedRide: () => IncomingRideRequest | null;
+  checkPendingRequest: () => Promise<boolean>;
 }
 
 const RideContext = createContext<RideContextValue>({
   incomingRequest: null,
   acceptedRide: null,
   consumeAcceptedRide: () => null,
+  checkPendingRequest: async () => false,
 });
 
 export const useRide = () => useContext(RideContext);
