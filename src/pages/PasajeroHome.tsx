@@ -272,6 +272,8 @@ const PasajeroHome = () => {
       console.log("🔑 OneSignal player_id:", playerId || "(no registrado)");
 
       const cost = getCostType(destination) === "city" ? "1.00" : "acordar";
+      const titulo = "🛺 ¡Carrera disponible!";
+      const mensaje = `${pasajeroNombre} necesita una carrera urgente hacia ${destination}`;
       const { data: pushData, error: pushErr } = await supabase.functions.invoke(
         "send-ride-notification",
         {
@@ -281,7 +283,9 @@ const PasajeroHome = () => {
             passenger_name: pasajeroNombre,
             destination,
             cost,
-            url: "https://motoya-pedernales-ride.lovable.app/?accion=solicitud",
+            titulo,
+            mensaje,
+            url: "/?accion=solicitud",
           },
         }
       );
