@@ -9,6 +9,7 @@ import RatingScreen from "@/components/RatingScreen";
 import BottomNav from "@/components/BottomNav";
 import { useBackHandler } from "@/hooks/useBackButton";
 import logoMotoya from "@/assets/logo-motoya.png";
+import pedernalesMototaxi from "@/assets/pedernales-mototaxi.png";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Search,
@@ -687,25 +688,35 @@ const PasajeroHome = () => {
           <h3 className="text-base font-bold mb-4" style={{ color: "#1a3a5c" }}>
             🔒 Viaja con confianza
           </h3>
-          <ul className="space-y-3">
-            {[
-              { icon: "✅", title: "Conductores verificados", desc: "Aprobados por Poseidon" },
-              { icon: "⭐", title: "Calificaciones reales", desc: "Opiniones de usuarios" },
-              { icon: "🆘", title: "Botón SOS", desc: "Disponible en cada viaje" },
-              { icon: "📤", title: "Comparte tu viaje", desc: "Con un familiar en tiempo real" },
-              { icon: "🗺️", title: "Sigue tu ruta", desc: "En el mapa en vivo" },
-            ].map((f) => (
-              <li key={f.title} className="flex items-start gap-3">
-                <span className="text-xl leading-none flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-white/70">
-                  {f.icon}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold leading-tight text-foreground">{f.title}</p>
-                  <p className="text-xs text-muted-foreground leading-tight mt-0.5">{f.desc}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <div className="flex items-center gap-3">
+            <ul className="space-y-3 flex-[3] min-w-0">
+              {[
+                { icon: "✅", title: "Conductores verificados", desc: "Aprobados por Poseidon" },
+                { icon: "⭐", title: "Calificaciones reales", desc: "Opiniones de usuarios" },
+                { icon: "🆘", title: "Botón SOS", desc: "Disponible en cada viaje" },
+                { icon: "📤", title: "Comparte tu viaje", desc: "Con un familiar en tiempo real" },
+                { icon: "🗺️", title: "Sigue tu ruta", desc: "En el mapa en vivo" },
+              ].map((f) => (
+                <li key={f.title} className="flex items-start gap-2">
+                  <span className="text-base leading-none flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-white/70">
+                    {f.icon}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold leading-tight text-foreground">{f.title}</p>
+                    <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{f.desc}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="flex-[2] flex items-center justify-center">
+              <img
+                src={pedernalesMototaxi}
+                alt="Mototaxi en Pedernales"
+                className="w-full h-auto object-contain"
+                style={{ borderRadius: "8px" }}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
