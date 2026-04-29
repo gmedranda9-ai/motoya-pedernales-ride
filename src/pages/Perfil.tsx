@@ -397,6 +397,28 @@ const Perfil = () => {
             </Button>
           </div>
 
+          <div className="mx-4 mt-6 text-center" style={{ fontSize: '12px' }}>
+            <a
+              href="https://motoya.mkposeidon.com/motoya-terminos-condiciones.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+              style={{ color: '#1a3a5c' }}
+            >
+              Términos y Condiciones
+            </a>
+            <span className="text-muted-foreground mx-2">·</span>
+            <a
+              href="https://motoya.mkposeidon.com/motoya-politica-privacidad.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+              style={{ color: '#1a3a5c' }}
+            >
+              Política de Privacidad
+            </a>
+          </div>
+
           <div className="mx-4 mt-8 flex flex-col items-center">
             <div className="w-full h-px bg-border mb-4" />
             <img

@@ -164,6 +164,29 @@ const Registro = () => {
           {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
         </Button>
 
+        <p className="text-center text-muted-foreground" style={{ fontSize: '12px' }}>
+          Al registrarte aceptas nuestros{' '}
+          <a
+            href="https://motoya.mkposeidon.com/motoya-terminos-condiciones.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+            style={{ color: '#1a3a5c' }}
+          >
+            Términos y Condiciones
+          </a>{' '}
+          y{' '}
+          <a
+            href="https://motoya.mkposeidon.com/motoya-politica-privacidad.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+            style={{ color: '#1a3a5c' }}
+          >
+            Política de Privacidad
+          </a>
+        </p>
+
         <div className="relative my-1">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t border-border" />
