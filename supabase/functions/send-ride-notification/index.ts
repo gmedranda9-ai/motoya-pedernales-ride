@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
         en: `${safeName} quiere ir a ${safeDest} - ${safeCost}`,
         es: `${safeName} quiere ir a ${safeDest} - ${safeCost}`,
       },
-      url: req.headers.get("origin") || undefined,
+      url: url || "https://motoya-pedernales-ride.lovable.app/?accion=solicitud",
     };
 
     console.log("📤 Enviando a OneSignal:", { player_id, contents: payload.contents });
