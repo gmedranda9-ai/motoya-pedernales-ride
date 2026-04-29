@@ -66,6 +66,9 @@ const ChatPanel = ({
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Device back button closes the chat overlay.
+  useBackHandler(true, onClose);
+
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
