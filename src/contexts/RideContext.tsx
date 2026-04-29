@@ -177,15 +177,22 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
         return false;
       }
       if (!data) return false;
+      const remaining = REQUEST_TIMEOUT_SECONDS - Math.floor((Date.now() - new Date(data.created_at).getTime()) / 1000);
+      if (remaining <= 0) {
+        // Expired — mark as cancelled, do not show modal
+        await supabase.from("viajes").update({ estado: "cancelado" }).eq("id", data.id).eq("estado", "pendiente");
+        toast({ title: "Esta solicitud ya expiró", description: "El pasajero está esperando demasiado." });
+        return false;
+      }
       const req = await buildRequestFromViaje(data);
       setIncomingRequest(req);
-      setRequestTimer(REQUEST_TIMEOUT_SECONDS);
+      setRequestTimer(remaining);
       return true;
     } catch (e) {
       console.error("checkPendingRequest exception:", e);
       return false;
     }
-  }, [conductorId, buildRequestFromViaje]);
+  }, [conductorId, buildRequestFromViaje, toast]);
 
   // Global subscription to new ride requests for this conductor
   useEffect(() => {
