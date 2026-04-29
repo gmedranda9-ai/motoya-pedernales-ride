@@ -64,11 +64,6 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
     }
   };
 
-  // Block phone back button while a ride is active
-  useEffect(() => {
-    setActiveRide(true);
-    return () => setActiveRide(false);
-  }, []);
 
   useEffect(() => {
     chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight });
