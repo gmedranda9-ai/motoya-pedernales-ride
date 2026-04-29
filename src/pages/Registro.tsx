@@ -167,7 +167,7 @@ const Registro = () => {
         <p className="text-center text-muted-foreground" style={{ fontSize: '12px' }}>
           Al registrarte aceptas nuestros{' '}
           <a
-            href="https://motoya.mkposeidon.com/motoya-terminos-condiciones.html"
+            href="https://motoya.mkposeidon.com/legal/terminos.html"
             target="_blank"
             rel="noopener noreferrer"
             className="underline"
@@ -177,7 +177,7 @@ const Registro = () => {
           </a>{' '}
           y{' '}
           <a
-            href="https://motoya.mkposeidon.com/motoya-politica-privacidad.html"
+            href="https://motoya.mkposeidon.com/legal/privacidad.html"
             target="_blank"
             rel="noopener noreferrer"
             className="underline"
