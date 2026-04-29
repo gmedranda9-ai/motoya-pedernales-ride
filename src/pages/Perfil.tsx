@@ -398,7 +398,7 @@ const Perfil = () => {
 
           <div className="mx-4 mt-6 text-center" style={{ fontSize: '12px' }}>
             <a
-              href="https://motoya.mkposeidon.com/motoya-terminos-condiciones.html"
+              href="https://motoya.mkposeidon.com/legal/terminos.html"
               target="_blank"
               rel="noopener noreferrer"
               className="underline"
@@ -408,7 +408,7 @@ const Perfil = () => {
             </a>
             <span className="text-muted-foreground mx-2">·</span>
             <a
-              href="https://motoya.mkposeidon.com/motoya-politica-privacidad.html"
+              href="https://motoya.mkposeidon.com/legal/privacidad.html"
               target="_blank"
               rel="noopener noreferrer"
               className="underline"
