@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import logoMotoya from "@/assets/logo-motoya.png";
 import UserAvatar from "@/components/UserAvatar";
-import { setActiveRide } from "@/hooks/useBackButton";
+
 
 type RideStatus = "en_camino" | "llegado" | "en_viaje" | "completado";
 
@@ -64,11 +64,6 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
     }
   };
 
-  // Block phone back button while a ride is active
-  useEffect(() => {
-    setActiveRide(true);
-    return () => setActiveRide(false);
-  }, []);
 
   useEffect(() => {
     chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight });
