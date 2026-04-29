@@ -67,36 +67,48 @@ const Registro = () => {
       </header>
 
       <form onSubmit={handleRegister} className="flex-1 p-6 flex flex-col gap-4">
-        <div className="space-y-2">
-          <Label>¿Cómo quieres usar MotoYa?</Label>
-          <RadioGroup value={rol} onValueChange={(v) => setRol(v as 'pasajero' | 'conductor')} className="grid grid-cols-2 gap-3">
-            <label
-              htmlFor="pasajero"
-              className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                rol === 'pasajero' ? 'border-accent bg-accent/10' : 'border-border'
-              }`}
-            >
-              <RadioGroupItem value="pasajero" id="pasajero" className="sr-only" />
-              <User className={`h-8 w-8 ${rol === 'pasajero' ? 'text-accent' : 'text-muted-foreground'}`} />
-              <span className={`text-sm font-semibold ${rol === 'pasajero' ? 'text-foreground' : 'text-muted-foreground'}`}>
-                Pasajero
-              </span>
-              <span className="text-[10px] text-muted-foreground text-center">Pide tu mototaxi</span>
-            </label>
-            <label
-              htmlFor="conductor"
-              className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                rol === 'conductor' ? 'border-accent bg-accent/10' : 'border-border'
-              }`}
-            >
-              <RadioGroupItem value="conductor" id="conductor" className="sr-only" />
-              <Bike className={`h-8 w-8 ${rol === 'conductor' ? 'text-accent' : 'text-muted-foreground'}`} />
-              <span className={`text-sm font-semibold ${rol === 'conductor' ? 'text-foreground' : 'text-muted-foreground'}`}>
-                Conductor
-              </span>
-              <span className="text-[10px] text-muted-foreground text-center">Ofrece viajes</span>
-            </label>
+        <div className="space-y-3">
+          <Label className="text-base font-semibold">¿Cómo quieres usar MotoYa? <span className="text-destructive">*</span></Label>
+          <RadioGroup
+            value={rol ?? ''}
+            onValueChange={(v) => setRol(v as 'pasajero' | 'conductor')}
+            className="grid grid-cols-2 gap-3"
+          >
+            {([
+              { value: 'pasajero', emoji: '👤', title: 'Pasajero', desc: 'Solicita mototaxis de forma segura' },
+              { value: 'conductor', emoji: '🛺', title: 'Conductor', desc: 'Genera ingresos ofreciendo viajes' },
+            ] as const).map((opt) => {
+              const selected = rol === opt.value;
+              return (
+                <label
+                  key={opt.value}
+                  htmlFor={opt.value}
+                  className={`relative flex flex-col items-center justify-start gap-2 p-5 min-h-[180px] rounded-2xl border-4 cursor-pointer transition-all ${
+                    selected
+                      ? 'border-accent bg-primary text-primary-foreground shadow-lg scale-[1.02]'
+                      : 'border-border bg-muted/40 text-muted-foreground hover:border-muted-foreground/40'
+                  }`}
+                >
+                  <RadioGroupItem value={opt.value} id={opt.value} className="sr-only" />
+                  {selected && (
+                    <span className="absolute top-2 right-2 inline-flex items-center gap-1 bg-accent text-accent-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">
+                      <Check className="h-3 w-3" /> Seleccionado
+                    </span>
+                  )}
+                  <span className="text-5xl leading-none mt-1" aria-hidden>{opt.emoji}</span>
+                  <span className={`text-base font-bold ${selected ? 'text-primary-foreground' : ''}`}>
+                    {opt.title}
+                  </span>
+                  <span className={`text-xs text-center leading-snug ${selected ? 'text-primary-foreground/80' : ''}`}>
+                    {opt.desc}
+                  </span>
+                </label>
+              );
+            })}
           </RadioGroup>
+          {!rol && (
+            <p className="text-xs text-muted-foreground text-center">Debes elegir un rol para continuar</p>
+          )}
         </div>
 
         <div className="space-y-2">
