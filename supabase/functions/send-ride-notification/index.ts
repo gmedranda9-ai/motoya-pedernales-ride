@@ -25,8 +25,8 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    let { player_id, conductor_id, passenger_name, destination, cost } = body ?? {};
-    console.log("📥 Payload recibido:", { player_id, conductor_id, passenger_name, destination, cost });
+    let { player_id, conductor_id, passenger_name, destination, cost, url } = body ?? {};
+    console.log("📥 Payload recibido:", { player_id, conductor_id, passenger_name, destination, cost, url });
 
     // Fallback: resolve player_id from conductor_id via Supabase
     if (!player_id && conductor_id) {
@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
         en: `${safeName} quiere ir a ${safeDest} - ${safeCost}`,
         es: `${safeName} quiere ir a ${safeDest} - ${safeCost}`,
       },
-      url: req.headers.get("origin") || undefined,
+      url: url || "https://motoya-pedernales-ride.lovable.app/?accion=solicitud",
     };
 
     console.log("📤 Enviando a OneSignal:", { player_id, contents: payload.contents });
