@@ -17,6 +17,7 @@ export interface IncomingRideRequest {
   originCoords?: { lat: number; lng: number };
   destination: string;
   costType: "city" | "outside";
+  createdAt: string;
 }
 
 interface RideContextValue {
@@ -152,6 +153,7 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
           : undefined,
       destination: viaje.destino || "Destino no especificado",
       costType: viaje.tipo_cobro === "fuera" ? "outside" : "city",
+      createdAt: viaje.created_at,
     };
   }, []);
 
@@ -175,15 +177,22 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
         return false;
       }
       if (!data) return false;
+      const remaining = REQUEST_TIMEOUT_SECONDS - Math.floor((Date.now() - new Date(data.created_at).getTime()) / 1000);
+      if (remaining <= 0) {
+        // Expired — mark as cancelled, do not show modal
+        await supabase.from("viajes").update({ estado: "cancelado" }).eq("id", data.id).eq("estado", "pendiente");
+        toast({ title: "Esta solicitud ya expiró", description: "El pasajero está esperando demasiado." });
+        return false;
+      }
       const req = await buildRequestFromViaje(data);
       setIncomingRequest(req);
-      setRequestTimer(REQUEST_TIMEOUT_SECONDS);
+      setRequestTimer(remaining);
       return true;
     } catch (e) {
       console.error("checkPendingRequest exception:", e);
       return false;
     }
-  }, [conductorId, buildRequestFromViaje]);
+  }, [conductorId, buildRequestFromViaje, toast]);
 
   // Global subscription to new ride requests for this conductor
   useEffect(() => {
@@ -203,8 +212,10 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
           const viaje = payload.new as any;
           if (viaje.estado !== "pendiente") return;
           const req = await buildRequestFromViaje(viaje);
+          const remaining = REQUEST_TIMEOUT_SECONDS - Math.floor((Date.now() - new Date(viaje.created_at).getTime()) / 1000);
+          if (remaining <= 0) return;
           setIncomingRequest(req);
-          setRequestTimer(REQUEST_TIMEOUT_SECONDS);
+          setRequestTimer(remaining);
           toast({
             title: "🔔 Nueva solicitud de viaje",
             description: `${req.passengerName} necesita un viaje`,
@@ -232,7 +243,7 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
         .then(({ error }) => {
           if (error) console.error("Error cancelando viaje expirado:", error);
         });
-      toast({ title: "Solicitud expirada", description: "No respondiste a tiempo." });
+      toast({ title: "Solicitud expirada", description: "El tiempo para responder terminó." });
       return;
     }
     const t = setTimeout(() => setRequestTimer((s) => s - 1), 1000);
@@ -241,10 +252,45 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
 
   const handleAccept = useCallback(async () => {
     if (!incomingRequest) return;
+
+    // Validar tiempo restante real
+    const remaining = REQUEST_TIMEOUT_SECONDS - Math.floor((Date.now() - new Date(incomingRequest.createdAt).getTime()) / 1000);
+    if (remaining <= 0) {
+      toast({ title: "Solicitud expirada", description: "Esta solicitud ya expiró", variant: "destructive" });
+      setIncomingRequest(null);
+      return;
+    }
+
+    // Verificar estado actual del viaje antes de aceptar
+    const { data: current, error: fetchErr } = await supabase
+      .from("viajes")
+      .select("estado")
+      .eq("id", incomingRequest.id)
+      .maybeSingle();
+
+    if (fetchErr) {
+      console.error("❌ Error verificando estado del viaje:", fetchErr);
+      toast({ title: "Error", description: "No se pudo aceptar el viaje.", variant: "destructive" });
+      return;
+    }
+
+    if (!current || current.estado === "cancelado") {
+      toast({ title: "El pasajero canceló la solicitud", description: "Esta solicitud ya no está disponible.", variant: "destructive" });
+      setIncomingRequest(null);
+      return;
+    }
+
+    if (current.estado !== "pendiente") {
+      toast({ title: "Solicitud no disponible", description: `Estado actual: ${current.estado}`, variant: "destructive" });
+      setIncomingRequest(null);
+      return;
+    }
+
     const { error } = await supabase
       .from("viajes")
       .update({ estado: "aceptado" })
-      .eq("id", incomingRequest.id);
+      .eq("id", incomingRequest.id)
+      .eq("estado", "pendiente");
     if (error) {
       console.error("❌ Error al aceptar viaje:", error);
       toast({ title: "Error", description: "No se pudo aceptar el viaje.", variant: "destructive" });
