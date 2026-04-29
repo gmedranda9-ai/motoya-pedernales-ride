@@ -19,6 +19,7 @@ import Admin from "./pages/Admin";
 import SeleccionarRol from "./pages/SeleccionarRol";
 import NotFound from "./pages/NotFound";
 import AuthCallback from "./pages/AuthCallback";
+import BackButtonGuard from "@/hooks/useBackButton";
 
 const queryClient = new QueryClient();
 
