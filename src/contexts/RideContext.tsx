@@ -212,8 +212,10 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
           const viaje = payload.new as any;
           if (viaje.estado !== "pendiente") return;
           const req = await buildRequestFromViaje(viaje);
+          const remaining = REQUEST_TIMEOUT_SECONDS - Math.floor((Date.now() - new Date(viaje.created_at).getTime()) / 1000);
+          if (remaining <= 0) return;
           setIncomingRequest(req);
-          setRequestTimer(REQUEST_TIMEOUT_SECONDS);
+          setRequestTimer(remaining);
           toast({
             title: "🔔 Nueva solicitud de viaje",
             description: `${req.passengerName} necesita un viaje`,
