@@ -81,6 +81,65 @@ const PasajeroHome = () => {
     return () => clearInterval(id);
   }, []);
 
+  // Verificar si hay un viaje completado sin calificar al abrir la app
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: viajes } = await supabase
+          .from("viajes")
+          .select("id, conductor_id, destino")
+          .eq("pasajero_id", user.id)
+          .eq("estado", "completado")
+          .order("created_at", { ascending: false })
+          .limit(10);
+        if (!viajes || viajes.length === 0 || cancelled) return;
+
+        const viajeIds = viajes.map((v: any) => v.id);
+        const { data: rated } = await supabase
+          .from("calificaciones")
+          .select("viaje_id")
+          .in("viaje_id", viajeIds);
+        const ratedSet = new Set((rated || []).map((r: any) => r.viaje_id));
+        const pending = viajes.find((v: any) => !ratedSet.has(v.id));
+        if (!pending || cancelled) return;
+
+        const { data: cond } = await supabase
+          .from("conductores")
+          .select("*")
+          .eq("id", pending.conductor_id)
+          .maybeSingle();
+        if (!cond || cancelled) return;
+
+        const driver: Driver = {
+          id: cond.id,
+          name: cond.nombre || "Conductor",
+          photo: cond.foto || "",
+          plate: cond.placa || "",
+          model: cond.modelo_moto || "",
+          rating: cond.calificacion_promedio ?? 5.0,
+          available: cond.disponible ?? true,
+          phone: cond.telefono || "",
+          color: cond.color || "",
+        };
+        setSelectedDriver(driver);
+        setDestination(pending.destino || "");
+        setViajeId(pending.id);
+        setStep("rating");
+        toast({
+          title: "Tienes un viaje sin calificar",
+          description: "Cuéntanos cómo estuvo tu viaje antes de continuar.",
+        });
+      } catch (e) {
+        console.warn("No se pudo verificar viaje pendiente de calificación", e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
   const userName =
     user?.user_metadata?.nombre || user?.email?.split("@")[0] || "Pasajero";
 
