@@ -88,7 +88,7 @@ const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: st
 
 const ConductorHome = () => {
   const { user } = useAuth();
-  const { acceptedRide, consumeAcceptedRide } = useRide();
+  const { acceptedRide, consumeAcceptedRide, checkPendingRequest } = useRide();
   const { toast } = useToast();
   const { isGranted: notifGranted, isBlocked: notifBlocked, request: requestNotif, refresh: refreshNotif } = useNotificationPermission();
   const userName = user?.user_metadata?.nombre || user?.email?.split("@")[0] || "Conductor";
