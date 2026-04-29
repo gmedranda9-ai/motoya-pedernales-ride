@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import logoMotoya from "@/assets/logo-motoya.png";
 import UserAvatar from "@/components/UserAvatar";
+import { setActiveRide } from "@/hooks/useBackButton";
 
 type RideStatus = "en_camino" | "llegado" | "en_viaje" | "completado";
 
