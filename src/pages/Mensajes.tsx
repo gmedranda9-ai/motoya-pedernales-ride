@@ -203,7 +203,7 @@ const ChatPanel = ({
 };
 
 const Mensajes = () => {
-  useBackButton();
+  // Back button on the conversation list opens the global exit dialog (main route).
   const { user } = useAuth();
   const [convos, setConvos] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
