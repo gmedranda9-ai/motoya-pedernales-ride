@@ -161,6 +161,8 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
   // o al cargar ConductorHome — verifica viajes pendientes en los últimos 2 minutos)
   const checkPendingRequest = useCallback(async (): Promise<boolean> => {
     if (!conductorId) return false;
+    // Si ya hay un modal abierto o un viaje aceptado, no mostrar otra solicitud
+    if (incomingRequest || acceptedRide) return false;
     try {
       const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
       const { data, error } = await supabase
@@ -192,7 +194,7 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
       console.error("checkPendingRequest exception:", e);
       return false;
     }
-  }, [conductorId, buildRequestFromViaje, toast]);
+  }, [conductorId, buildRequestFromViaje, toast, incomingRequest, acceptedRide]);
 
   // Global subscription to new ride requests for this conductor
   useEffect(() => {
@@ -211,6 +213,11 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
         async (payload) => {
           const viaje = payload.new as any;
           if (viaje.estado !== "pendiente") return;
+          // Si ya hay una solicitud abierta o un viaje aceptado en curso, ignorar nuevas
+          if (incomingRequest || acceptedRide) {
+            console.log("⛔ Solicitud ignorada — ya hay un viaje activo/modal abierto");
+            return;
+          }
           const req = await buildRequestFromViaje(viaje);
           const remaining = REQUEST_TIMEOUT_SECONDS - Math.floor((Date.now() - new Date(viaje.created_at).getTime()) / 1000);
           if (remaining <= 0) return;
@@ -227,7 +234,7 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conductorId, isApprovedAvailable, toast]);
+  }, [conductorId, isApprovedAvailable, toast, incomingRequest, acceptedRide, buildRequestFromViaje]);
 
   // Countdown — cancels the viaje in DB if the conductor doesn't respond in 60s
   useEffect(() => {
