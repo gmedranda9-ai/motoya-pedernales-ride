@@ -192,6 +192,22 @@ const ConductorHome = () => {
     })();
   }, [conductorId, checkPendingRequest, toast]);
 
+  // Al cargar la página (incluso sin deep link, ej. al reiniciarse la app por una
+  // notificación push) verificar si hay un viaje "pendiente" en los últimos 2 minutos
+  // y mostrar el modal automáticamente sin esperar al evento de Realtime.
+  useEffect(() => {
+    if (!conductorId) return;
+    let cancelled = false;
+    (async () => {
+      const found = await checkPendingRequest();
+      if (cancelled || !found) return;
+      console.log("✅ Viaje pendiente detectado al cargar ConductorHome");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [conductorId, checkPendingRequest]);
+
   // Reporte diario: cargar viajes completados HOY del conductor
   useEffect(() => {
     if (!conductorId) return;

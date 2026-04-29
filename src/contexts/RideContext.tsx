@@ -155,15 +155,18 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  // Manually check DB for a pending viaje (used when conductor opens app via push deep link)
+  // Manually check DB for a pending viaje (used when conductor opens app via push deep link
+  // o al cargar ConductorHome — verifica viajes pendientes en los últimos 2 minutos)
   const checkPendingRequest = useCallback(async (): Promise<boolean> => {
     if (!conductorId) return false;
     try {
+      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
       const { data, error } = await supabase
         .from("viajes")
         .select("*")
         .eq("conductor_id", conductorId)
         .eq("estado", "pendiente")
+        .gte("created_at", twoMinutesAgo)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
