@@ -31,6 +31,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <RideProvider>
+          <BackButtonGuard />
           <Routes>
             <Route path="/welcome" element={<Welcome />} />
             <Route path="/login" element={<Login />} />
