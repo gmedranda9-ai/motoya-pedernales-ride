@@ -283,7 +283,7 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <RideContext.Provider value={{ incomingRequest, acceptedRide, consumeAcceptedRide }}>
+    <RideContext.Provider value={{ incomingRequest, acceptedRide, consumeAcceptedRide, checkPendingRequest }}>
       {children}
       {incomingRequest && (
         <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm flex flex-col items-center justify-center px-6 animate-fade-in overflow-y-auto py-8">
