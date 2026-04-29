@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Mail, Lock, User, Bike } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, User, Check } from 'lucide-react';
 import logoMotoya from '@/assets/logo-motoya.png';
 import GoogleButton from '@/components/GoogleButton';
 
