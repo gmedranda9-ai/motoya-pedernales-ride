@@ -7,6 +7,7 @@ import WaitingScreen from "@/components/WaitingScreen";
 import ActiveRideScreen from "@/components/ActiveRideScreen";
 import RatingScreen from "@/components/RatingScreen";
 import BottomNav from "@/components/BottomNav";
+import { useBackHandler } from "@/hooks/useBackButton";
 import logoMotoya from "@/assets/logo-motoya.png";
 import { supabase } from "@/integrations/supabase/client";
 import {
