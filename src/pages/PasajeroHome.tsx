@@ -668,8 +668,17 @@ const PasajeroHome = () => {
 
       {/* Viaja seguro */}
       <div className="px-4 mt-6">
-        <div className="rounded-2xl p-5 bg-primary text-primary-foreground shadow-lg">
-          <h3 className="text-base font-bold mb-4">🔒 Viaja con confianza</h3>
+        <div
+          className="p-5 shadow-sm"
+          style={{
+            backgroundColor: "#eef4fb",
+            border: "1px solid #c5d8f0",
+            borderRadius: "12px",
+          }}
+        >
+          <h3 className="text-base font-bold mb-4" style={{ color: "#1a3a5c" }}>
+            🔒 Viaja con confianza
+          </h3>
           <ul className="space-y-3">
             {[
               { icon: "✅", title: "Conductores verificados", desc: "Aprobados por Poseidon" },
@@ -679,12 +688,12 @@ const PasajeroHome = () => {
               { icon: "🗺️", title: "Sigue tu ruta", desc: "En el mapa en vivo" },
             ].map((f) => (
               <li key={f.title} className="flex items-start gap-3">
-                <span className="text-xl leading-none flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-primary-foreground/10">
+                <span className="text-xl leading-none flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-white/70">
                   {f.icon}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold leading-tight">{f.title}</p>
-                  <p className="text-xs text-primary-foreground/75 leading-tight mt-0.5">{f.desc}</p>
+                  <p className="text-sm font-semibold leading-tight text-foreground">{f.title}</p>
+                  <p className="text-xs text-muted-foreground leading-tight mt-0.5">{f.desc}</p>
                 </div>
               </li>
             ))}
