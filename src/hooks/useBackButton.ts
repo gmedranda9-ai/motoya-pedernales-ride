@@ -1,49 +1,67 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 const MAIN_ROUTES = ["/", "/viajes", "/mensajes", "/perfil", "/admin"];
 
 /**
- * Global handler for the device back button.
- *
- * - Main screens (bottom nav): show "exit app?" confirmation dialog.
- * - Secondary screens: navigate back to the previous screen.
- * - During an active ride (window flag): block exit and toast a message.
+ * Mark the app as being inside an active ride.
+ * While true, the device back button is blocked.
  */
-export const useBackButton = () => {
+export const setActiveRide = (active: boolean) => {
+  (window as any).__motoyaActiveRide = active;
+};
+
+/**
+ * Global back-button handler. Mount once near the root of the app.
+ *
+ * - Active ride: block and notify.
+ * - Main screens (bottom nav): show "exit app?" confirmation dialog.
+ * - Secondary screens / auth screens: navigate back to the previous screen.
+ */
+const BackButtonGuard = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [exitOpen, setExitOpen] = useState(false);
 
   useEffect(() => {
     const isMainRoute = MAIN_ROUTES.includes(location.pathname);
 
-    // Always push a sentinel entry so the first back press is captured by us.
-    window.history.pushState({ __motoyaSentinel: true }, "", location.pathname + location.search);
+    // Push a sentinel so the first back press lands on our handler.
+    window.history.pushState(
+      { __motoyaSentinel: true },
+      "",
+      location.pathname + location.search,
+    );
+
+    const repush = () =>
+      window.history.pushState(
+        { __motoyaSentinel: true },
+        "",
+        location.pathname + location.search,
+      );
 
     const handlePopState = () => {
-      // Re-push so we keep control of the next back press as well.
-      const repush = () =>
-        window.history.pushState({ __motoyaSentinel: true }, "", location.pathname + location.search);
-
-      // Block back button during an active ride.
       if ((window as any).__motoyaActiveRide) {
         repush();
-        // Lazy import to avoid SSR issues.
-        import("sonner").then(({ toast }) => {
-          toast.error("No puedes salir durante un viaje activo");
-        });
+        toast.error("No puedes salir durante un viaje activo");
         return;
       }
 
       if (isMainRoute) {
         repush();
-        const ok = window.confirm("¿Salir de MotoYa?\n\n¿Deseas cerrar la aplicación?");
-        if (ok) {
-          // Pop our sentinel and the previous one so we actually leave.
-          window.history.go(-2);
-        }
+        setExitOpen(true);
       } else {
-        // Secondary screen: go back to the previous logical page.
         navigate(-1);
       }
     };
@@ -51,12 +69,41 @@ export const useBackButton = () => {
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, [location.pathname, location.search, navigate]);
+
+  const handleExit = () => {
+    setExitOpen(false);
+    // Try to close the window/PWA. If the browser blocks it, fall back to history.
+    setTimeout(() => {
+      window.close();
+      // Fallback: go far back in history to leave the app.
+      window.history.go(-window.history.length);
+    }, 50);
+  };
+
+  return (
+    <AlertDialog open={exitOpen} onOpenChange={setExitOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>¿Salir de MotoYa?</AlertDialogTitle>
+          <AlertDialogDescription>
+            ¿Deseas cerrar la aplicación?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={handleExit}>Salir</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
 };
 
+export default BackButtonGuard;
+
 /**
- * Mark the app as inside an active ride, so the back button is blocked.
- * Call setActiveRide(true) when a trip starts and setActiveRide(false) when it finishes.
+ * Backwards-compatible no-op hook. Per-page `useBackButton()` calls keep
+ * working but the real logic now lives in the global <BackButtonGuard />.
  */
-export const setActiveRide = (active: boolean) => {
-  (window as any).__motoyaActiveRide = active;
+export const useBackButton = () => {
+  // intentionally empty — handled globally
 };
