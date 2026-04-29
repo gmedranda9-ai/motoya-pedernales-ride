@@ -81,13 +81,6 @@ const PasajeroHome = () => {
     return () => clearInterval(id);
   }, []);
 
-  // Device back button steps back through the request flow instead of
-  // triggering the global "exit app?" dialog. "active" is handled by the
-  // active-ride lock; "rating" intentionally has no back.
-  useBackHandler(step === "drivers", () => setStep("home"));
-  useBackHandler(step === "profile", () => setStep("drivers"));
-  useBackHandler(step === "waiting", () => setStep("profile"));
-
   const userName =
     user?.user_metadata?.nombre || user?.email?.split("@")[0] || "Pasajero";
 
