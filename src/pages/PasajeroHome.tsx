@@ -281,6 +281,7 @@ const PasajeroHome = () => {
             passenger_name: pasajeroNombre,
             destination,
             cost,
+            url: "https://motoya-pedernales-ride.lovable.app/?accion=solicitud",
           },
         }
       );
