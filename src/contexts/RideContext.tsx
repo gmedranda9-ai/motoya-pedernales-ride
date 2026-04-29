@@ -211,6 +211,11 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
         async (payload) => {
           const viaje = payload.new as any;
           if (viaje.estado !== "pendiente") return;
+          // Si ya hay una solicitud abierta o un viaje aceptado en curso, ignorar nuevas
+          if (incomingRequest || acceptedRide) {
+            console.log("⛔ Solicitud ignorada — ya hay un viaje activo/modal abierto");
+            return;
+          }
           const req = await buildRequestFromViaje(viaje);
           const remaining = REQUEST_TIMEOUT_SECONDS - Math.floor((Date.now() - new Date(viaje.created_at).getTime()) / 1000);
           if (remaining <= 0) return;
