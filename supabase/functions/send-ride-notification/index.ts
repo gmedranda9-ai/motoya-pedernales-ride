@@ -25,8 +25,8 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    let { player_id, conductor_id, passenger_name, destination, cost, url } = body ?? {};
-    console.log("📥 Payload recibido:", { player_id, conductor_id, passenger_name, destination, cost, url });
+    let { player_id, conductor_id, passenger_name, destination, cost, url, titulo, mensaje } = body ?? {};
+    console.log("📥 Payload recibido:", { player_id, conductor_id, passenger_name, destination, cost, url, titulo, mensaje });
 
     // Fallback: resolve player_id from conductor_id via Supabase
     if (!player_id && conductor_id) {
@@ -55,17 +55,24 @@ Deno.serve(async (req) => {
 
     const safeName = (passenger_name || "Un pasajero").toString().slice(0, 60);
     const safeDest = (destination || "tu zona").toString().slice(0, 80);
-    const safeCost = cost ? `$${cost}` : "$1.00";
+
+    const heading = (titulo && typeof titulo === "string" ? titulo : "🛺 ¡Carrera disponible!").slice(0, 80);
+    const content = (mensaje && typeof mensaje === "string"
+      ? mensaje
+      : `${safeName} necesita una carrera urgente hacia ${safeDest}`).slice(0, 180);
+
+    const BASE_URL = "https://motoya-pedernales-ride.lovable.app";
+    let finalUrl = url || "/?accion=solicitud";
+    if (typeof finalUrl === "string" && finalUrl.startsWith("/")) {
+      finalUrl = BASE_URL + finalUrl;
+    }
 
     const payload = {
       app_id: ONESIGNAL_APP_ID,
       include_player_ids: [player_id],
-      headings: { en: "¡Nueva solicitud!", es: "¡Nueva solicitud!" },
-      contents: {
-        en: `${safeName} quiere ir a ${safeDest} - ${safeCost}`,
-        es: `${safeName} quiere ir a ${safeDest} - ${safeCost}`,
-      },
-      url: url || "https://motoya-pedernales-ride.lovable.app/?accion=solicitud",
+      headings: { en: heading, es: heading },
+      contents: { en: content, es: content },
+      url: finalUrl,
     };
 
     console.log("📤 Enviando a OneSignal:", { player_id, contents: payload.contents });
