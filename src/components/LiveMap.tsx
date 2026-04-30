@@ -1,7 +1,7 @@
 import { Component, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, RefreshCw, AlertTriangle } from "lucide-react";
+import { Loader2, RefreshCw, AlertTriangle, Crosshair } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Fallback UI when Google Maps fails to load or crashes at runtime
