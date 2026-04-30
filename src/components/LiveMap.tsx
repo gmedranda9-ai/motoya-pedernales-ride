@@ -61,8 +61,8 @@ const containerStyle = { width: "100%", height: "100%" };
 
 const PEDERNALES_FALLBACK: LatLng = { lat: 0.0689, lng: -80.0517 };
 
-const LiveMap = ({ viajeId, passengerLocation, className }: LiveMapProps) => {
-  const { isLoaded } = useJsApiLoader({
+const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMapProps & { onRetry: () => void }) => {
+  const { isLoaded, loadError } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
   });
