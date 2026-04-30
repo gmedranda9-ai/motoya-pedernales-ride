@@ -168,6 +168,14 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
     } as google.maps.Icon;
   }, [isLoaded]);
 
+  if (loadError) {
+    return (
+      <div className={className}>
+        <MapFallback onRetry={onRetry} />
+      </div>
+    );
+  }
+
   if (!isLoaded) {
     return (
       <div className={`flex items-center justify-center bg-muted ${className ?? ""}`}>
@@ -205,6 +213,16 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
         )}
       </GoogleMap>
     </div>
+  );
+};
+
+const LiveMap = (props: LiveMapProps) => {
+  const [retryKey, setRetryKey] = useState(0);
+  const handleRetry = () => setRetryKey((k) => k + 1);
+  return (
+    <MapErrorBoundary key={retryKey} onRetry={handleRetry}>
+      <LiveMapInner {...props} onRetry={handleRetry} />
+    </MapErrorBoundary>
   );
 };
 
