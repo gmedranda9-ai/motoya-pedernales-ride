@@ -146,20 +146,13 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
     };
   }, [viajeId]);
 
-  // Fit bounds whenever both points are known
+  // Initial fitBounds only once; do not auto-recenter while the user navigates the map.
   useEffect(() => {
     if (!isLoaded || !mapRef.current) return;
-    if (passenger && driver) {
-      const bounds = new google.maps.LatLngBounds();
-      bounds.extend(passenger);
-      bounds.extend(driver);
-      mapRef.current.fitBounds(bounds, 80);
-    } else if (passenger) {
-      mapRef.current.panTo(passenger);
-      mapRef.current.setZoom(15);
-    } else if (driver) {
-      mapRef.current.panTo(driver);
-      mapRef.current.setZoom(15);
+    if (didInitialFitRef.current) return;
+    if (passenger || driver) {
+      fitToBoth();
+      if (passenger && driver) didInitialFitRef.current = true;
     }
   }, [isLoaded, passenger, driver]);
 
