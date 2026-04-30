@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Phone, Shield, MessageCircle, Share2, Send, Map as MapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,14 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
   const [mapExpanded, setMapExpanded] = useState(true);
   const { messages, sendMessage } = useRideChat(viajeId, user?.id);
   const chatScrollRef = useRef<HTMLDivElement>(null);
+  const completedRef = useRef(false);
+
+  const goToRating = useCallback(() => {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    setStatus("completado");
+    onFinish();
+  }, [onFinish]);
 
   const readKey = viajeId && user?.id ? `chat:lastRead:${user.id}:${viajeId}` : null;
   const [lastReadAt, setLastReadAt] = useState<number>(() => {
@@ -92,15 +100,29 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
       const valid: RideStatus[] = ["en_camino", "llegado", "en_viaje", "completado"];
       // Map DB "aceptado" to "en_camino" for backward compat
       const mapped = (estado === "aceptado" ? "en_camino" : estado) as RideStatus;
-      if (valid.includes(mapped) && !cancelled) setStatus(mapped);
+      if (!valid.includes(mapped) || cancelled) return;
+      if (mapped === "completado") {
+        goToRating();
+        return;
+      }
+      setStatus(mapped);
     };
 
-    supabase
-      .from("viajes")
-      .select("estado")
-      .eq("id", viajeId)
-      .maybeSingle()
-      .then(({ data }) => apply((data as any)?.estado));
+    const fetchStatus = () => {
+      supabase
+        .from("viajes")
+        .select("estado")
+        .eq("id", viajeId)
+        .maybeSingle()
+        .then(({ data }) => apply((data as any)?.estado));
+    };
+
+    fetchStatus();
+    const intervalId = window.setInterval(fetchStatus, 5000);
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") fetchStatus();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
 
     const channel = supabase
       .channel(`viaje_estado_${viajeId}`)
@@ -113,9 +135,11 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
 
     return () => {
       cancelled = true;
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibility);
       supabase.removeChannel(channel);
     };
-  }, [viajeId]);
+  }, [viajeId, goToRating]);
 
   const handleToggleChat = () => {
     const next = !chatOpen;
@@ -164,9 +188,9 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
   // Cuando llega a "completado", saltamos automáticamente a la pantalla de calificación.
   useEffect(() => {
     if (status === "completado") {
-      onFinish();
+      goToRating();
     }
-  }, [status, onFinish]);
+  }, [status, goToRating]);
 
   // ─── Pantalla normal: en_camino, llegado o en_viaje ───
   return (
