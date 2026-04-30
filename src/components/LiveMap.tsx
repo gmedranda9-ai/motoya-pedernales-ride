@@ -1,5 +1,5 @@
 import { Component, ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { GoogleMap, useJsApiLoader, Marker, Polyline } from "@react-google-maps/api";
+import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, RefreshCw, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -70,6 +70,7 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
   const [passenger, setPassenger] = useState<LatLng | null>(passengerLocation ?? null);
   const [driver, setDriver] = useState<LatLng | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
+  const polylineRef = useRef<google.maps.Polyline | null>(null);
 
   // Detect passenger location if not provided
   useEffect(() => {
@@ -139,6 +140,31 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
     }
   }, [isLoaded, passenger, driver]);
 
+  // Draw route line imperatively to avoid @react-google-maps Polyline setPath crashes.
+  useEffect(() => {
+    if (!isLoaded || !mapRef.current || !passenger || !driver) {
+      polylineRef.current?.setMap(null);
+      polylineRef.current = null;
+      return;
+    }
+
+    if (!polylineRef.current) {
+      polylineRef.current = new google.maps.Polyline({
+        map: mapRef.current,
+        strokeColor: "#f5c518",
+        strokeOpacity: 0.9,
+        strokeWeight: 4,
+        geodesic: true,
+      });
+    }
+    polylineRef.current.setPath([passenger, driver]);
+
+    return () => {
+      polylineRef.current?.setMap(null);
+      polylineRef.current = null;
+    };
+  }, [isLoaded, passenger, driver]);
+
   const center = useMemo(() => passenger ?? driver ?? PEDERNALES_FALLBACK, [passenger, driver]);
 
   // Marker icons (built lazily once Google is loaded)
@@ -200,17 +226,6 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
       >
         {passenger && <Marker position={passenger} icon={passengerIcon} title="Tú" />}
         {driver && <Marker position={driver} icon={driverIcon} title="Conductor" />}
-        {passenger && driver && (
-          <Polyline
-            path={[passenger, driver]}
-            options={{
-              strokeColor: "#f5c518",
-              strokeOpacity: 0.9,
-              strokeWeight: 4,
-              geodesic: true,
-            }}
-          />
-        )}
       </GoogleMap>
     </div>
   );
