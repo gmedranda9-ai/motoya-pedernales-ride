@@ -72,17 +72,12 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
   const mapRef = useRef<google.maps.Map | null>(null);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
 
-  // Detect passenger location if not provided
+  // Sync passenger location from prop whenever it changes
   useEffect(() => {
-    if (passengerLocation || !("geolocation" in navigator)) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => setPassenger({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => setPassenger(PEDERNALES_FALLBACK),
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
+    if (passengerLocation) setPassenger(passengerLocation);
   }, [passengerLocation]);
 
-  // Initial fetch + realtime subscription to driver coordinates
+  // Initial fetch + realtime subscription to driver + passenger origin coordinates
   useEffect(() => {
     if (!viajeId) return;
 
@@ -90,7 +85,7 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
     const loadInitial = async () => {
       const { data } = await supabase
         .from("viajes")
-        .select("conductor_lat, conductor_lng")
+        .select("conductor_lat, conductor_lng, origen_lat, origen_lng")
         .eq("id", viajeId)
         .maybeSingle();
       if (cancelled) return;
@@ -98,6 +93,15 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
       const lng = (data as any)?.conductor_lng;
       if (typeof lat === "number" && typeof lng === "number") {
         setDriver({ lat, lng });
+      }
+      // Use passenger origin from DB if no prop provided
+      if (!passengerLocation) {
+        const oLat = (data as any)?.origen_lat;
+        const oLng = (data as any)?.origen_lng;
+        if (typeof oLat === "number" && typeof oLng === "number") {
+          setPassenger({ lat: oLat, lng: oLng });
+        }
+        // If origen_lat/lng vacíos → no mostrar pin del pasajero (no crash)
       }
     };
     loadInitial();
