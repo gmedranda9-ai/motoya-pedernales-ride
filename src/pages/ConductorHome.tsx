@@ -950,7 +950,7 @@ const ConductorHome = () => {
         {mapExpanded && (
           <div className="px-4 mt-4">
             <div className="h-48 rounded-2xl overflow-hidden border border-border">
-              <LiveMap viajeId={activeRide.id} className="w-full h-full" />
+              <LiveMap viajeId={activeRide.id} passengerLocation={activeRide.originCoords} className="w-full h-full" />
             </div>
           </div>
         )}
