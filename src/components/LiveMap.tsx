@@ -71,6 +71,25 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
   const [driver, setDriver] = useState<LatLng | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
+  const userInteractedRef = useRef(false);
+  const didInitialFitRef = useRef(false);
+
+  const fitToBoth = (force = false) => {
+    if (!mapRef.current) return;
+    if (passenger && driver) {
+      const bounds = new google.maps.LatLngBounds();
+      bounds.extend(passenger);
+      bounds.extend(driver);
+      mapRef.current.fitBounds(bounds, 80);
+    } else if (passenger) {
+      mapRef.current.panTo(passenger);
+      mapRef.current.setZoom(15);
+    } else if (driver) {
+      mapRef.current.panTo(driver);
+      mapRef.current.setZoom(15);
+    }
+    if (force) userInteractedRef.current = false;
+  };
 
   // Sync passenger location from prop whenever it changes
   useEffect(() => {
