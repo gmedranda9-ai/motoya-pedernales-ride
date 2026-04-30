@@ -184,7 +184,20 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
   const center = useMemo(() => passenger ?? driver ?? PEDERNALES_FALLBACK, [passenger, driver]);
 
   // Marker icons (built lazily once Google is loaded)
+  // Pasajero → amarillo, Conductor → azul
   const passengerIcon = useMemo(() => {
+    if (!isLoaded) return undefined;
+    return {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 10,
+      fillColor: "#f5c518",
+      fillOpacity: 1,
+      strokeColor: "#ffffff",
+      strokeWeight: 3,
+    } as google.maps.Symbol;
+  }, [isLoaded]);
+
+  const driverIcon = useMemo(() => {
     if (!isLoaded) return undefined;
     return {
       path: google.maps.SymbolPath.CIRCLE,
@@ -194,20 +207,6 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
       strokeColor: "#ffffff",
       strokeWeight: 3,
     } as google.maps.Symbol;
-  }, [isLoaded]);
-
-  const driverIcon = useMemo(() => {
-    if (!isLoaded) return undefined;
-    const svg = `
-      <svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'>
-        <circle cx='22' cy='22' r='20' fill='#1a3a5c' stroke='#f5c518' stroke-width='3'/>
-        <image href='/favicon.png' x='6' y='6' width='32' height='32' clip-path='circle(16px at 16px 16px)'/>
-      </svg>`;
-    return {
-      url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-      scaledSize: new google.maps.Size(44, 44),
-      anchor: new google.maps.Point(22, 22),
-    } as google.maps.Icon;
   }, [isLoaded]);
 
   if (loadError) {
@@ -227,12 +226,17 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
   }
 
   return (
-    <div className={className}>
+    <div className={`${className ?? ""} relative`}>
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={center}
         zoom={15}
         onLoad={(map) => { mapRef.current = map; }}
+        onDragStart={() => { userInteractedRef.current = true; }}
+        onZoomChanged={() => {
+          // Marca interacción solo si ya hicimos el fit inicial (evita falsos positivos durante el fitBounds inicial)
+          if (didInitialFitRef.current) userInteractedRef.current = true;
+        }}
         options={{
           disableDefaultUI: true,
           zoomControl: true,
@@ -240,9 +244,19 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
           clickableIcons: false,
         }}
       >
-        {passenger && <Marker position={passenger} icon={passengerIcon} title="Tú" />}
+        {passenger && <Marker position={passenger} icon={passengerIcon} title="Pasajero" />}
         {driver && <Marker position={driver} icon={driverIcon} title="Conductor" />}
       </GoogleMap>
+
+      {/* Botón flotante para recentrar y ver ambos pins */}
+      <button
+        type="button"
+        onClick={() => fitToBoth(true)}
+        aria-label="Centrar mapa"
+        className="absolute bottom-3 right-3 z-10 h-11 w-11 rounded-full bg-card border border-border shadow-lg flex items-center justify-center text-foreground hover:bg-muted active:scale-95 transition"
+      >
+        <Crosshair className="h-5 w-5 text-accent" />
+      </button>
     </div>
   );
 };
