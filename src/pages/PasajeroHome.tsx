@@ -797,7 +797,7 @@ const PasajeroHome = () => {
 
           {!canSearch && (
             <p className="text-[10px] text-muted-foreground text-center mt-2">
-              Ingresa un destino para continuar
+              {!locationCoords ? "Activa tu ubicación GPS para continuar" : "Ingresa un destino para continuar"}
             </p>
           )}
         </div>
