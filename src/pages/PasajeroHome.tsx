@@ -246,6 +246,14 @@ const PasajeroHome = () => {
     setLoadingDrivers(false);
   };
 
+  // Auto-request GPS on mount (mandatory)
+  useEffect(() => {
+    if (!locationCoords && !detectingLocation) {
+      detectLocation();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (step === "drivers") {
       fetchDrivers();
