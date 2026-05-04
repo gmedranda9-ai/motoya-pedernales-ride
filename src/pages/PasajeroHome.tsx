@@ -325,6 +325,14 @@ const PasajeroHome = () => {
       return;
     }
     if (!locationAddress) detectLocation();
+    if (locationCoords) {
+      const km = haversineKm(locationCoords, PEDERNALES_CENTER);
+      if (km > SERVICE_RADIUS_KM) {
+        setOutOfAreaKm(km);
+        setOutOfAreaOpen(true);
+        return;
+      }
+    }
     setStep("drivers");
   };
 
