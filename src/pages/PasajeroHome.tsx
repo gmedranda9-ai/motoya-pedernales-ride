@@ -97,6 +97,8 @@ const PasajeroHome = () => {
   const [viajeId, setViajeId] = useState<string | undefined>();
   const [phraseIdx, setPhraseIdx] = useState(0);
   const [destinationsOpen, setDestinationsOpen] = useState(false);
+  const [outOfAreaOpen, setOutOfAreaOpen] = useState(false);
+  const [outOfAreaKm, setOutOfAreaKm] = useState<number | null>(null);
 
   useEffect(() => {
     const id = setInterval(() => {
