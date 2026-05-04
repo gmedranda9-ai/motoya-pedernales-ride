@@ -246,6 +246,14 @@ const PasajeroHome = () => {
     setLoadingDrivers(false);
   };
 
+  // Auto-request GPS on mount (mandatory)
+  useEffect(() => {
+    if (!locationCoords && !detectingLocation) {
+      detectLocation();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (step === "drivers") {
       fetchDrivers();
@@ -258,7 +266,7 @@ const PasajeroHome = () => {
       d.plate.toLowerCase().includes(search.toLowerCase())
   );
 
-  const canSearch = !!destination;
+  const canSearch = !!destination && !!locationCoords;
 
   const detectLocation = () => {
     if (!("geolocation" in navigator)) {
@@ -797,7 +805,7 @@ const PasajeroHome = () => {
 
           {!canSearch && (
             <p className="text-[10px] text-muted-foreground text-center mt-2">
-              Ingresa un destino para continuar
+              {!locationCoords ? "Activa tu ubicación GPS para continuar" : "Ingresa un destino para continuar"}
             </p>
           )}
         </div>
@@ -874,6 +882,39 @@ const PasajeroHome = () => {
       </div>
 
       <BottomNav />
+
+      {/* Blocking GPS screen */}
+      {locationDenied && !locationCoords && (
+        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-6">
+          <div className="bg-card rounded-2xl shadow-xl border border-border max-w-md w-full p-6 space-y-4">
+            <h2 className="text-xl font-bold text-foreground text-center">
+              📍 Necesitamos tu ubicación
+            </h2>
+            <p className="text-sm text-muted-foreground text-center">
+              Para que el conductor pueda encontrarte necesitamos tu GPS.
+            </p>
+            <div className="bg-muted rounded-xl p-3 text-xs text-foreground space-y-2">
+              <div>
+                <p className="font-bold">iPhone Safari:</p>
+                <p className="text-muted-foreground">Configuración → Safari → Ubicación → Permitir</p>
+              </div>
+              <div>
+                <p className="font-bold">Android Chrome:</p>
+                <p className="text-muted-foreground">Toca el candado en la barra de URL → Permisos → Ubicación → Permitir</p>
+              </div>
+            </div>
+            <Button
+              variant="hero"
+              size="lg"
+              className="w-full rounded-xl"
+              onClick={detectLocation}
+              disabled={detectingLocation}
+            >
+              {detectingLocation ? "Buscando GPS..." : "Ya activé mi ubicación 🔄"}
+            </Button>
+          </div>
+        </div>
+      )}
 
       <AlertDialog open={outOfAreaOpen} onOpenChange={setOutOfAreaOpen}>
         <AlertDialogContent>
