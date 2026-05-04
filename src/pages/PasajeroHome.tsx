@@ -874,6 +874,25 @@ const PasajeroHome = () => {
       </div>
 
       <BottomNav />
+
+      <AlertDialog open={outOfAreaOpen} onOpenChange={setOutOfAreaOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>📍 Fuera del área de servicio</AlertDialogTitle>
+            <AlertDialogDescription>
+              Estás a {outOfAreaKm ? outOfAreaKm.toFixed(1) : "?"}km de Pedernales.
+              El servicio opera en Pedernales y sus alrededores hasta 30km.
+              ¿Deseas buscar un conductor de todas formas?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setOutOfAreaOpen(false); setStep("drivers"); }}>
+              Buscar de todas formas
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
