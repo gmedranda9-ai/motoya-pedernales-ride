@@ -23,6 +23,30 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+const PEDERNALES_CENTER = { lat: 0.0726, lng: -80.0463 };
+const SERVICE_RADIUS_KM = 30;
+
+const haversineKm = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return 2 * R * Math.asin(Math.sqrt(h));
+};
 
 const FREQUENT_DESTINATIONS = [
   "Malecón de Pedernales",
