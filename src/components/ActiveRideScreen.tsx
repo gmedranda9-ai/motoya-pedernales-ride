@@ -291,22 +291,7 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
         </div>
       </div>
 
-      {/* Live Map */}
-      {mapExpanded && (
-        <div className="px-4 mt-4">
-          <div className="rounded-2xl overflow-hidden border border-border bg-muted h-56">
-            {viajeId ? (
-              <LiveMap viajeId={viajeId} className="w-full h-full" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
-                Mapa no disponible (sin ID de viaje)
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Actions */}
+      {/* Actions (siempre encima del mapa) */}
       <div className="px-4 mt-4 grid grid-cols-4 gap-2">
         <Button variant="outline" className="relative rounded-xl flex-col h-auto py-3 gap-1" onClick={handleToggleChat}>
           <MessageCircle className="h-5 w-5" />
@@ -330,6 +315,21 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
           <span className="text-[10px]">SOS</span>
         </Button>
       </div>
+
+      {/* Live Map (debajo de los botones) */}
+      {mapExpanded && (
+        <div className="px-4 mt-4">
+          <div className="rounded-2xl overflow-hidden border border-border bg-muted h-56">
+            {viajeId ? (
+              <LiveMap viajeId={viajeId} className="w-full h-full" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                Mapa no disponible (sin ID de viaje)
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Chat panel */}
       {chatOpen && (
