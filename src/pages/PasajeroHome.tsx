@@ -23,6 +23,30 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+const PEDERNALES_CENTER = { lat: 0.0726, lng: -80.0463 };
+const SERVICE_RADIUS_KM = 30;
+
+const haversineKm = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return 2 * R * Math.asin(Math.sqrt(h));
+};
 
 const FREQUENT_DESTINATIONS = [
   "Malecón de Pedernales",
@@ -73,6 +97,8 @@ const PasajeroHome = () => {
   const [viajeId, setViajeId] = useState<string | undefined>();
   const [phraseIdx, setPhraseIdx] = useState(0);
   const [destinationsOpen, setDestinationsOpen] = useState(false);
+  const [outOfAreaOpen, setOutOfAreaOpen] = useState(false);
+  const [outOfAreaKm, setOutOfAreaKm] = useState<number | null>(null);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -299,6 +325,14 @@ const PasajeroHome = () => {
       return;
     }
     if (!locationAddress) detectLocation();
+    if (locationCoords) {
+      const km = haversineKm(locationCoords, PEDERNALES_CENTER);
+      if (km > SERVICE_RADIUS_KM) {
+        setOutOfAreaKm(km);
+        setOutOfAreaOpen(true);
+        return;
+      }
+    }
     setStep("drivers");
   };
 
@@ -840,6 +874,25 @@ const PasajeroHome = () => {
       </div>
 
       <BottomNav />
+
+      <AlertDialog open={outOfAreaOpen} onOpenChange={setOutOfAreaOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>📍 Fuera del área de servicio</AlertDialogTitle>
+            <AlertDialogDescription>
+              Estás a {outOfAreaKm ? outOfAreaKm.toFixed(1) : "?"}km de Pedernales.
+              El servicio opera en Pedernales y sus alrededores hasta 30km.
+              ¿Deseas buscar un conductor de todas formas?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setOutOfAreaOpen(false); setStep("drivers"); }}>
+              Buscar de todas formas
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
