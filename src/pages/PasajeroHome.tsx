@@ -258,7 +258,7 @@ const PasajeroHome = () => {
       d.plate.toLowerCase().includes(search.toLowerCase())
   );
 
-  const canSearch = !!destination;
+  const canSearch = !!destination && !!locationCoords;
 
   const detectLocation = () => {
     if (!("geolocation" in navigator)) {
