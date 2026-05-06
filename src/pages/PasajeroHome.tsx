@@ -99,6 +99,33 @@ const PasajeroHome = () => {
   const [destinationsOpen, setDestinationsOpen] = useState(false);
   const [outOfAreaOpen, setOutOfAreaOpen] = useState(false);
   const [outOfAreaKm, setOutOfAreaKm] = useState<number | null>(null);
+  const [sortedDestinations, setSortedDestinations] = useState<{ name: string; count: number }[]>(
+    FREQUENT_DESTINATIONS.map((n) => ({ name: n, count: 0 }))
+  );
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("viajes")
+          .select("destino")
+          .eq("estado", "completado");
+        if (error || !data || data.length === 0) return;
+        const counts = new Map<string, number>();
+        for (const row of data as { destino: string | null }[]) {
+          if (!row.destino) continue;
+          counts.set(row.destino, (counts.get(row.destino) || 0) + 1);
+        }
+        const ranked = FREQUENT_DESTINATIONS.map((name) => ({
+          name,
+          count: counts.get(name) || 0,
+        })).sort((a, b) => b.count - a.count);
+        setSortedDestinations(ranked);
+      } catch {
+        // ignore, keep default order
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     const id = setInterval(() => {
