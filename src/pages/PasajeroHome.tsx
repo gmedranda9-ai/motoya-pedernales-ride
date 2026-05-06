@@ -99,6 +99,33 @@ const PasajeroHome = () => {
   const [destinationsOpen, setDestinationsOpen] = useState(false);
   const [outOfAreaOpen, setOutOfAreaOpen] = useState(false);
   const [outOfAreaKm, setOutOfAreaKm] = useState<number | null>(null);
+  const [sortedDestinations, setSortedDestinations] = useState<{ name: string; count: number }[]>(
+    FREQUENT_DESTINATIONS.map((n) => ({ name: n, count: 0 }))
+  );
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("viajes")
+          .select("destino")
+          .eq("estado", "completado");
+        if (error || !data || data.length === 0) return;
+        const counts = new Map<string, number>();
+        for (const row of data as { destino: string | null }[]) {
+          if (!row.destino) continue;
+          counts.set(row.destino, (counts.get(row.destino) || 0) + 1);
+        }
+        const ranked = FREQUENT_DESTINATIONS.map((name) => ({
+          name,
+          count: counts.get(name) || 0,
+        })).sort((a, b) => b.count - a.count);
+        setSortedDestinations(ranked);
+      } catch {
+        // ignore, keep default order
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -774,20 +801,31 @@ const PasajeroHome = () => {
 
               {destinationsOpen && (
                 <div className="grid grid-cols-2 gap-2 mt-2 animate-fade-in">
-                  {FREQUENT_DESTINATIONS.map((place) => (
-                    <button
-                      key={place}
-                      type="button"
-                      onClick={() => {
-                        setDestination(place);
-                        setDestinationsOpen(false);
-                      }}
-                      className="flex items-center gap-2 text-left py-2.5 px-3 rounded-xl bg-muted hover:bg-muted/70 transition-colors"
-                    >
-                      <MapPin className="h-4 w-4 text-accent flex-shrink-0" />
-                      <span className="text-xs text-foreground leading-tight">{place}</span>
-                    </button>
-                  ))}
+                  {sortedDestinations.map((place, idx) => {
+                    const hasHistory = place.count > 0;
+                    const badge = hasHistory
+                      ? idx === 0
+                        ? "🔥"
+                        : idx <= 3
+                        ? "⭐"
+                        : null
+                      : null;
+                    return (
+                      <button
+                        key={place.name}
+                        type="button"
+                        onClick={() => {
+                          setDestination(place.name);
+                          setDestinationsOpen(false);
+                        }}
+                        className="flex items-center gap-2 text-left py-2.5 px-3 rounded-xl bg-muted hover:bg-muted/70 transition-colors"
+                      >
+                        <MapPin className="h-4 w-4 text-accent flex-shrink-0" />
+                        <span className="text-xs text-foreground leading-tight flex-1">{place.name}</span>
+                        {badge && <span className="text-xs flex-shrink-0">{badge}</span>}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
