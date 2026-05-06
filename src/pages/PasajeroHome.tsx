@@ -677,7 +677,9 @@ const PasajeroHome = () => {
                     </Button>
                   </div>
                 </div>
-            ))
+            ));
+            })()
+
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <Frown className="h-16 w-16 text-muted-foreground/50 mb-4" />
