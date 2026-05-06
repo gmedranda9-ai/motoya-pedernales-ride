@@ -246,7 +246,9 @@ const PasajeroHome = () => {
         .from("conductores")
         .select("*")
         .eq("disponible", true)
-        .eq("estado", "aprobado");
+        .eq("estado", "aprobado")
+        .eq("suscripcion_activa", true)
+        .order("calificacion_promedio", { ascending: false });
 
       if (error) {
         console.error("Error al cargar conductores:", error);
@@ -597,13 +599,22 @@ const PasajeroHome = () => {
               <p className="text-sm text-muted-foreground">Buscando conductores...</p>
             </div>
           ) : filteredDrivers.length > 0 ? (
-            filteredDrivers.map((driver) => (
+            (() => {
+              const topRating = Math.max(...filteredDrivers.map((d) => d.rating));
+              const topDriverId =
+                topRating > 0 ? filteredDrivers.find((d) => d.rating === topRating)?.id : null;
+              return filteredDrivers.map((driver) => (
                 <div
                   key={driver.id}
                   onClick={() => handleDriverTap(driver)}
                   className="cursor-pointer"
                 >
-                  <div className="bg-card rounded-2xl shadow-md p-4 border border-border animate-slide-up">
+                  <div className="bg-card rounded-2xl shadow-md p-4 border border-border animate-slide-up relative">
+                    {driver.id === topDriverId && (
+                      <span className="absolute -top-2 left-3 text-[10px] px-2 py-0.5 rounded-full font-bold bg-accent text-accent-foreground shadow">
+                        👑 Mejor calificado
+                      </span>
+                    )}
                     <div className="flex items-center gap-4">
                       {driver.photo && !driver.photo.includes("placeholder") && !driver.photo.includes("logo-motoya") ? (
                         <img
@@ -666,7 +677,9 @@ const PasajeroHome = () => {
                     </Button>
                   </div>
                 </div>
-            ))
+            ));
+            })()
+
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <Frown className="h-16 w-16 text-muted-foreground/50 mb-4" />
