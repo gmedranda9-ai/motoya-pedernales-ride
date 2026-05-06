@@ -246,7 +246,9 @@ const PasajeroHome = () => {
         .from("conductores")
         .select("*")
         .eq("disponible", true)
-        .eq("estado", "aprobado");
+        .eq("estado", "aprobado")
+        .eq("suscripcion_activa", true)
+        .order("calificacion_promedio", { ascending: false });
 
       if (error) {
         console.error("Error al cargar conductores:", error);
