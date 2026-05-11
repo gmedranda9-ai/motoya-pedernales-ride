@@ -2,6 +2,41 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import PermissionsScreen from '@/components/PermissionsScreen';
+import { subscribeToPush } from '@/lib/onesignal';
+
+const syncPlayerId = async (u: User) => {
+  try {
+    if (typeof Notification === 'undefined') return;
+    if (Notification.permission === 'denied') return;
+    if (Notification.permission === 'default') {
+      try {
+        const res = await Notification.requestPermission();
+        if (res !== 'granted') return;
+      } catch { return; }
+    }
+    const playerId = await Promise.race<string | null>([
+      subscribeToPush(),
+      new Promise<null>((r) => setTimeout(() => r(null), 10000)),
+    ]);
+    if (!playerId) return;
+    const role = (u.user_metadata as any)?.rol;
+    if (role === 'conductor') {
+      await (supabase as any).from('conductores')
+        .update({ onesignal_player_id: playerId })
+        .eq('usuario_id', u.id);
+      // fallback in case PK is the user id
+      await (supabase as any).from('conductores')
+        .update({ onesignal_player_id: playerId })
+        .eq('id', u.id);
+    } else {
+      await (supabase as any).from('usuarios')
+        .update({ onesignal_player_id: playerId })
+        .eq('id', u.id);
+    }
+  } catch (e) {
+    console.warn('syncPlayerId failed:', e);
+  }
+};
 
 interface AuthContextType {
   session: Session | null;
@@ -64,6 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       setLoading(false);
       checkPermissions(session?.user ?? null);
+      if (session?.user) syncPlayerId(session.user);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -71,6 +107,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       setLoading(false);
       checkPermissions(session?.user ?? null);
+      if (session?.user) syncPlayerId(session.user);
     });
 
     return () => subscription.unsubscribe();
