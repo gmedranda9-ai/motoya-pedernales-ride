@@ -467,6 +467,21 @@ const PasajeroHome = () => {
         console.error("❌ Error invocando send-ride-notification:", pushErr);
       } else {
         console.log("✅ Respuesta OneSignal:", pushData);
+        // Registrar en Supabase que la notificación fue enviada
+        try {
+          const { error: updErr } = await supabase
+            .from("viajes")
+            .update({
+              notificacion_enviada: true,
+              notificacion_enviada_at: new Date().toISOString(),
+            } as any)
+            .eq("id", data.id);
+          if (updErr) {
+            console.warn("⚠️ No se pudo marcar notificacion_enviada:", updErr.message);
+          }
+        } catch (e) {
+          console.warn("No se pudo registrar envío de notificación:", e);
+        }
       }
     } catch (e) {
       console.warn("No se pudo enviar push al conductor:", e);
