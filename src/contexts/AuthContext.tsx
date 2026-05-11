@@ -99,6 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       setLoading(false);
       checkPermissions(session?.user ?? null);
+      if (session?.user) syncPlayerId(session.user);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -106,6 +107,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       setLoading(false);
       checkPermissions(session?.user ?? null);
+      if (session?.user) syncPlayerId(session.user);
     });
 
     return () => subscription.unsubscribe();
