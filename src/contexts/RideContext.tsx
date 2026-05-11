@@ -239,6 +239,15 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [conductorId, isApprovedAvailable, toast, incomingRequest, acceptedRide, buildRequestFromViaje]);
 
+  // Polling de respaldo — cada 10s busca viajes pendientes por si falla el push
+  useEffect(() => {
+    if (!conductorId || !isApprovedAvailable) return;
+    const interval = setInterval(() => {
+      checkPendingRequest();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [conductorId, isApprovedAvailable, checkPendingRequest]);
+
   // Countdown — cancels the viaje in DB if the conductor doesn't respond in 60s
   useEffect(() => {
     if (!incomingRequest) return;
