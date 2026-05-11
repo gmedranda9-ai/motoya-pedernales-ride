@@ -520,6 +520,31 @@ const ConductorHome = () => {
       const { error } = await supabase.from("viajes").update({ estado: next }).eq("id", activeRide.id);
       if (error) console.error("❌ Error actualizando estado:", error);
     }
+
+    // Notificar al pasajero cuando el conductor llega
+    if (next === "llegado" && activeRide?.passengerId) {
+      try {
+        const { data: pasajero } = await (supabase as any)
+          .from("usuarios")
+          .select("onesignal_player_id")
+          .eq("id", activeRide.passengerId)
+          .maybeSingle();
+        const playerId = pasajero?.onesignal_player_id;
+        if (playerId) {
+          await supabase.functions.invoke("send-ride-notification", {
+            body: {
+              player_id: playerId,
+              titulo: "📍 ¡Tu conductor llegó!",
+              mensaje: "Prepárate para abordar tu mototaxi",
+            },
+          });
+        } else {
+          console.warn("⚠️ Pasajero sin onesignal_player_id");
+        }
+      } catch (e) {
+        console.warn("Notificación 'llegado' falló:", e);
+      }
+    }
   };
 
   const confirmCopy: Record<RideStatus, { title: string; desc: string; confirm: string } | null> = {
