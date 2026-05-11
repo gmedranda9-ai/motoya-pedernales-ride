@@ -318,8 +318,38 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
     setAcceptedRide(incomingRequest);
     setIncomingRequest(null);
     toast({ title: "✅ Viaje aceptado", description: `Dirígete hacia ${incomingRequest.passengerName}` });
+
+    // Notificar al pasajero por push
+    (async () => {
+      try {
+        const { data: pasajero } = await (supabase as any)
+          .from("usuarios")
+          .select("onesignal_player_id")
+          .eq("id", incomingRequest.passengerId)
+          .maybeSingle();
+        const playerId = pasajero?.onesignal_player_id;
+        if (!playerId) {
+          console.warn("⚠️ Pasajero sin onesignal_player_id");
+          return;
+        }
+        const conductorNombre =
+          (user?.user_metadata as any)?.nombre ||
+          user?.email?.split("@")[0] ||
+          "Tu conductor";
+        await supabase.functions.invoke("send-ride-notification", {
+          body: {
+            player_id: playerId,
+            titulo: "🛺 ¡Conductor en camino!",
+            mensaje: `${conductorNombre} aceptó tu viaje y está en camino`,
+          },
+        });
+      } catch (e) {
+        console.warn("Notificación a pasajero falló:", e);
+      }
+    })();
+
     navigate("/");
-  }, [incomingRequest, navigate, toast]);
+  }, [incomingRequest, navigate, toast, user]);
 
   const handleReject = useCallback(async () => {
     if (!incomingRequest) return;
