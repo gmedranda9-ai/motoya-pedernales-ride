@@ -2,21 +2,24 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import PermissionsScreen from '@/components/PermissionsScreen';
-import { subscribeToPush } from '@/lib/onesignal';
+import { getPushToken, isNativePush } from '@/lib/pushNotifications';
 
 const syncPlayerId = async (u: User) => {
   try {
-    if (typeof Notification === 'undefined') return;
-    if (Notification.permission === 'denied') return;
-    if (Notification.permission === 'default') {
-      try {
-        const res = await Notification.requestPermission();
-        if (res !== 'granted') return;
-      } catch { return; }
+    // On web, ensure browser-level Notification permission first.
+    if (!isNativePush()) {
+      if (typeof Notification === 'undefined') return;
+      if (Notification.permission === 'denied') return;
+      if (Notification.permission === 'default') {
+        try {
+          const res = await Notification.requestPermission();
+          if (res !== 'granted') return;
+        } catch { return; }
+      }
     }
     const playerId = await Promise.race<string | null>([
-      subscribeToPush(),
-      new Promise<null>((r) => setTimeout(() => r(null), 10000)),
+      getPushToken(),
+      new Promise<null>((r) => setTimeout(() => r(null), 15000)),
     ]);
     if (!playerId) return;
     const role = (u.user_metadata as any)?.rol;
