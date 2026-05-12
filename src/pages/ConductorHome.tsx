@@ -369,7 +369,7 @@ const ConductorHome = () => {
       setAvailable(true);
       toast({ title: "🟢 Ahora estás disponible" });
     } else {
-      await unsubscribeFromPush();
+      if (!isNativePush()) await unsubscribeFromPush();
       const ok = await persistAvailability(false);
       if (!ok) {
         toast({ title: "Error", description: "No se pudo actualizar tu disponibilidad.", variant: "destructive" });
