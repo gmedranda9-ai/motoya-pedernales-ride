@@ -46,6 +46,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { subscribeToPush, unsubscribeFromPush } from "@/lib/onesignal";
+import { getPushToken, isNativePush } from "@/lib/pushNotifications";
 import { useNotificationPermission } from "@/hooks/useNotificationPermission";
 import { useShareDriverLocation } from "@/hooks/useShareDriverLocation";
 import { useRideChat } from "@/hooks/useRideChat";
@@ -310,46 +311,51 @@ const ConductorHome = () => {
         setPlanOpen(true);
         return;
       }
-      // Require notification permission BEFORE flipping the toggle on.
-      refreshNotif();
-      if (notifBlocked) {
-        toast({
-          title: "Notificaciones bloqueadas",
-          description: "Actívalas en la configuración del navegador y recarga la página.",
-          variant: "destructive",
-        });
-        return;
-      }
-      if (!notifGranted) {
-        const next = await requestNotif();
-        if (next !== "granted") {
+      // On native (Capacitor), skip web Notification.permission checks — rely on subscripcion_activa.
+      if (!isNativePush()) {
+        // Require notification permission BEFORE flipping the toggle on (web only).
+        refreshNotif();
+        if (notifBlocked) {
           toast({
-            title: "Permiso necesario",
-            description: "Debes permitir notificaciones para recibir solicitudes.",
+            title: "Notificaciones bloqueadas",
+            description: "Actívalas en la configuración del navegador y recarga la página.",
             variant: "destructive",
           });
           return;
         }
-      }
-
-      // Verify SW registration before subscribing
-      try {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        console.log("Service Workers:", regs);
-        if (!regs.length) {
-          console.warn("⚠️ No hay Service Workers registrados todavía. OneSignal intentará registrar uno.");
+        if (!notifGranted) {
+          const next = await requestNotif();
+          if (next !== "granted") {
+            toast({
+              title: "Permiso necesario",
+              description: "Debes permitir notificaciones para recibir solicitudes.",
+              variant: "destructive",
+            });
+            return;
+          }
         }
-      } catch (e) {
-        console.warn("No se pudo consultar Service Workers:", e);
+
+        // Verify SW registration before subscribing
+        try {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          console.log("Service Workers:", regs);
+          if (!regs.length) {
+            console.warn("⚠️ No hay Service Workers registrados todavía. OneSignal intentará registrar uno.");
+          }
+        } catch (e) {
+          console.warn("No se pudo consultar Service Workers:", e);
+        }
       }
 
-      console.log("➡️ Llamando subscribeToPush()...");
-      const playerId = await subscribeToPush();
-      console.log("⬅️ Resultado subscribeToPush:", playerId);
+      console.log("➡️ Obteniendo push token...");
+      const playerId = await getPushToken();
+      console.log("⬅️ Resultado push token:", playerId);
       if (!playerId) {
         toast({
           title: "No se pudo activar notificaciones",
-          description: "El navegador no entregó un Player ID. Recarga la página e inténtalo de nuevo.",
+          description: isNativePush()
+            ? "No se obtuvo el token de notificaciones. Reinstala la app o reinicia el dispositivo."
+            : "El navegador no entregó un Player ID. Recarga la página e inténtalo de nuevo.",
           variant: "destructive",
         });
         return;
@@ -363,7 +369,7 @@ const ConductorHome = () => {
       setAvailable(true);
       toast({ title: "🟢 Ahora estás disponible" });
     } else {
-      await unsubscribeFromPush();
+      if (!isNativePush()) await unsubscribeFromPush();
       const ok = await persistAvailability(false);
       if (!ok) {
         toast({ title: "Error", description: "No se pudo actualizar tu disponibilidad.", variant: "destructive" });
@@ -378,7 +384,8 @@ const ConductorHome = () => {
   // Also resubscribe on app reopen to refresh player_id in case it changed.
   useEffect(() => {
     if (!user || !conductorId) return;
-    if (available && !notifGranted) {
+    // On native, do not auto-disable based on web Notification.permission — it isn't accurate.
+    if (!isNativePush() && available && !notifGranted) {
       console.warn("⚠️ Conductor disponible sin notificaciones — desactivando automáticamente.");
       persistAvailability(false).then(() => setAvailable(false));
       toast({
@@ -388,11 +395,11 @@ const ConductorHome = () => {
       });
       return;
     }
-    if (available && notifGranted) {
+    if (available && (isNativePush() || notifGranted)) {
       // Resubscribe silently to refresh player_id (may change between sessions/devices).
       (async () => {
         try {
-          const playerId = await subscribeToPush();
+          const playerId = await getPushToken();
           if (playerId) {
             await supabase
               .from("conductores")
@@ -406,7 +413,7 @@ const ConductorHome = () => {
       })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conductorId, notifGranted]);
+  }, [conductorId, notifGranted, available]);
 
   // Application form
   const [form, setForm] = useState<ApplicationForm>({
