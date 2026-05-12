@@ -384,7 +384,8 @@ const ConductorHome = () => {
   // Also resubscribe on app reopen to refresh player_id in case it changed.
   useEffect(() => {
     if (!user || !conductorId) return;
-    if (available && !notifGranted) {
+    // On native, do not auto-disable based on web Notification.permission — it isn't accurate.
+    if (!isNativePush() && available && !notifGranted) {
       console.warn("⚠️ Conductor disponible sin notificaciones — desactivando automáticamente.");
       persistAvailability(false).then(() => setAvailable(false));
       toast({
@@ -394,11 +395,11 @@ const ConductorHome = () => {
       });
       return;
     }
-    if (available && notifGranted) {
+    if (available && (isNativePush() || notifGranted)) {
       // Resubscribe silently to refresh player_id (may change between sessions/devices).
       (async () => {
         try {
-          const playerId = await subscribeToPush();
+          const playerId = await getPushToken();
           if (playerId) {
             await supabase
               .from("conductores")
@@ -412,7 +413,7 @@ const ConductorHome = () => {
       })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conductorId, notifGranted]);
+  }, [conductorId, notifGranted, available]);
 
   // Application form
   const [form, setForm] = useState<ApplicationForm>({
