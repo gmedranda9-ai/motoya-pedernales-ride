@@ -311,46 +311,51 @@ const ConductorHome = () => {
         setPlanOpen(true);
         return;
       }
-      // Require notification permission BEFORE flipping the toggle on.
-      refreshNotif();
-      if (notifBlocked) {
-        toast({
-          title: "Notificaciones bloqueadas",
-          description: "Actívalas en la configuración del navegador y recarga la página.",
-          variant: "destructive",
-        });
-        return;
-      }
-      if (!notifGranted) {
-        const next = await requestNotif();
-        if (next !== "granted") {
+      // On native (Capacitor), skip web Notification.permission checks — rely on subscripcion_activa.
+      if (!isNativePush()) {
+        // Require notification permission BEFORE flipping the toggle on (web only).
+        refreshNotif();
+        if (notifBlocked) {
           toast({
-            title: "Permiso necesario",
-            description: "Debes permitir notificaciones para recibir solicitudes.",
+            title: "Notificaciones bloqueadas",
+            description: "Actívalas en la configuración del navegador y recarga la página.",
             variant: "destructive",
           });
           return;
         }
-      }
-
-      // Verify SW registration before subscribing
-      try {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        console.log("Service Workers:", regs);
-        if (!regs.length) {
-          console.warn("⚠️ No hay Service Workers registrados todavía. OneSignal intentará registrar uno.");
+        if (!notifGranted) {
+          const next = await requestNotif();
+          if (next !== "granted") {
+            toast({
+              title: "Permiso necesario",
+              description: "Debes permitir notificaciones para recibir solicitudes.",
+              variant: "destructive",
+            });
+            return;
+          }
         }
-      } catch (e) {
-        console.warn("No se pudo consultar Service Workers:", e);
+
+        // Verify SW registration before subscribing
+        try {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          console.log("Service Workers:", regs);
+          if (!regs.length) {
+            console.warn("⚠️ No hay Service Workers registrados todavía. OneSignal intentará registrar uno.");
+          }
+        } catch (e) {
+          console.warn("No se pudo consultar Service Workers:", e);
+        }
       }
 
-      console.log("➡️ Llamando subscribeToPush()...");
-      const playerId = await subscribeToPush();
-      console.log("⬅️ Resultado subscribeToPush:", playerId);
+      console.log("➡️ Obteniendo push token...");
+      const playerId = await getPushToken();
+      console.log("⬅️ Resultado push token:", playerId);
       if (!playerId) {
         toast({
           title: "No se pudo activar notificaciones",
-          description: "El navegador no entregó un Player ID. Recarga la página e inténtalo de nuevo.",
+          description: isNativePush()
+            ? "No se obtuvo el token de notificaciones. Reinstala la app o reinicia el dispositivo."
+            : "El navegador no entregó un Player ID. Recarga la página e inténtalo de nuevo.",
           variant: "destructive",
         });
         return;
