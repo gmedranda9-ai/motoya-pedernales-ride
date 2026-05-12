@@ -1,7 +1,7 @@
 import { Bell, BellOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { subscribeToPush } from "@/lib/onesignal";
+import { getPushToken } from "@/lib/pushNotifications";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotificationPermission } from "@/hooks/useNotificationPermission";
@@ -35,14 +35,22 @@ const NotificationsBanner = ({ critical = false }: Props) => {
       if (next === "granted") {
         try {
           const playerId = await Promise.race<string | null>([
-            subscribeToPush(),
-            new Promise<null>((r) => setTimeout(() => r(null), 8000)),
+            getPushToken(),
+            new Promise<null>((r) => setTimeout(() => r(null), 15000)),
           ]);
           if (playerId && user) {
-            await supabase
-              .from("conductores")
-              .update({ onesignal_player_id: playerId })
-              .eq("usuario_id", user.id);
+            const role = (user.user_metadata as any)?.rol;
+            if (role === "conductor") {
+              await (supabase as any)
+                .from("conductores")
+                .update({ onesignal_player_id: playerId })
+                .eq("usuario_id", user.id);
+            } else {
+              await (supabase as any)
+                .from("usuarios")
+                .update({ onesignal_player_id: playerId })
+                .eq("id", user.id);
+            }
           }
         } catch (e) {
           console.warn("Push subscribe failed:", e);
