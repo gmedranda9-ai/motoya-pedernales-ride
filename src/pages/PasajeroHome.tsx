@@ -11,6 +11,8 @@ import BottomNav from "@/components/BottomNav";
 import logoMotoya from "@/assets/logo-motoya.png";
 import pedernalesMototaxi from "@/assets/pedernales-mototaxi.png";
 import { supabase } from "@/integrations/supabase/client";
+import { Capacitor } from "@capacitor/core";
+import { Geolocation } from "@capacitor/geolocation";
 import {
   Search,
   Frown,
