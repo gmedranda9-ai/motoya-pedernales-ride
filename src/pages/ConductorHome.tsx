@@ -303,16 +303,49 @@ const ConductorHome = () => {
   };
 
   const handleToggleAvailable = async (value: boolean) => {
-    if (!user) return;
+    console.log("🔘 Toggle tocado, estado actual:", available, "→ nuevo:", value, "subActiva:", subActiva, "native:", isNativePush());
+    if (!user) {
+      console.warn("Toggle: sin usuario");
+      return;
+    }
 
     if (value) {
       // Require active subscription BEFORE allowing toggle on.
       if (!subActiva) {
+        console.log("Toggle: suscripción inactiva, abriendo plan");
         setPlanOpen(true);
         return;
       }
-      // On native (Capacitor), skip web Notification.permission checks — rely on subscripcion_activa.
-      if (!isNativePush()) {
+
+      // NATIVE FAST PATH: confiar en suscripcion_activa y actualizar disponible directamente.
+      // Refrescar el push token en segundo plano sin bloquear la UI.
+      if (isNativePush()) {
+        const ok = await persistAvailability(true);
+        if (!ok) {
+          toast({ title: "Error", description: "No se pudo actualizar tu disponibilidad.", variant: "destructive" });
+          return;
+        }
+        setAvailable(true);
+        toast({ title: "🟢 Ahora estás disponible" });
+        // Refrescar token en background
+        (async () => {
+          try {
+            const playerId = await getPushToken();
+            if (playerId) {
+              await supabase
+                .from("conductores")
+                .update({ onesignal_player_id: playerId })
+                .eq("usuario_id", user.id);
+              console.log("✅ Player ID refrescado en background");
+            }
+          } catch (e) {
+            console.warn("No se pudo refrescar player_id:", e);
+          }
+        })();
+        return;
+      }
+
+      {
         // Require notification permission BEFORE flipping the toggle on (web only).
         refreshNotif();
         if (notifBlocked) {
