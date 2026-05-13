@@ -6,6 +6,7 @@
       "name": "vite_react_shadcn_ts",
       "dependencies": {
         "@capacitor/core": "^8.3.3",
+        "@capacitor/geolocation": "^8.2.0",
         "@capacitor/push-notifications": "^8.0.4",
         "@hookform/resolvers": "^3.10.0",
         "@radix-ui/react-accordion": "^1.2.11",
@@ -98,7 +99,11 @@
 
     "@capacitor/core": ["@capacitor/core@8.3.3", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/core/-/core-8.3.3.tgz", { "dependencies": { "tslib": "^2.1.0" } }, "sha512-xx1FIriZQ5jwqEkZwmWQHfXNEn5a9ZLOtdFoJXslh0ian6T/EU+QJtRmZw3KRsmcUV6p5ufczBrzF1rVP8Nu3A=="],
 
+    "@capacitor/geolocation": ["@capacitor/geolocation@8.2.0", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/geolocation/-/geolocation-8.2.0.tgz", { "dependencies": { "@capacitor/synapse": "^1.0.4" }, "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-N29QcoIPmme0xSxRkm7+3hjoHp6mBAOarxecvtCCZKyOBeKiJsFUq981cezg2XWBa6fhCXJMCCjQPngKK/dIag=="],
+
     "@capacitor/push-notifications": ["@capacitor/push-notifications@8.0.4", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/push-notifications/-/push-notifications-8.0.4.tgz", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-14ZWKik9ExTu65AZ9+o7+k05uEOaTstuYv6lLq1Bobip+SC5AOwciSICYLALgTTKN2jEDTRoigFAEixmVEJp/w=="],
+
+    "@capacitor/synapse": ["@capacitor/synapse@1.0.4", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/synapse/-/synapse-1.0.4.tgz", {}, "sha512-/C1FUo8/OkKuAT4nCIu/34ny9siNHr9qtFezu4kxm6GY1wNFxrCFWjfYx5C1tUhVGz3fxBABegupkpjXvjCHrw=="],
 
     "@esbuild/aix-ppc64": ["@esbuild/aix-ppc64@0.25.0", "", { "os": "aix", "cpu": "ppc64" }, "sha512-O7vun9Sf8DFjH2UtqK8Ku3LkquL9SZL8OLY1T5NZkA34+wG3OQF7cl4Ql8vdNzM6fzBbYfLaiRLIOZ+2FOCgBQ=="],
 
