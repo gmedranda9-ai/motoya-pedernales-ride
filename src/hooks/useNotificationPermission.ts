@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
 import { Capacitor } from "@capacitor/core";
-import { PushNotifications } from "@capacitor/push-notifications";
 
 type PermState = "granted" | "denied" | "default" | "unsupported";
 
@@ -13,12 +12,25 @@ const readWeb = (): PermState => {
   return Notification.permission as PermState;
 };
 
+let cachedOneSignal: any | null = null;
+const getOneSignal = async (): Promise<any | null> => {
+  if (cachedOneSignal) return cachedOneSignal;
+  try {
+    const mod: any = await import("onesignal-cordova-plugin");
+    cachedOneSignal = mod?.default ?? mod;
+    return cachedOneSignal;
+  } catch {
+    return null;
+  }
+};
+
 const readNative = async (): Promise<PermState> => {
   try {
-    const r = await PushNotifications.checkPermissions();
-    if (r.receive === "granted") return "granted";
-    if (r.receive === "denied") return "denied";
-    return "default";
+    const OneSignal = await getOneSignal();
+    if (!OneSignal) return "unsupported";
+    const has = await OneSignal.Notifications.getPermissionAsync?.()
+      ?? OneSignal.Notifications.hasPermission?.();
+    return has ? "granted" : "default";
   } catch {
     return "unsupported";
   }
@@ -26,7 +38,8 @@ const readNative = async (): Promise<PermState> => {
 
 /**
  * Reactive hook that tracks the push notification permission.
- * Works for web (Notification API) and native (Capacitor PushNotifications).
+ * Native (Capacitor) → OneSignal Cordova plugin
+ * Web → Notification API
  */
 export const useNotificationPermission = () => {
   const [permission, setPermission] = useState<PermState>(() =>
@@ -56,13 +69,13 @@ export const useNotificationPermission = () => {
   const request = useCallback(async (): Promise<PermState> => {
     if (isNative()) {
       try {
-        const r = await PushNotifications.requestPermissions();
-        if (r.receive === "granted") {
-          try { await PushNotifications.register(); } catch (e) { console.warn("register failed:", e); }
-          setPermission("granted");
-          return "granted";
+        const OneSignal = await getOneSignal();
+        if (!OneSignal) {
+          setPermission("unsupported");
+          return "unsupported";
         }
-        const next = r.receive === "denied" ? "denied" : "default";
+        const granted: boolean = await OneSignal.Notifications.requestPermission(true);
+        const next: PermState = granted ? "granted" : "denied";
         setPermission(next);
         return next;
       } catch (e) {
