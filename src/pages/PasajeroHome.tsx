@@ -299,32 +299,71 @@ const PasajeroHome = () => {
 
   const canSearch = !!destination && !!locationCoords;
 
-  const detectLocation = () => {
+  const reverseGeocode = async (latitude: number, longitude: number) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1&accept-language=es`,
+        { headers: { "User-Agent": "MotoYa/1.0" } }
+      );
+      const data = await res.json();
+      const addr = data.address;
+      const street = addr?.road || addr?.pedestrian || addr?.neighbourhood || "";
+      const city = addr?.city || addr?.town || addr?.village || "";
+      setLocationAddress(street && city ? `${street}, ${city}` : street || city || `(${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
+    } catch {
+      setLocationAddress(`(${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
+    }
+  };
+
+  const detectLocation = async () => {
+    setDetectingLocation(true);
+
+    // Native (Capacitor): use @capacitor/geolocation, no Safari/Chrome instructions
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const perm = await Geolocation.requestPermissions();
+        if (perm.location !== "granted" && perm.coarseLocation !== "granted") {
+          setDetectingLocation(false);
+          setLocationDenied(true);
+          toast({
+            title: "Ubicación bloqueada",
+            description: "Necesitamos tu ubicación para continuar. Actívala en Configuración → MotoYa",
+            variant: "destructive",
+          });
+          return;
+        }
+        const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+        const { latitude, longitude } = pos.coords;
+        setLocationCoords({ lat: latitude, lng: longitude });
+        await reverseGeocode(latitude, longitude);
+        setLocationDenied(false);
+        setDetectingLocation(false);
+        toast({ title: "📍 Ubicación detectada", description: "Tu ubicación GPS ha sido registrada." });
+      } catch (e: any) {
+        setDetectingLocation(false);
+        setLocationDenied(true);
+        toast({
+          title: "No se pudo obtener tu ubicación",
+          description: "Necesitamos tu ubicación para continuar. Actívala en Configuración → MotoYa",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
+    // Web fallback
     if (!("geolocation" in navigator)) {
+      setDetectingLocation(false);
       setLocationDenied(true);
       toast({ title: "GPS no disponible", description: "Escribe tu dirección manualmente." });
       return;
     }
-    setDetectingLocation(true);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
         setLocationCoords({ lat: latitude, lng: longitude });
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1&accept-language=es`,
-            { headers: { "User-Agent": "MotoYa/1.0" } }
-          );
-          const data = await res.json();
-          const addr = data.address;
-          const street = addr?.road || addr?.pedestrian || addr?.neighbourhood || "";
-          const city = addr?.city || addr?.town || addr?.village || "";
-          setLocationAddress(street && city ? `${street}, ${city}` : street || city || `(${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
-          setLocationDenied(false);
-        } catch {
-          setLocationAddress(`(${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
-          setLocationDenied(false);
-        }
+        await reverseGeocode(latitude, longitude);
+        setLocationDenied(false);
         setDetectingLocation(false);
         toast({ title: "📍 Ubicación detectada", description: "Tu ubicación GPS ha sido registrada." });
       },
