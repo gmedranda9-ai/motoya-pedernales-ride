@@ -1000,16 +1000,24 @@ const PasajeroHome = () => {
             <p className="text-sm text-muted-foreground text-center">
               Para que el conductor pueda encontrarte necesitamos tu GPS.
             </p>
-            <div className="bg-muted rounded-xl p-3 text-xs text-foreground space-y-2">
-              <div>
-                <p className="font-bold">iPhone Safari:</p>
-                <p className="text-muted-foreground">Configuración → Safari → Ubicación → Permitir</p>
+            {Capacitor.isNativePlatform() ? (
+              <div className="bg-muted rounded-xl p-3 text-xs text-foreground text-center">
+                Necesitamos tu ubicación para continuar.
+                <br />
+                Actívala en <span className="font-bold">Configuración → MotoYa</span>
               </div>
-              <div>
-                <p className="font-bold">Android Chrome:</p>
-                <p className="text-muted-foreground">Toca el candado en la barra de URL → Permisos → Ubicación → Permitir</p>
+            ) : (
+              <div className="bg-muted rounded-xl p-3 text-xs text-foreground space-y-2">
+                <div>
+                  <p className="font-bold">iPhone Safari:</p>
+                  <p className="text-muted-foreground">Configuración → Safari → Ubicación → Permitir</p>
+                </div>
+                <div>
+                  <p className="font-bold">Android Chrome:</p>
+                  <p className="text-muted-foreground">Toca el candado en la barra de URL → Permisos → Ubicación → Permitir</p>
+                </div>
               </div>
-            </div>
+            )}
             <Button
               variant="hero"
               size="lg"
