@@ -42,7 +42,17 @@ const getNativeOneSignal = async (): Promise<any | null> => {
 
 /** Initialize OneSignal on native at app startup (no-op on web). */
 export const initPushNotifications = async (): Promise<void> => {
-  await getNativeOneSignal();
+  const OneSignal = await getNativeOneSignal();
+  if (!OneSignal) return;
+  // Navigate to home when user taps a push notification
+  try {
+    OneSignal.Notifications.addEventListener("click", (event: any) => {
+      console.log("🔔 Notificación tocada:", event);
+      window.location.href = "/";
+    });
+  } catch (e) {
+    console.warn("OneSignal click listener error:", e);
+  }
 };
 
 /**
