@@ -66,11 +66,14 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
   };
 
   const handleAllowAll = async () => {
+    console.log("[PermissionsScreen] Activar todo presionado");
     setLoading(true);
     try {
-      await requestLocation();
-      const granted = await requestNotifications();
-      if (granted && user) {
+      const locGranted = await requestLocation();
+      console.log("[PermissionsScreen] Ubicación:", locGranted);
+      const notifGranted = await requestNotifications();
+      console.log("[PermissionsScreen] Notificaciones:", notifGranted);
+      if (notifGranted && user) {
         try {
           const playerId = isNativePush()
             ? await getPushToken()
@@ -118,7 +121,7 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
             <div>
               <p className="font-bold text-foreground text-sm">📍 Ubicación</p>
               <p className="text-xs text-muted-foreground">
-                MotoYa necesita tu ubicación para mostrarte conductores cercanos y compartir tu posición.
+                Para que el conductor pueda encontrarte y para navegar durante el viaje.
               </p>
             </div>
           </div>
@@ -130,7 +133,7 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
             <div>
               <p className="font-bold text-foreground text-sm">🔔 Notificaciones</p>
               <p className="text-xs text-muted-foreground">
-                Activa las notificaciones para recibir alertas de viajes en tiempo real.
+                Para recibir alertas de viajes en tiempo real.
               </p>
             </div>
           </div>
