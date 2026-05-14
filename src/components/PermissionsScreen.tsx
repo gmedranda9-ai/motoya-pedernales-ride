@@ -2,9 +2,12 @@ import { MapPin, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logoMotoya from "@/assets/logo-motoya.png";
 import { subscribeToPush } from "@/lib/onesignal";
+import { getPushToken, isNativePush } from "@/lib/pushNotifications";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
+import { Capacitor } from "@capacitor/core";
+import { Geolocation } from "@capacitor/geolocation";
 
 interface PermissionsScreenProps {
   onDone: () => void;
@@ -14,8 +17,19 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  const requestLocation = (): Promise<boolean> =>
-    new Promise((resolve) => {
+  const requestLocation = async (): Promise<boolean> => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const perm = await Geolocation.requestPermissions();
+        if (perm.location !== "granted" && perm.coarseLocation !== "granted") return false;
+        await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+        return true;
+      } catch (e) {
+        console.warn("Native geolocation error:", e);
+        return false;
+      }
+    }
+    return new Promise((resolve) => {
       if (!("geolocation" in navigator)) return resolve(false);
       let done = false;
       const finish = (ok: boolean) => {
@@ -28,11 +42,15 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
         () => finish(false),
         { timeout: 8000, maximumAge: 60000 }
       );
-      // Hard fallback in case the browser never resolves the prompt
       setTimeout(() => finish(false), 9000);
     });
+  };
 
   const requestNotifications = async (): Promise<boolean> => {
+    if (isNativePush()) {
+      const token = await getPushToken();
+      return !!token;
+    }
     try {
       if (typeof Notification === "undefined") return false;
       if (Notification.permission === "granted") return true;
@@ -52,19 +70,21 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
     try {
       await requestLocation();
       const granted = await requestNotifications();
-      if (granted) {
+      if (granted && user) {
         try {
-          const playerId = await Promise.race<string | null>([
-            subscribeToPush(),
-            new Promise<null>((r) => setTimeout(() => r(null), 8000)),
-          ]);
-          if (playerId && user) {
+          const playerId = isNativePush()
+            ? await getPushToken()
+            : await Promise.race<string | null>([
+                subscribeToPush(),
+                new Promise<null>((r) => setTimeout(() => r(null), 8000)),
+              ]);
+          if (playerId) {
             const role = (user.user_metadata as any)?.rol;
             if (role === "conductor") {
               await supabase
                 .from("conductores")
                 .update({ onesignal_player_id: playerId })
-                .eq("id", user.id);
+                .eq("usuario_id", user.id);
             }
           }
         } catch (e) {
@@ -124,7 +144,7 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
             onClick={handleAllowAll}
             disabled={loading}
           >
-            {loading ? "Solicitando..." : "Permitir todo"}
+            {loading ? "Solicitando..." : "Activar todo"}
           </Button>
           <Button
             variant="ghost"
