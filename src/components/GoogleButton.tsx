@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Capacitor } from "@capacitor/core";
+import { Browser } from "@capacitor/browser";
+import { App as CapacitorApp } from "@capacitor/app";
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 48 48" className="h-5 w-5" aria-hidden="true">
@@ -15,10 +18,57 @@ interface GoogleButtonProps {
   label?: string;
 }
 
+const NATIVE_REDIRECT = "com.poseidon.motoya://auth/callback";
+
 const GoogleButton = ({ label = "Continuar con Google" }: GoogleButtonProps) => {
   const { toast } = useToast();
 
   const handleGoogleSignIn = async () => {
+    const isNative = Capacitor.isNativePlatform();
+
+    if (isNative) {
+      try {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: NATIVE_REDIRECT,
+            skipBrowserRedirect: true,
+          },
+        });
+        if (error) throw error;
+        if (!data?.url) throw new Error("No se obtuvo URL de autenticación");
+
+        // Listen for the deep link callback
+        const listener = await CapacitorApp.addListener("appUrlOpen", async (event) => {
+          try {
+            const url = new URL(event.url);
+            const hash = url.hash?.startsWith("#") ? url.hash.slice(1) : "";
+            const params = new URLSearchParams(hash || url.search);
+            const access_token = params.get("access_token");
+            const refresh_token = params.get("refresh_token");
+            if (access_token && refresh_token) {
+              await supabase.auth.setSession({ access_token, refresh_token });
+            }
+          } catch (e) {
+            console.error("Deep link parse error", e);
+          } finally {
+            await Browser.close().catch(() => {});
+            listener.remove();
+          }
+        });
+
+        await Browser.open({ url: data.url, presentationStyle: "popover" });
+        return;
+      } catch (err: any) {
+        toast({
+          title: "Error con Google",
+          description: err?.message ?? "No se pudo iniciar sesión",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
