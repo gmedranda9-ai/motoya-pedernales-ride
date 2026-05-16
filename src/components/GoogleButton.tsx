@@ -41,23 +41,34 @@ const GoogleButton = ({ label = "Continuar con Google" }: GoogleButtonProps) => 
         // Listen for the deep link callback
         const listener = await CapacitorApp.addListener("appUrlOpen", async (event) => {
           try {
+            if (!event.url.includes("motoya.mkposeidon.com/auth/callback")) return;
+
+            await Browser.close().catch(() => {});
+
             const url = new URL(event.url);
-            const hash = url.hash?.startsWith("#") ? url.hash.slice(1) : "";
-            const params = new URLSearchParams(hash || url.search);
-            const access_token = params.get("access_token");
-            const refresh_token = params.get("refresh_token");
-            if (access_token && refresh_token) {
-              await supabase.auth.setSession({ access_token, refresh_token });
+            const code = url.searchParams.get("code");
+
+            if (code) {
+              const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+              if (exchangeError) throw exchangeError;
+            } else {
+              // Fallback: implicit flow tokens in hash
+              const hash = url.hash?.startsWith("#") ? url.hash.slice(1) : "";
+              const params = new URLSearchParams(hash);
+              const access_token = params.get("access_token");
+              const refresh_token = params.get("refresh_token");
+              if (access_token && refresh_token) {
+                await supabase.auth.setSession({ access_token, refresh_token });
+              }
             }
           } catch (e) {
-            console.error("Deep link parse error", e);
+            console.error("Deep link callback error", e);
           } finally {
-            await Browser.close().catch(() => {});
             listener.remove();
           }
         });
 
-        await Browser.open({ url: data.url, presentationStyle: "popover" });
+        await Browser.open({ url: data.url });
         return;
       } catch (err: any) {
         toast({
