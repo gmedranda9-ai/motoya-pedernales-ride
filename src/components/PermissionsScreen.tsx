@@ -68,11 +68,13 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
   const handleAllowAll = async () => {
     console.log("[PermissionsScreen] Activar todo presionado");
     setLoading(true);
+    let bothGranted = false;
     try {
       const locGranted = await requestLocation();
       console.log("[PermissionsScreen] Ubicación:", locGranted);
       const notifGranted = await requestNotifications();
       console.log("[PermissionsScreen] Notificaciones:", notifGranted);
+      bothGranted = locGranted && notifGranted;
       if (notifGranted && user) {
         try {
           const playerId = isNativePush()
@@ -98,7 +100,11 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
       console.warn("Permissions flow error:", e);
     } finally {
       setLoading(false);
-      onDone();
+      if (bothGranted) {
+        onDone();
+      } else {
+        console.warn("[PermissionsScreen] Faltan permisos, no se continúa");
+      }
     }
   };
 
