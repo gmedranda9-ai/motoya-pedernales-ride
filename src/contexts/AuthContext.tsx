@@ -57,7 +57,7 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
-const PERMISSIONS_KEY = "motoya_permisos_v2";
+const PERMISSIONS_KEY = "motoya_permisos_v3";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
