@@ -64,13 +64,6 @@ export const registerNativePush = async (): Promise<string | null> => {
   const OneSignal = await getNativeOneSignal();
   if (!OneSignal) return null;
   try {
-    await PushNotifications.register();
-    PushNotifications.addListener(
-      'pushNotificationActionPerformed',
-      () => {
-        window.location.href = '/';
-      }
-    );
     const granted = await OneSignal.Notifications.requestPermission(true);
     if (!granted) {
       console.warn("⚠️ Permiso OneSignal nativo no concedido");
