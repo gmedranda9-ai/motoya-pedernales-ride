@@ -18,7 +18,7 @@ interface GoogleButtonProps {
   label?: string;
 }
 
-const NATIVE_REDIRECT = "com.poseidon.motoya://auth/callback";
+const NATIVE_REDIRECT = "https://motoya.mkposeidon.com/auth/callback";
 
 const GoogleButton = ({ label = "Continuar con Google" }: GoogleButtonProps) => {
   const { toast } = useToast();
