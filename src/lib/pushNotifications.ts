@@ -2,7 +2,7 @@
 // - Native (Capacitor) → OneSignal Cordova plugin (FCM/APNs token via OneSignal)
 // - Web → OneSignal Web SDK (player id)
 import { Capacitor } from "@capacitor/core";
-import { PushNotifications } from "@capacitor/push-notifications";
+
 import { subscribeToPush } from "./onesignal";
 
 const ONESIGNAL_APP_ID = "205503f2-6063-40cb-9f36-07c46f559c18";
@@ -64,13 +64,6 @@ export const registerNativePush = async (): Promise<string | null> => {
   const OneSignal = await getNativeOneSignal();
   if (!OneSignal) return null;
   try {
-    await PushNotifications.register();
-    PushNotifications.addListener(
-      'pushNotificationActionPerformed',
-      () => {
-        window.location.href = '/';
-      }
-    );
     const granted = await OneSignal.Notifications.requestPermission(true);
     if (!granted) {
       console.warn("⚠️ Permiso OneSignal nativo no concedido");
