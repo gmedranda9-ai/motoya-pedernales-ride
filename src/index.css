@@ -96,9 +96,13 @@
     @apply border-border;
   }
 
+  html, body {
+    overscroll-behavior-y: none;
+    overscroll-behavior: none;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    overscroll-behavior-y: contain;
   }
 }
 
