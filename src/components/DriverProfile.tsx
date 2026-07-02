@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Star, Phone, ShieldCheck, ArrowLeft, Clock, Route, Loader2, MapPin } from "lucide-react";
+import { Star, Phone, ShieldCheck, ArrowLeft, Clock, Route, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
