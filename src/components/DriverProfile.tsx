@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
-import { Star, Phone, ShieldCheck, ArrowLeft, Clock, Route, Loader2 } from "lucide-react";
+import { Star, Phone, ShieldCheck, ArrowLeft, Clock, Route, Loader2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import type { Driver } from "@/components/DriverCard";
 import UserAvatar from "@/components/UserAvatar";
+import DriverLocationModal from "@/components/DriverLocationModal";
 
 interface DriverProfileProps {
   driver: Driver;
   onRequest: (driverId: string) => void;
   onClose: () => void;
   estimatedCost?: string;
+  passengerLocation?: { lat: number; lng: number } | null;
 }
 
 interface RealComment {
@@ -44,7 +46,7 @@ const monthsSince = (iso: string | null | undefined) => {
   return Math.max(0, months);
 };
 
-const DriverProfile = ({ driver, onRequest, onClose, estimatedCost }: DriverProfileProps) => {
+const DriverProfile = ({ driver, onRequest, onClose, estimatedCost, passengerLocation }: DriverProfileProps) => {
   const [stats, setStats] = useState<{ trips: number; months: number; cedula: string | null }>({
     trips: 0,
     months: 0,
@@ -53,6 +55,7 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost }: DriverProf
   const [comments, setComments] = useState<RealComment[]>([]);
   const [loadingComments, setLoadingComments] = useState(true);
   const [showAllComments, setShowAllComments] = useState(false);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
 
   const initial = (driver.name || "?").trim().charAt(0).toUpperCase();
   const showRealPhoto = !isPlaceholderPhoto(driver.photo);
