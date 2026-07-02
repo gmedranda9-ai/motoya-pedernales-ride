@@ -423,6 +423,28 @@ const ActiveRideScreen = ({ driver, destination, onFinish, onDriverCancelled, vi
       {!chatOpen && <div className="pb-6" />}
 
       {showSOS && <SOSModal onClose={() => setShowSOS(false)} onShare={handleShareWhatsApp} />}
+
+      {driverCancelled && (
+        <div className="fixed inset-0 z-[70] bg-background/90 backdrop-blur-sm flex items-center justify-center p-6 animate-fade-in">
+          <div className="bg-card rounded-2xl border border-border p-6 max-w-sm w-full space-y-4 text-center">
+            <span className="text-5xl">😔</span>
+            <h2 className="text-lg font-extrabold text-foreground">Tu conductor canceló el viaje</h2>
+            <p className="text-sm text-muted-foreground">Por favor solicita uno nuevo 🛺</p>
+            <Button
+              variant="hero"
+              size="lg"
+              className="w-full rounded-xl"
+              onClick={() => {
+                setDriverCancelled(false);
+                if (onDriverCancelled) onDriverCancelled();
+                else onFinish();
+              }}
+            >
+              Buscar nuevo conductor
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
