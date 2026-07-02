@@ -4,8 +4,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, MapPin, Star, XCircle, ExternalLink } from "lucide-react";
+import { CheckCircle, MapPin, Star, XCircle } from "lucide-react";
 import UserAvatar from "@/components/UserAvatar";
+import PassengerLocationModal from "@/components/PassengerLocationModal";
 
 export interface IncomingRideRequest {
   id: string;
