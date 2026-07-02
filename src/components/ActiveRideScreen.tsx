@@ -30,12 +30,13 @@ const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: st
   completado: { label: "Viaje completado", emoji: "✅", desc: "¡Has llegado a tu destino!" },
 };
 
-const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords }: ActiveRideScreenProps) => {
+const ActiveRideScreen = ({ driver, destination, onFinish, onDriverCancelled, viajeId, originCoords }: ActiveRideScreenProps) => {
   const { user } = useAuth();
   const [status, setStatus] = useState<RideStatus>("en_camino");
   const [chatOpen, setChatOpen] = useState(false);
   const [msgText, setMsgText] = useState("");
   const [showSOS, setShowSOS] = useState(false);
+  const [driverCancelled, setDriverCancelled] = useState(false);
   const [mapExpanded, setMapExpanded] = useState(true);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const { messages, sendMessage } = useRideChat(viajeId, user?.id);
