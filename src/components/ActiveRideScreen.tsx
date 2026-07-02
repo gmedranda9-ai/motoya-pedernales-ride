@@ -36,9 +36,11 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
   const [msgText, setMsgText] = useState("");
   const [showSOS, setShowSOS] = useState(false);
   const [mapExpanded, setMapExpanded] = useState(true);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const { messages, sendMessage } = useRideChat(viajeId, user?.id);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const completedRef = useRef(false);
+  const previousMapExpandedRef = useRef(true);
 
   const goToRating = useCallback(() => {
     if (completedRef.current) return;
