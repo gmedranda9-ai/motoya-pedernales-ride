@@ -49,6 +49,7 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
   const [incomingRequest, setIncomingRequest] = useState<IncomingRideRequest | null>(null);
   const [requestTimer, setRequestTimer] = useState(REQUEST_TIMEOUT_SECONDS);
   const [acceptedRide, setAcceptedRide] = useState<IncomingRideRequest | null>(null);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
 
   // Refresh conductor info on user change + listen to availability/status changes
   useEffect(() => {
