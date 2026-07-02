@@ -18,6 +18,7 @@ interface ActiveRideScreenProps {
   driver: Driver;
   destination: string;
   onFinish: () => void;
+  onDriverCancelled?: () => void;
   viajeId?: string;
   originCoords?: { lat: number; lng: number };
 }
@@ -29,12 +30,13 @@ const STATUS_LABELS: Record<RideStatus, { label: string; emoji: string; desc: st
   completado: { label: "Viaje completado", emoji: "✅", desc: "¡Has llegado a tu destino!" },
 };
 
-const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords }: ActiveRideScreenProps) => {
+const ActiveRideScreen = ({ driver, destination, onFinish, onDriverCancelled, viajeId, originCoords }: ActiveRideScreenProps) => {
   const { user } = useAuth();
   const [status, setStatus] = useState<RideStatus>("en_camino");
   const [chatOpen, setChatOpen] = useState(false);
   const [msgText, setMsgText] = useState("");
   const [showSOS, setShowSOS] = useState(false);
+  const [driverCancelled, setDriverCancelled] = useState(false);
   const [mapExpanded, setMapExpanded] = useState(true);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const { messages, sendMessage } = useRideChat(viajeId, user?.id);
@@ -121,6 +123,11 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
     const apply = (estado: string | null | undefined) => {
       if (!estado) return;
       const valid: RideStatus[] = ["en_camino", "llegado", "en_viaje", "completado"];
+      if (estado === "cancelado") {
+        if (cancelled) return;
+        setDriverCancelled(true);
+        return;
+      }
       // Map DB "aceptado" to "en_camino" for backward compat
       const mapped = (estado === "aceptado" ? "en_camino" : estado) as RideStatus;
       if (!valid.includes(mapped) || cancelled) return;
@@ -256,6 +263,14 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
       <div className="px-4 flex justify-between text-[10px] text-muted-foreground -mt-1 mb-3">
         <span>En camino</span><span>Llegó</span><span>En viaje</span><span>Final</span>
       </div>
+
+      {/* Aviso: ya no se puede cancelar */}
+      {(status === "en_camino" || status === "llegado") && (
+        <p className="px-4 -mt-1 mb-2 text-[11px] text-muted-foreground text-center italic">
+          El conductor ya está en camino
+        </p>
+      )}
+
 
       {/* Banner: conductor llegó */}
       {status === "llegado" && (
@@ -416,6 +431,28 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
       {!chatOpen && <div className="pb-6" />}
 
       {showSOS && <SOSModal onClose={() => setShowSOS(false)} onShare={handleShareWhatsApp} />}
+
+      {driverCancelled && (
+        <div className="fixed inset-0 z-[70] bg-background/90 backdrop-blur-sm flex items-center justify-center p-6 animate-fade-in">
+          <div className="bg-card rounded-2xl border border-border p-6 max-w-sm w-full space-y-4 text-center">
+            <span className="text-5xl">😔</span>
+            <h2 className="text-lg font-extrabold text-foreground">Tu conductor canceló el viaje</h2>
+            <p className="text-sm text-muted-foreground">Por favor solicita uno nuevo 🛺</p>
+            <Button
+              variant="hero"
+              size="lg"
+              className="w-full rounded-xl"
+              onClick={() => {
+                setDriverCancelled(false);
+                if (onDriverCancelled) onDriverCancelled();
+                else onFinish();
+              }}
+            >
+              Buscar nuevo conductor
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

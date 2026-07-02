@@ -271,6 +271,33 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
     return () => clearTimeout(t);
   }, [requestTimer, incomingRequest, toast]);
 
+  // Realtime: si el pasajero cancela la solicitud pendiente, cerrar el modal
+  useEffect(() => {
+    if (!incomingRequest) return;
+    const rideId = incomingRequest.id;
+    const channel = supabase
+      .channel(`viaje_pendiente_${rideId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "viajes", filter: `id=eq.${rideId}` },
+        (payload) => {
+          const estado = (payload.new as any)?.estado;
+          if (estado === "cancelado") {
+            setIncomingRequest(null);
+            toast({
+              title: "Solicitud cancelada",
+              description: "La solicitud fue cancelada por el pasajero.",
+            });
+          }
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [incomingRequest, toast]);
+
+
   const handleAccept = useCallback(async () => {
     if (!incomingRequest) return;
 
