@@ -14,6 +14,8 @@ export interface Driver {
   available: boolean;
   phone?: string;
   color?: string;
+  lat?: number | null;
+  lng?: number | null;
 }
 
 interface DriverCardProps {
