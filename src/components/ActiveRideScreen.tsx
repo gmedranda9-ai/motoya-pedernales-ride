@@ -123,6 +123,11 @@ const ActiveRideScreen = ({ driver, destination, onFinish, onDriverCancelled, vi
     const apply = (estado: string | null | undefined) => {
       if (!estado) return;
       const valid: RideStatus[] = ["en_camino", "llegado", "en_viaje", "completado"];
+      if (estado === "cancelado") {
+        if (cancelled) return;
+        setDriverCancelled(true);
+        return;
+      }
       // Map DB "aceptado" to "en_camino" for backward compat
       const mapped = (estado === "aceptado" ? "en_camino" : estado) as RideStatus;
       if (!valid.includes(mapped) || cancelled) return;
