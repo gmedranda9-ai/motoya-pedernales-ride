@@ -723,6 +723,18 @@ const PasajeroHome = () => {
                       </div>
                     </div>
 
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLocationModalDriver(driver);
+                      }}
+                      className="w-full mt-3 text-xs font-semibold text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20 rounded-lg py-2 px-3 flex items-center justify-center gap-1.5 transition"
+                    >
+                      📍 Ver ubicación en mapa
+                    </button>
+
+
                     <Button
                       variant="hero"
                       size="sm"
