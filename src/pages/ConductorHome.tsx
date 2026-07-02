@@ -512,9 +512,35 @@ const ConductorHome = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages.length, chatOpen]);
 
+  // Track keyboard height to keep the chat input visible above the software keyboard
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.visualViewport) {
+        const height = window.innerHeight - window.visualViewport.height;
+        setKeyboardHeight(height > 0 ? height : 0);
+      }
+    };
+    window.visualViewport?.addEventListener("resize", handleResize);
+    handleResize();
+    return () => window.visualViewport?.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Scroll input into view whenever the keyboard opens while chat is open
+  useEffect(() => {
+    if (chatOpen && keyboardHeight > 0 && inputRef.current) {
+      inputRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [keyboardHeight, chatOpen]);
+
   const handleToggleChat = () => {
     const next = !chatOpen;
     setChatOpen(next);
+    if (next) {
+      previousMapExpandedRef.current = mapExpanded;
+      setMapExpanded(false);
+    } else {
+      setMapExpanded(previousMapExpandedRef.current);
+    }
     if (next) markChatAsRead();
   };
 
