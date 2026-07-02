@@ -99,6 +99,7 @@ const PasajeroHome = () => {
   const [loadingDrivers, setLoadingDrivers] = useState(false);
   const [viajeId, setViajeId] = useState<string | undefined>();
   const [phraseIdx, setPhraseIdx] = useState(0);
+  const [locationModalDriver, setLocationModalDriver] = useState<Driver | null>(null);
   const [destinationsOpen, setDestinationsOpen] = useState(false);
   const [outOfAreaOpen, setOutOfAreaOpen] = useState(false);
   const [outOfAreaKm, setOutOfAreaKm] = useState<number | null>(null);
