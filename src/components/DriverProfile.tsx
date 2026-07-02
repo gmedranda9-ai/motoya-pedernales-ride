@@ -57,7 +57,15 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost, passengerLoc
   const [showAllComments, setShowAllComments] = useState(false);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
 
-  const initial = (driver.name || "?").trim().charAt(0).toUpperCase();
+  const driverLocation = useMemo(() => {
+    if (driver.conductor_lat != null && driver.conductor_lng != null) {
+      return { lat: driver.conductor_lat, lng: driver.conductor_lng };
+    }
+    if (driver.lat != null && driver.lng != null) {
+      return { lat: driver.lat, lng: driver.lng };
+    }
+    return null;
+  }, [driver.conductor_lat, driver.conductor_lng, driver.lat, driver.lng]);
   const showRealPhoto = !isPlaceholderPhoto(driver.photo);
 
   useEffect(() => {
