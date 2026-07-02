@@ -375,12 +375,6 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
     return r;
   }, [acceptedRide]);
 
-  const openInMaps = (address: string, coords?: { lat: number; lng: number }) => {
-    const query = coords
-      ? `${coords.lat},${coords.lng}`
-      : encodeURIComponent(address + " Pedernales Ecuador");
-    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank");
-  };
 
   return (
     <RideContext.Provider value={{ incomingRequest, acceptedRide, consumeAcceptedRide, checkPendingRequest }}>
