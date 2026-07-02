@@ -94,6 +94,13 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
     return () => window.visualViewport?.removeEventListener("resize", handleResize);
   }, []);
 
+  // Scroll input into view whenever the keyboard opens while chat is open
+  useEffect(() => {
+    if (chatOpen && keyboardHeight > 0 && inputRef.current) {
+      inputRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [keyboardHeight, chatOpen]);
+
   // Toast cuando el conductor marca "Llegué"
   const prevStatusRef = useRef<RideStatus>(status);
   useEffect(() => {
