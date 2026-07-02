@@ -24,16 +24,6 @@ interface RealComment {
   author?: string;
 }
 
-const isPlaceholderPhoto = (url: string | null | undefined) => {
-  if (!url) return true;
-  const u = url.toLowerCase();
-  return (
-    u.includes("placeholder") ||
-    u.includes("logo-motoya") ||
-    u.includes("via.placeholder") ||
-    u.endsWith("/placeholder.svg")
-  );
-};
 
 const monthsSince = (iso: string | null | undefined) => {
   if (!iso) return 0;
