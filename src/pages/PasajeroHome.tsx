@@ -729,7 +729,7 @@ const PasajeroHome = () => {
                         handleDriverTap(driver);
                       }}
                     >
-                      {driver.available ? "Solicitar viaje" : "No disponible"}
+                      {driver.available ? "Ver perfil del conductor" : "No disponible"}
                     </Button>
                   </div>
                 </div>
