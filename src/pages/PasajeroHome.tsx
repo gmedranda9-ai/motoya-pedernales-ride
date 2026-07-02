@@ -7,6 +7,7 @@ import WaitingScreen from "@/components/WaitingScreen";
 import ActiveRideScreen from "@/components/ActiveRideScreen";
 import RatingScreen from "@/components/RatingScreen";
 import BottomNav from "@/components/BottomNav";
+import DriverLocationModal from "@/components/DriverLocationModal";
 
 import logoMotoya from "@/assets/logo-motoya.png";
 import pedernalesMototaxi from "@/assets/pedernales-mototaxi.png";
@@ -98,6 +99,7 @@ const PasajeroHome = () => {
   const [loadingDrivers, setLoadingDrivers] = useState(false);
   const [viajeId, setViajeId] = useState<string | undefined>();
   const [phraseIdx, setPhraseIdx] = useState(0);
+  const [locationModalDriver, setLocationModalDriver] = useState<Driver | null>(null);
   const [destinationsOpen, setDestinationsOpen] = useState(false);
   const [outOfAreaOpen, setOutOfAreaOpen] = useState(false);
   const [outOfAreaKm, setOutOfAreaKm] = useState<number | null>(null);
@@ -267,6 +269,8 @@ const PasajeroHome = () => {
           available: c.disponible ?? true,
           phone: c.telefono || "",
           color: c.color || "",
+          lat: typeof c.conductor_lat === "number" ? c.conductor_lat : null,
+          lng: typeof c.conductor_lng === "number" ? c.conductor_lng : null,
         }));
         setDrivers(mapped);
       }
@@ -719,6 +723,18 @@ const PasajeroHome = () => {
                       </div>
                     </div>
 
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLocationModalDriver(driver);
+                      }}
+                      className="w-full mt-3 text-xs font-semibold text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20 rounded-lg py-2 px-3 flex items-center justify-center gap-1.5 transition"
+                    >
+                      📍 Ver ubicación en mapa
+                    </button>
+
+
                     <Button
                       variant="hero"
                       size="sm"
@@ -1049,6 +1065,18 @@ const PasajeroHome = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <DriverLocationModal
+        open={!!locationModalDriver}
+        onClose={() => setLocationModalDriver(null)}
+        driverName={locationModalDriver?.name || ""}
+        driverLocation={
+          locationModalDriver && locationModalDriver.lat != null && locationModalDriver.lng != null
+            ? { lat: locationModalDriver.lat, lng: locationModalDriver.lng }
+            : null
+        }
+        passengerLocation={locationCoords}
+      />
     </div>
   );
 };
