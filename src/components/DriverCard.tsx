@@ -16,6 +16,8 @@ export interface Driver {
   color?: string;
   lat?: number | null;
   lng?: number | null;
+  conductor_lat?: number | null;
+  conductor_lng?: number | null;
 }
 
 interface DriverCardProps {

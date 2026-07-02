@@ -152,6 +152,8 @@ const PasajeroHome = () => {
             .eq("id", conductorId)
             .maybeSingle();
           if (!cond) return null;
+          const lat = typeof cond.conductor_lat === "number" ? cond.conductor_lat : null;
+          const lng = typeof cond.conductor_lng === "number" ? cond.conductor_lng : null;
           return {
             id: cond.id,
             name: cond.nombre || "Conductor",
@@ -162,6 +164,10 @@ const PasajeroHome = () => {
             available: cond.disponible ?? true,
             phone: cond.telefono || "",
             color: cond.color || "",
+            lat,
+            lng,
+            conductor_lat: lat,
+            conductor_lng: lng,
           };
         };
 
@@ -259,19 +265,25 @@ const PasajeroHome = () => {
         toast({ title: "Error", description: "No se pudieron cargar los conductores.", variant: "destructive" });
         setDrivers([]);
       } else {
-        const mapped: Driver[] = (data || []).map((c: any) => ({
-          id: c.id,
-          name: c.nombre || "Sin nombre",
-          photo: c.foto || "",
-          plate: c.placa || "",
-          model: c.modelo_moto || "",
-          rating: c.calificacion_promedio ?? 5.0,
-          available: c.disponible ?? true,
-          phone: c.telefono || "",
-          color: c.color || "",
-          lat: typeof c.conductor_lat === "number" ? c.conductor_lat : null,
-          lng: typeof c.conductor_lng === "number" ? c.conductor_lng : null,
-        }));
+        const mapped: Driver[] = (data || []).map((c: any) => {
+          const lat = typeof c.conductor_lat === "number" ? c.conductor_lat : null;
+          const lng = typeof c.conductor_lng === "number" ? c.conductor_lng : null;
+          return {
+            id: c.id,
+            name: c.nombre || "Sin nombre",
+            photo: c.foto || "",
+            plate: c.placa || "",
+            model: c.modelo_moto || "",
+            rating: c.calificacion_promedio ?? 5.0,
+            available: c.disponible ?? true,
+            phone: c.telefono || "",
+            color: c.color || "",
+            lat,
+            lng,
+            conductor_lat: lat,
+            conductor_lng: lng,
+          };
+        });
         setDrivers(mapped);
       }
     } catch (err) {

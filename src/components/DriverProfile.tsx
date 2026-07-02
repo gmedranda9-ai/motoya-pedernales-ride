@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Star, Phone, ShieldCheck, ArrowLeft, Clock, Route, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,16 +24,6 @@ interface RealComment {
   author?: string;
 }
 
-const isPlaceholderPhoto = (url: string | null | undefined) => {
-  if (!url) return true;
-  const u = url.toLowerCase();
-  return (
-    u.includes("placeholder") ||
-    u.includes("logo-motoya") ||
-    u.includes("via.placeholder") ||
-    u.endsWith("/placeholder.svg")
-  );
-};
 
 const monthsSince = (iso: string | null | undefined) => {
   if (!iso) return 0;
@@ -57,8 +47,15 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost, passengerLoc
   const [showAllComments, setShowAllComments] = useState(false);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
 
-  const initial = (driver.name || "?").trim().charAt(0).toUpperCase();
-  const showRealPhoto = !isPlaceholderPhoto(driver.photo);
+  const driverLocation = useMemo(() => {
+    if (driver.conductor_lat != null && driver.conductor_lng != null) {
+      return { lat: driver.conductor_lat, lng: driver.conductor_lng };
+    }
+    if (driver.lat != null && driver.lng != null) {
+      return { lat: driver.lat, lng: driver.lng };
+    }
+    return null;
+  }, [driver.conductor_lat, driver.conductor_lng, driver.lat, driver.lng]);
 
   useEffect(() => {
     const loadStats = async () => {
@@ -212,7 +209,8 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost, passengerLoc
             )}
           </div>
 
-          {driver.lat != null && driver.lng != null && (
+          {((driver.conductor_lat != null && driver.conductor_lng != null) ||
+            (driver.lat != null && driver.lng != null)) && (
             <button
               type="button"
               onClick={() => setLocationModalOpen(true)}
@@ -331,11 +329,7 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost, passengerLoc
             open={locationModalOpen}
             onClose={() => setLocationModalOpen(false)}
             driverName={driver.name}
-            driverLocation={
-              driver.lat != null && driver.lng != null
-                ? { lat: driver.lat, lng: driver.lng }
-                : null
-            }
+            driverLocation={driverLocation}
             passengerLocation={passengerLocation}
           />
         </div>
