@@ -4,8 +4,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, MapPin, Star, XCircle, ExternalLink } from "lucide-react";
+import { CheckCircle, MapPin, Star, XCircle } from "lucide-react";
 import UserAvatar from "@/components/UserAvatar";
+import PassengerLocationModal from "@/components/PassengerLocationModal";
 
 export interface IncomingRideRequest {
   id: string;
@@ -48,6 +49,7 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
   const [incomingRequest, setIncomingRequest] = useState<IncomingRideRequest | null>(null);
   const [requestTimer, setRequestTimer] = useState(REQUEST_TIMEOUT_SECONDS);
   const [acceptedRide, setAcceptedRide] = useState<IncomingRideRequest | null>(null);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
 
   // Refresh conductor info on user change + listen to availability/status changes
   useEffect(() => {
@@ -373,12 +375,6 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
     return r;
   }, [acceptedRide]);
 
-  const openInMaps = (address: string, coords?: { lat: number; lng: number }) => {
-    const query = coords
-      ? `${coords.lat},${coords.lng}`
-      : encodeURIComponent(address + " Pedernales Ecuador");
-    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank");
-  };
 
   return (
     <RideContext.Provider value={{ incomingRequest, acceptedRide, consumeAcceptedRide, checkPendingRequest }}>
@@ -444,10 +440,10 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
             <Button
               variant="outline"
               className="w-full rounded-xl"
-              onClick={() => openInMaps(incomingRequest.origin, incomingRequest.originCoords)}
+              onClick={() => setLocationModalOpen(true)}
             >
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Ver ubicación en Google Maps
+              <MapPin className="h-4 w-4 mr-2" />
+              Ver ubicación
             </Button>
 
             {/* Circular timer */}
@@ -490,6 +486,14 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
               Tienes {requestTimer}s para responder esta solicitud
             </p>
           </div>
+
+          <PassengerLocationModal
+            open={locationModalOpen}
+            onClose={() => setLocationModalOpen(false)}
+            passengerName={incomingRequest.passengerName}
+            passengerLocation={incomingRequest.originCoords ?? null}
+            originLabel={incomingRequest.origin}
+          />
         </div>
       )}
     </RideContext.Provider>
