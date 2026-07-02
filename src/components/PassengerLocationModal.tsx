@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2, AlertTriangle, X } from "lucide-react";
 
@@ -53,16 +52,25 @@ const PassengerLocationModal = ({
     }
   }, [open, mapReady, passengerLocation]);
 
-  return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-md p-0 gap-0 overflow-hidden rounded-2xl">
-        <DialogHeader className="p-4 pb-2">
-          <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
-            📍 Ubicación de recogida
-          </DialogTitle>
-        </DialogHeader>
+  if (!open) return null;
 
-        <div className="w-full h-[360px] bg-muted relative">
+  return (
+    <div className="fixed inset-0 z-[110] bg-background/95 backdrop-blur-sm flex items-center justify-center px-4 py-8 animate-fade-in">
+      <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="p-4 pb-2 border-b border-border flex items-center justify-between">
+          <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+            📍 Ubicación de recogida
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-full text-muted-foreground hover:bg-muted transition"
+            aria-label="Cerrar"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="w-full h-[360px] bg-muted relative flex-shrink-0">
           {loadError ? (
             <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-4 text-center">
               <AlertTriangle className="h-8 w-8 text-accent" />
@@ -95,7 +103,7 @@ const PassengerLocationModal = ({
           )}
         </div>
 
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-3 overflow-y-auto">
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <span className="inline-block w-3 h-3 rounded-full bg-[#f5c518] border-2 border-white shadow" />
             {originLabel || "Ubicación del pasajero"}
@@ -111,8 +119,8 @@ const PassengerLocationModal = ({
             <X className="h-4 w-4 mr-1" /> Cerrar
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 };
 
