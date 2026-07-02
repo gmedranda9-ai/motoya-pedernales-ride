@@ -597,7 +597,7 @@ const PasajeroHome = () => {
 
   // ── Active Ride ──
   if (step === "active" && selectedDriver) {
-    return <ActiveRideScreen driver={selectedDriver} destination={destination} viajeId={viajeId} originCoords={locationCoords ?? undefined} onFinish={() => setStep("rating")} />;
+    return <ActiveRideScreen driver={selectedDriver} destination={destination} viajeId={viajeId} originCoords={locationCoords ?? undefined} onFinish={() => setStep("rating")} onDriverCancelled={handleFinish} />;
   }
 
   // ── Waiting Screen ──
