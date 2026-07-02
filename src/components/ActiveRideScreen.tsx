@@ -370,7 +370,10 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
       {/* Chat panel */}
       {chatOpen && (
         <div className="px-4 mt-4 flex-1 flex flex-col min-h-0">
-          <div className="flex-1 flex flex-col min-h-0 bg-card rounded-2xl border border-border overflow-hidden">
+          <div
+            className="flex-1 flex flex-col min-h-0 bg-card rounded-2xl border border-border overflow-hidden"
+            style={{ paddingBottom: "env(keyboard-insets-bottom, 0px)" }}
+          >
             <div ref={chatScrollRef} className="flex-1 flex flex-col p-3 overflow-y-auto min-h-0">
               {messages.length === 0 && (
                 <p className="text-xs text-muted-foreground text-center py-4">Envía un mensaje para coordinar tu recogida</p>
@@ -391,10 +394,14 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
             </div>
             <div className="p-3 border-t border-border flex gap-2 items-center" style={{ paddingBottom: Math.max(12, keyboardHeight + 12) }}>
               <Input
+                ref={inputRef}
                 placeholder="Escribe un mensaje..."
                 value={msgText}
                 onChange={(e) => setMsgText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                onFocus={() => {
+                  inputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                }}
                 className="rounded-xl"
               />
               <Button size="icon" variant="hero" className="rounded-xl flex-shrink-0" onClick={handleSend}>
