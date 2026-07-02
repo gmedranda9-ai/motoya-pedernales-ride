@@ -212,7 +212,8 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost, passengerLoc
             )}
           </div>
 
-          {driver.lat != null && driver.lng != null && (
+          {(driver.conductor_lat != null && driver.conductor_lng != null) ||
+            (driver.lat != null && driver.lng != null) && (
             <button
               type="button"
               onClick={() => setLocationModalOpen(true)}
