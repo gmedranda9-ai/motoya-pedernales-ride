@@ -466,7 +466,10 @@ const ConductorHome = () => {
   const [chatOpen, setChatOpen] = useState(false);
   const [mapExpanded, setMapExpanded] = useState(true);
   const [msgText, setMsgText] = useState("");
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const { messages, sendMessage } = useRideChat(activeRide?.id ?? null, user?.id ?? null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const previousMapExpandedRef = useRef(true);
 
   // Unread badge for chat
   const readKey = activeRide?.id && user?.id ? `chat:lastRead:${user.id}:${activeRide.id}` : null;
