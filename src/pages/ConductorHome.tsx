@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRide } from "@/contexts/RideContext";
 import { useToast } from "@/hooks/use-toast";
@@ -466,7 +466,10 @@ const ConductorHome = () => {
   const [chatOpen, setChatOpen] = useState(false);
   const [mapExpanded, setMapExpanded] = useState(true);
   const [msgText, setMsgText] = useState("");
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const { messages, sendMessage } = useRideChat(activeRide?.id ?? null, user?.id ?? null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const previousMapExpandedRef = useRef(true);
 
   // Unread badge for chat
   const readKey = activeRide?.id && user?.id ? `chat:lastRead:${user.id}:${activeRide.id}` : null;
@@ -509,9 +512,35 @@ const ConductorHome = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages.length, chatOpen]);
 
+  // Track keyboard height to keep the chat input visible above the software keyboard
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.visualViewport) {
+        const height = window.innerHeight - window.visualViewport.height;
+        setKeyboardHeight(height > 0 ? height : 0);
+      }
+    };
+    window.visualViewport?.addEventListener("resize", handleResize);
+    handleResize();
+    return () => window.visualViewport?.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Scroll input into view whenever the keyboard opens while chat is open
+  useEffect(() => {
+    if (chatOpen && keyboardHeight > 0 && inputRef.current) {
+      inputRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [keyboardHeight, chatOpen]);
+
   const handleToggleChat = () => {
     const next = !chatOpen;
     setChatOpen(next);
+    if (next) {
+      previousMapExpandedRef.current = mapExpanded;
+      setMapExpanded(false);
+    } else {
+      setMapExpanded(previousMapExpandedRef.current);
+    }
     if (next) markChatAsRead();
   };
 
@@ -1089,35 +1118,44 @@ const ConductorHome = () => {
         {/* Chat */}
         {chatOpen && (
           <div className="px-4 mt-4 flex-1 flex flex-col min-h-0">
-            <div className="bg-card rounded-2xl border border-border flex-1 flex flex-col p-3 max-h-48 overflow-y-auto">
-              {messages.length === 0 && (
-                <p className="text-xs text-muted-foreground text-center py-4">Envía un mensaje al pasajero</p>
-              )}
-              {messages.map((m) => {
-                const mine = m.remitente_id === user?.id;
-                return (
-                  <div
-                    key={m.id}
-                    className={`mb-2 text-xs px-3 py-2 rounded-xl max-w-[80%] ${
-                      mine ? "bg-accent text-accent-foreground self-end" : "bg-muted text-foreground self-start"
-                    }`}
-                  >
-                    {m.texto}
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex gap-2 mt-2">
-              <Input
-                placeholder="Escribe un mensaje..."
-                value={msgText}
-                onChange={(e) => setMsgText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                className="rounded-xl"
-              />
-              <Button size="icon" variant="hero" className="rounded-xl" onClick={handleSend}>
-                <Send className="h-4 w-4" />
-              </Button>
+            <div
+              className="flex-1 flex flex-col min-h-0 bg-card rounded-2xl border border-border overflow-hidden"
+              style={{ paddingBottom: "env(keyboard-insets-bottom, 0px)" }}
+            >
+              <div className="flex-1 flex flex-col p-3 overflow-y-auto min-h-0">
+                {messages.length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-4">Envía un mensaje al pasajero</p>
+                )}
+                {messages.map((m) => {
+                  const mine = m.remitente_id === user?.id;
+                  return (
+                    <div
+                      key={m.id}
+                      className={`mb-2 text-xs px-3 py-2 rounded-xl max-w-[80%] ${
+                        mine ? "bg-accent text-accent-foreground self-end" : "bg-muted text-foreground self-start"
+                      }`}
+                    >
+                      {m.texto}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="p-3 border-t border-border flex gap-2 items-center" style={{ paddingBottom: Math.max(12, keyboardHeight + 12) }}>
+                <Input
+                  ref={inputRef}
+                  placeholder="Escribe un mensaje..."
+                  value={msgText}
+                  onChange={(e) => setMsgText(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                  onFocus={() => {
+                    inputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                  }}
+                  className="rounded-xl"
+                />
+                <Button size="icon" variant="hero" className="rounded-xl flex-shrink-0" onClick={handleSend}>
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         )}
