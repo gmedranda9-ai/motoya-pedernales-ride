@@ -327,6 +327,17 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost, passengerLoc
           >
             {driver.available ? "Solicitar este conductor" : "No disponible en este momento"}
           </Button>
+          <DriverLocationModal
+            open={locationModalOpen}
+            onClose={() => setLocationModalOpen(false)}
+            driverName={driver.name}
+            driverLocation={
+              driver.lat != null && driver.lng != null
+                ? { lat: driver.lat, lng: driver.lng }
+                : null
+            }
+            passengerLocation={passengerLocation}
+          />
         </div>
       </div>
     </div>
