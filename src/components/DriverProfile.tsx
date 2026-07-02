@@ -212,6 +212,16 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost, passengerLoc
             )}
           </div>
 
+          {driver.lat != null && driver.lng != null && (
+            <button
+              type="button"
+              onClick={() => setLocationModalOpen(true)}
+              className="w-full text-xs font-semibold text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20 rounded-lg py-2 px-3 flex items-center justify-center gap-1.5 transition"
+            >
+              <MapPin className="h-3.5 w-3.5" /> Ver ubicación en mapa
+            </button>
+          )}
+
           {/* Rating & comments */}
           <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center gap-2 mb-3">
