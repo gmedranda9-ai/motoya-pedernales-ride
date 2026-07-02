@@ -74,7 +74,7 @@ const DriverCard = ({ driver, onRequest }: DriverCardProps) => {
         disabled={!available}
         onClick={() => onRequest(driver.id)}
       >
-        {available ? "Solicitar viaje" : "No disponible"}
+        {available ? "Ver perfil del conductor" : "No disponible"}
       </Button>
     </div>
   );
