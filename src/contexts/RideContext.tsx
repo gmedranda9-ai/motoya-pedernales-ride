@@ -446,10 +446,10 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
             <Button
               variant="outline"
               className="w-full rounded-xl"
-              onClick={() => openInMaps(incomingRequest.origin, incomingRequest.originCoords)}
+              onClick={() => setLocationModalOpen(true)}
             >
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Ver ubicación en Google Maps
+              <MapPin className="h-4 w-4 mr-2" />
+              Ver ubicación
             </Button>
 
             {/* Circular timer */}
