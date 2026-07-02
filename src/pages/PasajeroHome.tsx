@@ -613,6 +613,7 @@ const PasajeroHome = () => {
         onRequest={handleRequest}
         onClose={() => setStep("drivers")}
         estimatedCost={costType}
+        passengerLocation={locationCoords}
       />
     );
   }
@@ -1056,17 +1057,6 @@ const PasajeroHome = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      <DriverLocationModal
-        open={!!locationModalDriver}
-        onClose={() => setLocationModalDriver(null)}
-        driverName={locationModalDriver?.name || ""}
-        driverLocation={
-          locationModalDriver && locationModalDriver.lat != null && locationModalDriver.lng != null
-            ? { lat: locationModalDriver.lat, lng: locationModalDriver.lng }
-            : null
-        }
-        passengerLocation={locationCoords}
-      />
     </div>
   );
 };
