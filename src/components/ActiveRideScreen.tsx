@@ -18,6 +18,7 @@ interface ActiveRideScreenProps {
   driver: Driver;
   destination: string;
   onFinish: () => void;
+  onDriverCancelled?: () => void;
   viajeId?: string;
   originCoords?: { lat: number; lng: number };
 }
