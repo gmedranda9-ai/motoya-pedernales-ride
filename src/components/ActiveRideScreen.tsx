@@ -264,6 +264,14 @@ const ActiveRideScreen = ({ driver, destination, onFinish, onDriverCancelled, vi
         <span>En camino</span><span>Llegó</span><span>En viaje</span><span>Final</span>
       </div>
 
+      {/* Aviso: ya no se puede cancelar */}
+      {(status === "en_camino" || status === "llegado") && (
+        <p className="px-4 -mt-1 mb-2 text-[11px] text-muted-foreground text-center italic">
+          El conductor ya está en camino
+        </p>
+      )}
+
+
       {/* Banner: conductor llegó */}
       {status === "llegado" && (
         <div className="px-4 mb-3 animate-slide-up">
