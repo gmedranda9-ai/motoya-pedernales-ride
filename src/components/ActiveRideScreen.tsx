@@ -80,6 +80,19 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
     if (chatOpen) markAsRead();
   }, [messages.length, chatOpen]);
 
+  // Track keyboard height to keep input visible above the software keyboard
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.visualViewport) {
+        const height = window.innerHeight - window.visualViewport.height;
+        setKeyboardHeight(height > 0 ? height : 0);
+      }
+    };
+    window.visualViewport?.addEventListener("resize", handleResize);
+    handleResize();
+    return () => window.visualViewport?.removeEventListener("resize", handleResize);
+  }, []);
+
   // Toast cuando el conductor marca "Llegué"
   const prevStatusRef = useRef<RideStatus>(status);
   useEffect(() => {
