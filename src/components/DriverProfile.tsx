@@ -56,7 +56,6 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost, passengerLoc
     }
     return null;
   }, [driver.conductor_lat, driver.conductor_lng, driver.lat, driver.lng]);
-  const showRealPhoto = !isPlaceholderPhoto(driver.photo);
 
   useEffect(() => {
     const loadStats = async () => {
