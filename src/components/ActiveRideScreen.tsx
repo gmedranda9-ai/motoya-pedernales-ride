@@ -39,6 +39,7 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const { messages, sendMessage } = useRideChat(viajeId, user?.id);
   const chatScrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const completedRef = useRef(false);
   const previousMapExpandedRef = useRef(true);
 
@@ -92,6 +93,13 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
     handleResize();
     return () => window.visualViewport?.removeEventListener("resize", handleResize);
   }, []);
+
+  // Scroll input into view whenever the keyboard opens while chat is open
+  useEffect(() => {
+    if (chatOpen && keyboardHeight > 0 && inputRef.current) {
+      inputRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [keyboardHeight, chatOpen]);
 
   // Toast cuando el conductor marca "Llegué"
   const prevStatusRef = useRef<RideStatus>(status);
@@ -362,7 +370,10 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
       {/* Chat panel */}
       {chatOpen && (
         <div className="px-4 mt-4 flex-1 flex flex-col min-h-0">
-          <div className="flex-1 flex flex-col min-h-0 bg-card rounded-2xl border border-border overflow-hidden">
+          <div
+            className="flex-1 flex flex-col min-h-0 bg-card rounded-2xl border border-border overflow-hidden"
+            style={{ paddingBottom: "env(keyboard-insets-bottom, 0px)" }}
+          >
             <div ref={chatScrollRef} className="flex-1 flex flex-col p-3 overflow-y-auto min-h-0">
               {messages.length === 0 && (
                 <p className="text-xs text-muted-foreground text-center py-4">Envía un mensaje para coordinar tu recogida</p>
@@ -383,10 +394,14 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
             </div>
             <div className="p-3 border-t border-border flex gap-2 items-center" style={{ paddingBottom: Math.max(12, keyboardHeight + 12) }}>
               <Input
+                ref={inputRef}
                 placeholder="Escribe un mensaje..."
                 value={msgText}
                 onChange={(e) => setMsgText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                onFocus={() => {
+                  inputRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                }}
                 className="rounded-xl"
               />
               <Button size="icon" variant="hero" className="rounded-xl flex-shrink-0" onClick={handleSend}>
