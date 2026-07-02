@@ -323,7 +323,14 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
             </span>
           )}
         </Button>
-        <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={() => setMapExpanded((v) => !v)}>
+        <Button variant="outline" className="rounded-xl flex-col h-auto py-3 gap-1" onClick={() => {
+          if (chatOpen) {
+            setChatOpen(false);
+            setMapExpanded(previousMapExpandedRef.current);
+          } else {
+            setMapExpanded((v) => !v);
+          }
+        }}>
           <MapIcon className="h-5 w-5" />
           <span className="text-[10px]">{mapExpanded ? "Ocultar mapa" : "Ver mapa"}</span>
         </Button>
