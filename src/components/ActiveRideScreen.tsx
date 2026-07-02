@@ -159,6 +159,12 @@ const ActiveRideScreen = ({ driver, destination, onFinish, viajeId, originCoords
   const handleToggleChat = () => {
     const next = !chatOpen;
     setChatOpen(next);
+    if (next) {
+      previousMapExpandedRef.current = mapExpanded;
+      setMapExpanded(false);
+    } else {
+      setMapExpanded(previousMapExpandedRef.current);
+    }
     if (next) markAsRead();
   };
 
