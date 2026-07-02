@@ -641,6 +641,47 @@ const ConductorHome = () => {
     setRideStatus("en_camino");
   };
 
+  const [cancelRideOpen, setCancelRideOpen] = useState(false);
+
+  const cancelActiveRide = async () => {
+    if (!activeRide?.id) return;
+    setCancelRideOpen(false);
+    const passengerId = activeRide.passengerId;
+    const { error } = await supabase.from("viajes").update({ estado: "cancelado" }).eq("id", activeRide.id);
+    if (error) {
+      console.error("❌ Error cancelando viaje:", error);
+      toast({ title: "Error", description: "No se pudo cancelar el viaje.", variant: "destructive" });
+      return;
+    }
+
+    // Notificar al pasajero
+    if (passengerId) {
+      try {
+        const { data: pasajero } = await (supabase as any)
+          .from("usuarios")
+          .select("onesignal_player_id")
+          .eq("id", passengerId)
+          .maybeSingle();
+        const playerId = pasajero?.onesignal_player_id;
+        if (playerId) {
+          await supabase.functions.invoke("send-ride-notification", {
+            body: {
+              player_id: playerId,
+              titulo: "Viaje cancelado",
+              mensaje: "Tu conductor canceló el viaje. Por favor solicita uno nuevo 🛺",
+            },
+          });
+        }
+      } catch (e) {
+        console.warn("Notificación 'cancelado' falló:", e);
+      }
+    }
+
+    toast({ title: "Viaje cancelado", description: "El pasajero fue notificado." });
+    finishRide();
+  };
+
+
   const STORAGE_PATHS: Record<string, string> = {
     photoUrl: "foto-perfil",
     cedulaPhotoUrl: "foto-cedula",
