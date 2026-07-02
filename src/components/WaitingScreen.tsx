@@ -189,7 +189,11 @@ const WaitingScreen = ({ driver, destination, onCancel, onTimeout, onAccepted, e
           variant="outline"
           size="lg"
           className="w-full rounded-xl"
-          onClick={onCancel}
+          onClick={() => {
+            if (window.confirm("¿Cancelar solicitud? Volverás al inicio.")) {
+              onCancel();
+            }
+          }}
         >
           Cancelar solicitud
         </Button>
