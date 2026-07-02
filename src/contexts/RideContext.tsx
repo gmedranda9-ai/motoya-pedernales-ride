@@ -486,6 +486,14 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
               Tienes {requestTimer}s para responder esta solicitud
             </p>
           </div>
+
+          <PassengerLocationModal
+            open={locationModalOpen}
+            onClose={() => setLocationModalOpen(false)}
+            passengerName={incomingRequest.passengerName}
+            passengerLocation={incomingRequest.originCoords ?? null}
+            originLabel={incomingRequest.origin}
+          />
         </div>
       )}
     </RideContext.Provider>
