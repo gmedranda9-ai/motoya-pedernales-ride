@@ -5,12 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import type { Driver } from "@/components/DriverCard";
 import UserAvatar from "@/components/UserAvatar";
+import DriverLocationModal from "@/components/DriverLocationModal";
 
 interface DriverProfileProps {
   driver: Driver;
   onRequest: (driverId: string) => void;
   onClose: () => void;
   estimatedCost?: string;
+  passengerLocation?: { lat: number; lng: number } | null;
 }
 
 interface RealComment {
@@ -44,7 +46,7 @@ const monthsSince = (iso: string | null | undefined) => {
   return Math.max(0, months);
 };
 
-const DriverProfile = ({ driver, onRequest, onClose, estimatedCost }: DriverProfileProps) => {
+const DriverProfile = ({ driver, onRequest, onClose, estimatedCost, passengerLocation }: DriverProfileProps) => {
   const [stats, setStats] = useState<{ trips: number; months: number; cedula: string | null }>({
     trips: 0,
     months: 0,
@@ -53,6 +55,7 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost }: DriverProf
   const [comments, setComments] = useState<RealComment[]>([]);
   const [loadingComments, setLoadingComments] = useState(true);
   const [showAllComments, setShowAllComments] = useState(false);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
 
   const initial = (driver.name || "?").trim().charAt(0).toUpperCase();
   const showRealPhoto = !isPlaceholderPhoto(driver.photo);
@@ -209,6 +212,16 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost }: DriverProf
             )}
           </div>
 
+          {driver.lat != null && driver.lng != null && (
+            <button
+              type="button"
+              onClick={() => setLocationModalOpen(true)}
+              className="w-full text-xs font-semibold text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20 rounded-lg py-2 px-3 flex items-center justify-center gap-1.5 transition"
+            >
+              📍 Ver ubicación en mapa
+            </button>
+          )}
+
           {/* Rating & comments */}
           <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center gap-2 mb-3">
@@ -314,6 +327,17 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost }: DriverProf
           >
             {driver.available ? "Solicitar este conductor" : "No disponible en este momento"}
           </Button>
+          <DriverLocationModal
+            open={locationModalOpen}
+            onClose={() => setLocationModalOpen(false)}
+            driverName={driver.name}
+            driverLocation={
+              driver.lat != null && driver.lng != null
+                ? { lat: driver.lat, lng: driver.lng }
+                : null
+            }
+            passengerLocation={passengerLocation}
+          />
         </div>
       </div>
     </div>
