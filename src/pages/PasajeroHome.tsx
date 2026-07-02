@@ -267,6 +267,8 @@ const PasajeroHome = () => {
           available: c.disponible ?? true,
           phone: c.telefono || "",
           color: c.color || "",
+          lat: typeof c.conductor_lat === "number" ? c.conductor_lat : null,
+          lng: typeof c.conductor_lng === "number" ? c.conductor_lng : null,
         }));
         setDrivers(mapped);
       }
