@@ -1123,13 +1123,44 @@ const ConductorHome = () => {
         )}
 
         {/* Botón de avance de estado */}
-        <div className="mt-auto px-4 pb-6 pt-4">
+        <div className="mt-auto px-4 pb-6 pt-4 space-y-2">
           <Button variant="hero" size="lg" className="w-full rounded-xl" onClick={() => setConfirmOpen(true)}>
             {rideStatus === "en_camino" && "📍 Llegué al pasajero"}
             {rideStatus === "llegado" && "▶️ Iniciar viaje"}
             {rideStatus === "en_viaje" && "🏁 Llegué al destino"}
           </Button>
+          {rideStatus === "en_camino" && (
+            <button
+              type="button"
+              onClick={() => setCancelRideOpen(true)}
+              className="w-full text-xs text-destructive hover:underline py-1"
+            >
+              Cancelar viaje
+            </button>
+          )}
         </div>
+
+        {/* Diálogo de cancelación de viaje */}
+        <AlertDialog open={cancelRideOpen} onOpenChange={setCancelRideOpen}>
+          <AlertDialogContent className="rounded-2xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Cancelar viaje?</AlertDialogTitle>
+              <AlertDialogDescription>
+                El pasajero será notificado de que cancelaste el viaje.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="rounded-xl">Volver</AlertDialogCancel>
+              <AlertDialogAction
+                className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={cancelActiveRide}
+              >
+                Sí, cancelar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
 
         {/* Diálogo de confirmación */}
         <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
