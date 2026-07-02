@@ -340,11 +340,7 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost, passengerLoc
             open={locationModalOpen}
             onClose={() => setLocationModalOpen(false)}
             driverName={driver.name}
-            driverLocation={
-              driver.lat != null && driver.lng != null
-                ? { lat: driver.lat, lng: driver.lng }
-                : null
-            }
+            driverLocation={driverLocation}
             passengerLocation={passengerLocation}
           />
         </div>
