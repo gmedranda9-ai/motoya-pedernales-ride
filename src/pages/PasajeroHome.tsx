@@ -152,8 +152,10 @@ const PasajeroHome = () => {
             .eq("id", conductorId)
             .maybeSingle();
           if (!cond) return null;
-          const lat = typeof cond.conductor_lat === "number" ? cond.conductor_lat : null;
-          const lng = typeof cond.conductor_lng === "number" ? cond.conductor_lng : null;
+          const nLat = Number(cond.conductor_lat);
+          const nLng = Number(cond.conductor_lng);
+          const lat = Number.isFinite(nLat) ? nLat : null;
+          const lng = Number.isFinite(nLng) ? nLng : null;
           return {
             id: cond.id,
             name: cond.nombre || "Conductor",
