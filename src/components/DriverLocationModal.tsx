@@ -87,32 +87,31 @@ const DriverLocationModal = ({
 
   const fitBoth = () => {
     if (!mapRef.current || !isLoaded) return;
-    if (driverLocation && passengerLocation) {
+    if (driverLocation && effectivePassenger) {
       const bounds = new google.maps.LatLngBounds();
       bounds.extend(driverLocation);
-      bounds.extend(passengerLocation);
+      bounds.extend(effectivePassenger);
       mapRef.current.fitBounds(bounds, 80);
     } else if (driverLocation) {
       mapRef.current.panTo(driverLocation);
       mapRef.current.setZoom(15);
-    } else if (passengerLocation) {
-      mapRef.current.panTo(passengerLocation);
+    } else if (effectivePassenger) {
+      mapRef.current.panTo(effectivePassenger);
       mapRef.current.setZoom(15);
     }
   };
 
   useEffect(() => {
     if (open && mapReady) {
-      // fit after modal open + map ready
       setTimeout(fitBoth, 50);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, mapReady, driverLocation, passengerLocation]);
+  }, [open, mapReady, driverLocation, effectivePassenger]);
 
   const distance =
-    driverLocation && passengerLocation ? distanceMeters(driverLocation, passengerLocation) : null;
+    driverLocation && effectivePassenger ? distanceMeters(driverLocation, effectivePassenger) : null;
 
-  const center = driverLocation ?? passengerLocation ?? { lat: 0.0689, lng: -80.0517 };
+  const center = driverLocation ?? effectivePassenger ?? { lat: 0.0689, lng: -80.0517 };
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
