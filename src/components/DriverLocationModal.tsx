@@ -48,6 +48,18 @@ const DriverLocationModal = ({
 
   const mapRef = useRef<google.maps.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [gpsLocation, setGpsLocation] = useState<LatLng | null>(null);
+
+  useEffect(() => {
+    if (!open || passengerLocation || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setGpsLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {},
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }, [open, passengerLocation]);
+
+  const effectivePassenger = passengerLocation ?? gpsLocation;
 
   const passengerIcon = useMemo(() => {
     if (!isLoaded) return undefined;
