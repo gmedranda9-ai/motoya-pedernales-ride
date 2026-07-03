@@ -26,7 +26,7 @@ const PassengerLocationModal = ({
   conductorLocation,
 }: PassengerLocationModalProps) => {
   const { isLoaded, loadError } = useJsApiLoader({
-    id: "google-map-script-passenger",
+    id: "google-map-script",
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
   });
 
