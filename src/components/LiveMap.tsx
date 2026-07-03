@@ -108,17 +108,21 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
         .eq("id", viajeId)
         .maybeSingle();
       if (cancelled) return;
-      const lat = (data as any)?.conductor_lat;
-      const lng = (data as any)?.conductor_lng;
-      if (typeof lat === "number" && typeof lng === "number") {
-        setDriver({ lat, lng });
+      const rawLat = (data as any)?.conductor_lat;
+      const rawLng = (data as any)?.conductor_lng;
+      const nLat = Number(rawLat);
+      const nLng = Number(rawLng);
+      if (Number.isFinite(nLat) && Number.isFinite(nLng)) {
+        setDriver({ lat: nLat, lng: nLng });
       }
       // Use passenger origin from DB if no prop provided
       if (!passengerLocation) {
-        const oLat = (data as any)?.origen_lat;
-        const oLng = (data as any)?.origen_lng;
-        if (typeof oLat === "number" && typeof oLng === "number") {
-          setPassenger({ lat: oLat, lng: oLng });
+        const rawOLat = (data as any)?.origen_lat;
+        const rawOLng = (data as any)?.origen_lng;
+        const nOLat = Number(rawOLat);
+        const nOLng = Number(rawOLng);
+        if (Number.isFinite(nOLat) && Number.isFinite(nOLng)) {
+          setPassenger({ lat: nOLat, lng: nOLng });
         }
         // If origen_lat/lng vacíos → no mostrar pin del pasajero (no crash)
       }
@@ -131,10 +135,12 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "viajes", filter: `id=eq.${viajeId}` },
         (payload: any) => {
-          const lat = payload.new?.conductor_lat;
-          const lng = payload.new?.conductor_lng;
-          if (typeof lat === "number" && typeof lng === "number") {
-            setDriver({ lat, lng });
+          const rawLat = payload.new?.conductor_lat;
+          const rawLng = payload.new?.conductor_lng;
+          const nLat = Number(rawLat);
+          const nLng = Number(rawLng);
+          if (Number.isFinite(nLat) && Number.isFinite(nLng)) {
+            setDriver({ lat: nLat, lng: nLng });
           }
         }
       )
