@@ -5,10 +5,13 @@ import { Loader2, RefreshCw, AlertTriangle, Crosshair } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Fallback UI when Google Maps fails to load or crashes at runtime
-const MapFallback = ({ onRetry }: { onRetry: () => void }) => (
+const MapFallback = ({ onRetry, error }: { onRetry: () => void; error?: string }) => (
   <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-4 text-center bg-muted">
     <AlertTriangle className="h-8 w-8 text-accent" />
     <p className="text-sm font-semibold text-foreground">El mapa no pudo cargar</p>
+    {error && (
+      <p className="text-[11px] text-destructive font-mono break-all max-w-xs">{error}</p>
+    )}
     <p className="text-xs text-muted-foreground">El viaje continúa normalmente.</p>
     <Button size="sm" variant="outline" className="rounded-xl mt-1" onClick={onRetry}>
       <RefreshCw className="h-4 w-4 mr-1" /> Reintentar
@@ -19,21 +22,22 @@ const MapFallback = ({ onRetry }: { onRetry: () => void }) => (
 // Error boundary so a Maps runtime crash never blanks the app
 class MapErrorBoundary extends Component<
   { onRetry: () => void; children: ReactNode },
-  { hasError: boolean }
+  { hasError: boolean; errorMsg?: string }
 > {
-  state = { hasError: false };
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  state: { hasError: boolean; errorMsg?: string } = { hasError: false };
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, errorMsg: error?.message ?? String(error) };
   }
-  componentDidCatch(error: any) {
-    console.error("LiveMap crashed:", error);
+  componentDidCatch(error: any, info: any) {
+    console.error("[LiveMap] crashed:", error, info);
   }
   render() {
     if (this.state.hasError) {
       return (
         <MapFallback
+          error={this.state.errorMsg}
           onRetry={() => {
-            this.setState({ hasError: false });
+            this.setState({ hasError: false, errorMsg: undefined });
             this.props.onRetry();
           }}
         />
@@ -102,16 +106,18 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
 
     let cancelled = false;
     const loadInitial = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("viajes")
         .select("conductor_lat, conductor_lng, origen_lat, origen_lng")
         .eq("id", viajeId)
         .maybeSingle();
       if (cancelled) return;
+      console.log("[LiveMap] viajeId:", viajeId, "row:", data, "error:", error);
       const rawLat = (data as any)?.conductor_lat;
       const rawLng = (data as any)?.conductor_lng;
       const nLat = Number(rawLat);
       const nLng = Number(rawLng);
+      console.log("[LiveMap] driver raw:", rawLat, rawLng, "parsed:", nLat, nLng);
       if (Number.isFinite(nLat) && Number.isFinite(nLng)) {
         setDriver({ lat: nLat, lng: nLng });
       }
@@ -121,10 +127,10 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
         const rawOLng = (data as any)?.origen_lng;
         const nOLat = Number(rawOLat);
         const nOLng = Number(rawOLng);
+        console.log("[LiveMap] passenger origin raw:", rawOLat, rawOLng, "parsed:", nOLat, nOLng);
         if (Number.isFinite(nOLat) && Number.isFinite(nOLng)) {
           setPassenger({ lat: nOLat, lng: nOLng });
         }
-        // If origen_lat/lng vacíos → no mostrar pin del pasajero (no crash)
       }
     };
     loadInitial();
@@ -216,9 +222,10 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
   }, [isLoaded]);
 
   if (loadError) {
+    console.error("[LiveMap] Google Maps loadError:", loadError);
     return (
       <div className={className}>
-        <MapFallback onRetry={onRetry} />
+        <MapFallback onRetry={onRetry} error={(loadError as any)?.message ?? String(loadError)} />
       </div>
     );
   }
