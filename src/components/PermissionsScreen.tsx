@@ -1,4 +1,4 @@
-import { MapPin, Bell } from "lucide-react";
+import { MapPin, Bell, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logoMotoya from "@/assets/logo-motoya.png";
 import { subscribeToPush } from "@/lib/onesignal";
@@ -13,9 +13,13 @@ interface PermissionsScreenProps {
   onDone: () => void;
 }
 
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+
 const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [locationFailed, setLocationFailed] = useState(false);
+  const [showIOSTip, setShowIOSTip] = useState(false);
 
   const requestLocation = async (): Promise<boolean> => {
     if (Capacitor.isNativePlatform()) {
@@ -66,12 +70,18 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
   };
 
   const handleAllowAll = async () => {
-    console.log("[PermissionsScreen] Activar todo presionado");
+    console.log("[PermissionsScreen] Activar todo / Reintentar presionado");
     setLoading(true);
+    setLocationFailed(false);
+    setShowIOSTip(false);
     let bothGranted = false;
     try {
       const locGranted = await requestLocation();
       console.log("[PermissionsScreen] Ubicación:", locGranted);
+      if (!locGranted) {
+        setLocationFailed(true);
+        if (isIOS) setShowIOSTip(true);
+      }
       const notifGranted = await requestNotifications();
       console.log("[PermissionsScreen] Notificaciones:", notifGranted);
       bothGranted = locGranted && notifGranted;
@@ -145,6 +155,38 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
           </div>
         </div>
 
+        {locationFailed && (
+          <div className="space-y-3">
+            <div className="bg-destructive/10 border border-destructive/30 rounded-2xl p-4 text-left">
+              <p className="text-sm font-semibold text-destructive">
+                No pudimos acceder a tu ubicación
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Activa la ubicación del navegador y vuelve a intentarlo.
+              </p>
+            </div>
+
+            {showIOSTip && (
+              <div className="bg-accent/10 border border-accent/30 rounded-2xl p-4 text-left space-y-3">
+                <p className="text-sm text-foreground">
+                  📱 En iPhone: después de activar la ubicación en Configuración → Safari → Ubicación,
+                  debes recargar esta página.
+                </p>
+                <Button
+                  variant="heroOutline"
+                  size="lg"
+                  className="w-full rounded-xl"
+                  onClick={() => window.location.reload()}
+                  disabled={loading}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  🔄 Recargar
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="space-y-2 pt-2">
           <Button
             variant="hero"
@@ -153,8 +195,19 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
             onClick={handleAllowAll}
             disabled={loading}
           >
-            {loading ? "Solicitando..." : "Activar todo"}
+            {loading ? "Solicitando..." : locationFailed ? "Reintentar ubicación" : "Activar todo"}
           </Button>
+          {locationFailed && (
+            <Button
+              variant="heroOutline"
+              size="lg"
+              className="w-full rounded-xl"
+              onClick={handleAllowAll}
+              disabled={loading}
+            >
+              Ya activé mi ubicación
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="lg"
