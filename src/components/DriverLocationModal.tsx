@@ -151,8 +151,8 @@ const DriverLocationModal = ({
               {driverLocation && (
                 <Marker position={driverLocation} icon={driverIcon} title="Conductor" />
               )}
-              {passengerLocation && (
-                <Marker position={passengerLocation} icon={passengerIcon} title="Tú" />
+              {effectivePassenger && (
+                <Marker position={effectivePassenger} icon={passengerIcon} title="Tú" />
               )}
             </GoogleMap>
           )}
@@ -172,20 +172,20 @@ const DriverLocationModal = ({
 
           {distance != null ? (
             <p className="text-center text-sm font-semibold text-foreground">
-              A {formatDistance(distance)} de tu ubicación
+              El conductor está a {formatDistance(distance)} de ti
             </p>
           ) : !driverLocation ? (
             <p className="text-center text-xs text-muted-foreground">
               El conductor aún no ha compartido su ubicación
             </p>
-          ) : !passengerLocation ? (
+          ) : !effectivePassenger ? (
             <p className="text-center text-xs text-muted-foreground">
               No tenemos tu ubicación actual
             </p>
           ) : null}
 
-          <Button variant="outline" className="w-full rounded-xl" onClick={onClose}>
-            <X className="h-4 w-4 mr-1" /> Cerrar
+          <Button size="lg" className="w-full rounded-xl text-base font-bold" onClick={onClose}>
+            <X className="h-5 w-5 mr-1" /> Cerrar
           </Button>
         </div>
       </DialogContent>
