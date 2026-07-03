@@ -304,6 +304,24 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost, passengerLoc
             </p>
           </div>
 
+          {/* Location Button */}
+          <button
+            type="button"
+            onClick={() => driverLocation && setLocationModalOpen(true)}
+            disabled={!driverLocation}
+            style={{ backgroundColor: driverLocation ? '#1a3a5c' : undefined }}
+            className={`w-full rounded-xl py-3 px-4 flex items-center justify-center gap-2 transition ${
+              driverLocation
+                ? 'text-white hover:opacity-90 shadow-md'
+                : 'bg-muted text-muted-foreground cursor-not-allowed'
+            }`}
+          >
+            <span className="text-2xl leading-none">📍</span>
+            <span className="text-sm font-semibold">
+              {driverLocation ? 'Ver ubicación en mapa' : 'Conductor aún no disponible'}
+            </span>
+          </button>
+
           {/* Request Button */}
           <Button
             variant="hero"
