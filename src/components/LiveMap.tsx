@@ -222,9 +222,10 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
   }, [isLoaded]);
 
   if (loadError) {
+    console.error("[LiveMap] Google Maps loadError:", loadError);
     return (
       <div className={className}>
-        <MapFallback onRetry={onRetry} />
+        <MapFallback onRetry={onRetry} error={(loadError as any)?.message ?? String(loadError)} />
       </div>
     );
   }
