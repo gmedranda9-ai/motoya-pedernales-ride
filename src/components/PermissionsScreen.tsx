@@ -14,6 +14,7 @@ interface PermissionsScreenProps {
 }
 
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+const isStandalone = typeof window !== "undefined" && (window.navigator as any).standalone === true;
 
 const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
   const { user } = useAuth();
@@ -168,6 +169,29 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
             </div>
           </div>
         </div>
+
+        {isIOS && isStandalone && (
+          <div className="bg-accent/10 border border-accent/30 rounded-2xl p-4 text-left space-y-3">
+            <p className="text-sm text-foreground">
+              📱 Para usar GPS en iPhone:
+              <br />
+              <br />
+              1. Abre esta página en Safari (no como app guardada)
+              <br />
+              <br />
+              2. O ve a Configuración → Privacidad → Servicios de Ubicación → Safari → Permitir
+            </p>
+            <Button
+              variant="heroOutline"
+              size="lg"
+              className="w-full rounded-xl"
+              onClick={() => window.open(window.location.href, '_blank')}
+              disabled={loading}
+            >
+              Abrir en Safari
+            </Button>
+          </div>
+        )}
 
         {locationFailed && (
           <div className="space-y-3">
