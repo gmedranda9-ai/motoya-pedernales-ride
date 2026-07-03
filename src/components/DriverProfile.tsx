@@ -209,17 +209,6 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost, passengerLoc
             )}
           </div>
 
-          {((driver.conductor_lat != null && driver.conductor_lng != null) ||
-            (driver.lat != null && driver.lng != null)) && (
-            <button
-              type="button"
-              onClick={() => setLocationModalOpen(true)}
-              className="w-full text-xs font-semibold text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20 rounded-lg py-2 px-3 flex items-center justify-center gap-1.5 transition"
-            >
-              📍 Ver ubicación en mapa
-            </button>
-          )}
-
           {/* Rating & comments */}
           <div className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center gap-2 mb-3">
@@ -314,6 +303,24 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost, passengerLoc
               El pago se realiza en efectivo al finalizar el viaje
             </p>
           </div>
+
+          {/* Location Button */}
+          <button
+            type="button"
+            onClick={() => driverLocation && setLocationModalOpen(true)}
+            disabled={!driverLocation}
+            style={{ backgroundColor: driverLocation ? '#1a3a5c' : undefined }}
+            className={`w-full rounded-xl py-3 px-4 flex items-center justify-center gap-2 transition ${
+              driverLocation
+                ? 'text-white hover:opacity-90 shadow-md'
+                : 'bg-muted text-muted-foreground cursor-not-allowed'
+            }`}
+          >
+            <span className="text-2xl leading-none">📍</span>
+            <span className="text-sm font-semibold">
+              {driverLocation ? 'Ver ubicación en mapa' : 'Conductor aún no disponible'}
+            </span>
+          </button>
 
           {/* Request Button */}
           <Button
