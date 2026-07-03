@@ -22,7 +22,7 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
   const [showIOSTip, setShowIOSTip] = useState(false);
   const [showIOSRetryTip, setShowIOSRetryTip] = useState(false);
 
-  const requestLocation = async (): Promise<boolean> => {
+  const requestLocation = async (isRetryAttempt = false): Promise<boolean> => {
     if (Capacitor.isNativePlatform()) {
       try {
         const perm = await Geolocation.requestPermissions();
@@ -42,12 +42,17 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
         done = true;
         resolve(ok);
       };
+      const isIOSRetry = isRetryAttempt && isIOS;
+      const options = isIOSRetry
+        ? { timeout: 15000, enableHighAccuracy: false, maximumAge: 30000 }
+        : { timeout: 8000, maximumAge: 60000 };
+      const fallbackTimeout = isIOSRetry ? 16000 : 9000;
       navigator.geolocation.getCurrentPosition(
         () => finish(true),
         () => finish(false),
-        { timeout: 8000, maximumAge: 60000 }
+        options
       );
-      setTimeout(() => finish(false), 9000);
+      setTimeout(() => finish(false), fallbackTimeout);
     });
   };
 
