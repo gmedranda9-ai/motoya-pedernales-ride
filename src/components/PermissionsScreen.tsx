@@ -180,7 +180,26 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
               </p>
             </div>
 
-            {showIOSTip && (
+            {showIOSRetryTip && (
+              <div className="bg-accent/10 border border-accent/30 rounded-2xl p-4 text-left space-y-3">
+                <p className="text-sm text-foreground">
+                  📱 Tu iPhone tiene activo el permiso pero Safari necesita un momento.
+                  Espera 5 segundos y toca Reintentar.
+                </p>
+                <Button
+                  variant="heroOutline"
+                  size="lg"
+                  className="w-full rounded-xl"
+                  onClick={handleAllowAll}
+                  disabled={loading}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Reintentar
+                </Button>
+              </div>
+            )}
+
+            {showIOSTip && !showIOSRetryTip && (
               <div className="bg-accent/10 border border-accent/30 rounded-2xl p-4 text-left space-y-3">
                 <p className="text-sm text-foreground">
                   📱 En iPhone: después de activar la ubicación en Configuración → Safari → Ubicación,
