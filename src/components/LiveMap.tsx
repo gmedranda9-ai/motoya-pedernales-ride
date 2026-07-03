@@ -22,21 +22,22 @@ const MapFallback = ({ onRetry, error }: { onRetry: () => void; error?: string }
 // Error boundary so a Maps runtime crash never blanks the app
 class MapErrorBoundary extends Component<
   { onRetry: () => void; children: ReactNode },
-  { hasError: boolean }
+  { hasError: boolean; errorMsg?: string }
 > {
-  state = { hasError: false };
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  state: { hasError: boolean; errorMsg?: string } = { hasError: false };
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, errorMsg: error?.message ?? String(error) };
   }
-  componentDidCatch(error: any) {
-    console.error("LiveMap crashed:", error);
+  componentDidCatch(error: any, info: any) {
+    console.error("[LiveMap] crashed:", error, info);
   }
   render() {
     if (this.state.hasError) {
       return (
         <MapFallback
+          error={this.state.errorMsg}
           onRetry={() => {
-            this.setState({ hasError: false });
+            this.setState({ hasError: false, errorMsg: undefined });
             this.props.onRetry();
           }}
         />
