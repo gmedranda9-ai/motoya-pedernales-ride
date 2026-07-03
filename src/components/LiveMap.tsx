@@ -106,16 +106,18 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
 
     let cancelled = false;
     const loadInitial = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("viajes")
         .select("conductor_lat, conductor_lng, origen_lat, origen_lng")
         .eq("id", viajeId)
         .maybeSingle();
       if (cancelled) return;
+      console.log("[LiveMap] viajeId:", viajeId, "row:", data, "error:", error);
       const rawLat = (data as any)?.conductor_lat;
       const rawLng = (data as any)?.conductor_lng;
       const nLat = Number(rawLat);
       const nLng = Number(rawLng);
+      console.log("[LiveMap] driver raw:", rawLat, rawLng, "parsed:", nLat, nLng);
       if (Number.isFinite(nLat) && Number.isFinite(nLng)) {
         setDriver({ lat: nLat, lng: nLng });
       }
@@ -125,10 +127,10 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
         const rawOLng = (data as any)?.origen_lng;
         const nOLat = Number(rawOLat);
         const nOLng = Number(rawOLng);
+        console.log("[LiveMap] passenger origin raw:", rawOLat, rawOLng, "parsed:", nOLat, nOLng);
         if (Number.isFinite(nOLat) && Number.isFinite(nOLng)) {
           setPassenger({ lat: nOLat, lng: nOLng });
         }
-        // If origen_lat/lng vacíos → no mostrar pin del pasajero (no crash)
       }
     };
     loadInitial();
