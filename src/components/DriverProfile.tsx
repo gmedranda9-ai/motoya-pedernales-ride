@@ -318,7 +318,7 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost, passengerLoc
           >
             <span className="text-2xl leading-none">📍</span>
             <span className="text-sm font-semibold">
-              {driverLocation ? 'Ver ubicación en mapa' : 'Conductor aún no disponible'}
+              {driverLocation ? 'Ver ubicación del conductor' : 'Conductor aún no disponible'}
             </span>
           </button>
 

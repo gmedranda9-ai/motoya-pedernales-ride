@@ -48,6 +48,18 @@ const DriverLocationModal = ({
 
   const mapRef = useRef<google.maps.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [gpsLocation, setGpsLocation] = useState<LatLng | null>(null);
+
+  useEffect(() => {
+    if (!open || passengerLocation || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setGpsLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {},
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }, [open, passengerLocation]);
+
+  const effectivePassenger = passengerLocation ?? gpsLocation;
 
   const passengerIcon = useMemo(() => {
     if (!isLoaded) return undefined;
@@ -75,32 +87,31 @@ const DriverLocationModal = ({
 
   const fitBoth = () => {
     if (!mapRef.current || !isLoaded) return;
-    if (driverLocation && passengerLocation) {
+    if (driverLocation && effectivePassenger) {
       const bounds = new google.maps.LatLngBounds();
       bounds.extend(driverLocation);
-      bounds.extend(passengerLocation);
+      bounds.extend(effectivePassenger);
       mapRef.current.fitBounds(bounds, 80);
     } else if (driverLocation) {
       mapRef.current.panTo(driverLocation);
       mapRef.current.setZoom(15);
-    } else if (passengerLocation) {
-      mapRef.current.panTo(passengerLocation);
+    } else if (effectivePassenger) {
+      mapRef.current.panTo(effectivePassenger);
       mapRef.current.setZoom(15);
     }
   };
 
   useEffect(() => {
     if (open && mapReady) {
-      // fit after modal open + map ready
       setTimeout(fitBoth, 50);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, mapReady, driverLocation, passengerLocation]);
+  }, [open, mapReady, driverLocation, effectivePassenger]);
 
   const distance =
-    driverLocation && passengerLocation ? distanceMeters(driverLocation, passengerLocation) : null;
+    driverLocation && effectivePassenger ? distanceMeters(driverLocation, effectivePassenger) : null;
 
-  const center = driverLocation ?? passengerLocation ?? { lat: 0.0689, lng: -80.0517 };
+  const center = driverLocation ?? effectivePassenger ?? { lat: 0.0689, lng: -80.0517 };
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
@@ -140,8 +151,8 @@ const DriverLocationModal = ({
               {driverLocation && (
                 <Marker position={driverLocation} icon={driverIcon} title="Conductor" />
               )}
-              {passengerLocation && (
-                <Marker position={passengerLocation} icon={passengerIcon} title="Tú" />
+              {effectivePassenger && (
+                <Marker position={effectivePassenger} icon={passengerIcon} title="Tú" />
               )}
             </GoogleMap>
           )}
@@ -161,20 +172,20 @@ const DriverLocationModal = ({
 
           {distance != null ? (
             <p className="text-center text-sm font-semibold text-foreground">
-              A {formatDistance(distance)} de tu ubicación
+              El conductor está a {formatDistance(distance)} de ti
             </p>
           ) : !driverLocation ? (
             <p className="text-center text-xs text-muted-foreground">
               El conductor aún no ha compartido su ubicación
             </p>
-          ) : !passengerLocation ? (
+          ) : !effectivePassenger ? (
             <p className="text-center text-xs text-muted-foreground">
               No tenemos tu ubicación actual
             </p>
           ) : null}
 
-          <Button variant="outline" className="w-full rounded-xl" onClick={onClose}>
-            <X className="h-4 w-4 mr-1" /> Cerrar
+          <Button size="lg" className="w-full rounded-xl text-base font-bold" onClick={onClose}>
+            <X className="h-5 w-5 mr-1" /> Cerrar
           </Button>
         </div>
       </DialogContent>
