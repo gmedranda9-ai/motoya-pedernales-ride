@@ -268,8 +268,10 @@ const PasajeroHome = () => {
         setDrivers([]);
       } else {
         const mapped: Driver[] = (data || []).map((c: any) => {
-          const lat = typeof c.conductor_lat === "number" ? c.conductor_lat : null;
-          const lng = typeof c.conductor_lng === "number" ? c.conductor_lng : null;
+          const nLat = Number(c.conductor_lat);
+          const nLng = Number(c.conductor_lng);
+          const lat = Number.isFinite(nLat) ? nLat : null;
+          const lng = Number.isFinite(nLng) ? nLng : null;
           return {
             id: c.id,
             name: c.nombre || "Sin nombre",
