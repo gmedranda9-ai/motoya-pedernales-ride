@@ -254,7 +254,7 @@ const PasajeroHome = () => {
     try {
       const { data, error } = await supabase
         .from("conductores")
-        .select("*")
+        .select("id, nombre, foto, placa, modelo_moto, calificacion_promedio, disponible, telefono, color, conductor_lat, conductor_lng")
         .eq("disponible", true)
         .eq("estado", "aprobado")
         .eq("suscripcion_activa", true)
