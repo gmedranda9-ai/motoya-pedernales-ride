@@ -14,6 +14,7 @@ interface PermissionsScreenProps {
 }
 
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+const isStandalone = typeof window !== "undefined" && (window.navigator as any).standalone === true;
 
 const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
   const { user } = useAuth();
