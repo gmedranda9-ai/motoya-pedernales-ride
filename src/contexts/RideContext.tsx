@@ -470,7 +470,7 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
               onClick={() => setLocationModalOpen(true)}
             >
               <MapPin className="h-4 w-4 mr-2" />
-              Ver ubicación
+              Ver ubicación del pasajero
             </Button>
 
             {/* Circular timer */}
