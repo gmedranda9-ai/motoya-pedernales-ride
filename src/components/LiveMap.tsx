@@ -5,10 +5,13 @@ import { Loader2, RefreshCw, AlertTriangle, Crosshair } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Fallback UI when Google Maps fails to load or crashes at runtime
-const MapFallback = ({ onRetry }: { onRetry: () => void }) => (
+const MapFallback = ({ onRetry, error }: { onRetry: () => void; error?: string }) => (
   <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-4 text-center bg-muted">
     <AlertTriangle className="h-8 w-8 text-accent" />
     <p className="text-sm font-semibold text-foreground">El mapa no pudo cargar</p>
+    {error && (
+      <p className="text-[11px] text-destructive font-mono break-all max-w-xs">{error}</p>
+    )}
     <p className="text-xs text-muted-foreground">El viaje continúa normalmente.</p>
     <Button size="sm" variant="outline" className="rounded-xl mt-1" onClick={onRetry}>
       <RefreshCw className="h-4 w-4 mr-1" /> Reintentar
