@@ -46,16 +46,32 @@ const DriverProfile = ({ driver, onRequest, onClose, estimatedCost, passengerLoc
   const [loadingComments, setLoadingComments] = useState(true);
   const [showAllComments, setShowAllComments] = useState(false);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const [driverLocation, setDriverLocation] = useState<{ lat: number; lng: number } | null>(null);
 
-  const driverLocation = useMemo(() => {
-    if (driver.conductor_lat != null && driver.conductor_lng != null) {
-      return { lat: driver.conductor_lat, lng: driver.conductor_lng };
-    }
-    if (driver.lat != null && driver.lng != null) {
-      return { lat: driver.lat, lng: driver.lng };
-    }
-    return null;
-  }, [driver.conductor_lat, driver.conductor_lng, driver.lat, driver.lng]);
+  useEffect(() => {
+    let cancelled = false;
+    const loadDriverLocation = async () => {
+      const { data } = await supabase
+        .from("viajes")
+        .select("conductor_lat, conductor_lng")
+        .eq("conductor_id", driver.id)
+        .in("estado", ["pendiente", "aceptado", "en_camino", "llegado"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      const nLat = Number((data as any)?.conductor_lat);
+      const nLng = Number((data as any)?.conductor_lng);
+      if (Number.isFinite(nLat) && Number.isFinite(nLng)) {
+        setDriverLocation({ lat: nLat, lng: nLng });
+      } else {
+        setDriverLocation(null);
+      }
+    };
+    loadDriverLocation();
+    return () => { cancelled = true; };
+  }, [driver.id]);
+
 
   useEffect(() => {
     const loadStats = async () => {
