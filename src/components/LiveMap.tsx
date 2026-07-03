@@ -135,10 +135,12 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "viajes", filter: `id=eq.${viajeId}` },
         (payload: any) => {
-          const lat = payload.new?.conductor_lat;
-          const lng = payload.new?.conductor_lng;
-          if (typeof lat === "number" && typeof lng === "number") {
-            setDriver({ lat, lng });
+          const rawLat = payload.new?.conductor_lat;
+          const rawLng = payload.new?.conductor_lng;
+          const nLat = Number(rawLat);
+          const nLng = Number(rawLng);
+          if (Number.isFinite(nLat) && Number.isFinite(nLng)) {
+            setDriver({ lat: nLat, lng: nLng });
           }
         }
       )
