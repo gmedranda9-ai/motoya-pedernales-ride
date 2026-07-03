@@ -20,8 +20,9 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
   const [loading, setLoading] = useState(false);
   const [locationFailed, setLocationFailed] = useState(false);
   const [showIOSTip, setShowIOSTip] = useState(false);
+  const [showIOSRetryTip, setShowIOSRetryTip] = useState(false);
 
-  const requestLocation = async (): Promise<boolean> => {
+  const requestLocation = async (isRetryAttempt = false): Promise<boolean> => {
     if (Capacitor.isNativePlatform()) {
       try {
         const perm = await Geolocation.requestPermissions();
@@ -41,12 +42,17 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
         done = true;
         resolve(ok);
       };
+      const isIOSRetry = isRetryAttempt && isIOS;
+      const options = isIOSRetry
+        ? { timeout: 15000, enableHighAccuracy: false, maximumAge: 30000 }
+        : { timeout: 8000, maximumAge: 60000 };
+      const fallbackTimeout = isIOSRetry ? 16000 : 9000;
       navigator.geolocation.getCurrentPosition(
         () => finish(true),
         () => finish(false),
-        { timeout: 8000, maximumAge: 60000 }
+        options
       );
-      setTimeout(() => finish(false), 9000);
+      setTimeout(() => finish(false), fallbackTimeout);
     });
   };
 
@@ -71,16 +77,24 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
 
   const handleAllowAll = async () => {
     console.log("[PermissionsScreen] Activar todo / Reintentar presionado");
+    const isRetryAttempt = locationFailed && isIOS;
     setLoading(true);
     setLocationFailed(false);
     setShowIOSTip(false);
+    setShowIOSRetryTip(false);
     let bothGranted = false;
     try {
-      const locGranted = await requestLocation();
+      const locGranted = await requestLocation(isRetryAttempt);
       console.log("[PermissionsScreen] Ubicación:", locGranted);
       if (!locGranted) {
         setLocationFailed(true);
-        if (isIOS) setShowIOSTip(true);
+        if (isIOS) {
+          if (isRetryAttempt) {
+            setShowIOSRetryTip(true);
+          } else {
+            setShowIOSTip(true);
+          }
+        }
       }
       const notifGranted = await requestNotifications();
       console.log("[PermissionsScreen] Notificaciones:", notifGranted);
@@ -166,7 +180,26 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
               </p>
             </div>
 
-            {showIOSTip && (
+            {showIOSRetryTip && (
+              <div className="bg-accent/10 border border-accent/30 rounded-2xl p-4 text-left space-y-3">
+                <p className="text-sm text-foreground">
+                  📱 Tu iPhone tiene activo el permiso pero Safari necesita un momento.
+                  Espera 5 segundos y toca Reintentar.
+                </p>
+                <Button
+                  variant="heroOutline"
+                  size="lg"
+                  className="w-full rounded-xl"
+                  onClick={handleAllowAll}
+                  disabled={loading}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Reintentar
+                </Button>
+              </div>
+            )}
+
+            {showIOSTip && !showIOSRetryTip && (
               <div className="bg-accent/10 border border-accent/30 rounded-2xl p-4 text-left space-y-3">
                 <p className="text-sm text-foreground">
                   📱 En iPhone: después de activar la ubicación en Configuración → Safari → Ubicación,
