@@ -77,16 +77,24 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
 
   const handleAllowAll = async () => {
     console.log("[PermissionsScreen] Activar todo / Reintentar presionado");
+    const isRetryAttempt = locationFailed && isIOS;
     setLoading(true);
     setLocationFailed(false);
     setShowIOSTip(false);
+    setShowIOSRetryTip(false);
     let bothGranted = false;
     try {
-      const locGranted = await requestLocation();
+      const locGranted = await requestLocation(isRetryAttempt);
       console.log("[PermissionsScreen] Ubicación:", locGranted);
       if (!locGranted) {
         setLocationFailed(true);
-        if (isIOS) setShowIOSTip(true);
+        if (isIOS) {
+          if (isRetryAttempt) {
+            setShowIOSRetryTip(true);
+          } else {
+            setShowIOSTip(true);
+          }
+        }
       }
       const notifGranted = await requestNotifications();
       console.log("[PermissionsScreen] Notificaciones:", notifGranted);
