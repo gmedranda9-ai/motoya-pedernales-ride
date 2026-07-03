@@ -20,6 +20,7 @@ const PermissionsScreen = ({ onDone }: PermissionsScreenProps) => {
   const [loading, setLoading] = useState(false);
   const [locationFailed, setLocationFailed] = useState(false);
   const [showIOSTip, setShowIOSTip] = useState(false);
+  const [showIOSRetryTip, setShowIOSRetryTip] = useState(false);
 
   const requestLocation = async (): Promise<boolean> => {
     if (Capacitor.isNativePlatform()) {
