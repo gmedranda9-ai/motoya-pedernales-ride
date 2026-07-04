@@ -465,8 +465,7 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
             </div>
 
             <Button
-              variant="outline"
-              className="w-full rounded-xl"
+              className="w-full rounded-xl bg-[#1a3a5c] text-white border-[#1a3a5c] hover:bg-[#142a45] hover:text-white"
               onClick={() => setLocationModalOpen(true)}
             >
               <MapPin className="h-4 w-4 mr-2" />
