@@ -74,7 +74,7 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
   const mapRef = useRef<google.maps.Map | null>(null);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
   const userInteractedRef = useRef(false);
-  const hasFittedRef = useRef(false);
+
 
 
   const fitToBoth = (force = false) => {
@@ -164,9 +164,9 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
     };
   }, [viajeId]);
 
-  // Center/zoom only the first time valid driver coordinates arrive.
+  // Center/zoom on driver or passenger changes so the map follows the ride.
   useEffect(() => {
-    if (!mapRef.current || hasFittedRef.current) return;
+    if (!mapRef.current) return;
 
     if (driver && passenger) {
       const bounds = new google.maps.LatLngBounds();
@@ -174,17 +174,20 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
       bounds.extend(passenger);
       mapRef.current.fitBounds(bounds, 80);
       setTimeout(() => {
-        if (mapRef.current && mapRef.current.getZoom() > 16) {
-          mapRef.current.setZoom(16);
+        if (mapRef.current) {
+          if (mapRef.current.getZoom() > 16) mapRef.current.setZoom(16);
+          if (mapRef.current.getZoom() < 12) mapRef.current.setZoom(12);
         }
       }, 500);
-      hasFittedRef.current = true;
     } else if (driver) {
       mapRef.current.setCenter(driver);
       mapRef.current.setZoom(15);
-      hasFittedRef.current = true;
+    } else if (passenger) {
+      mapRef.current.setCenter(passenger);
+      mapRef.current.setZoom(15);
     }
   }, [driver, passenger]);
+
 
 
   // Draw route line imperatively to avoid @react-google-maps Polyline setPath crashes.
