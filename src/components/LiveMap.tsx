@@ -77,6 +77,7 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
   const polylineRef = useRef<google.maps.Polyline | null>(null);
   const userInteractedRef = useRef(false);
   const didInitialFitRef = useRef(false);
+  const hasFitted = useRef(false);
 
   const fitToBoth = (force = false) => {
     if (!mapRef.current) return;
