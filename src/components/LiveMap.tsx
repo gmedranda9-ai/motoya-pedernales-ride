@@ -63,8 +63,6 @@ interface LiveMapProps {
 
 const containerStyle = { width: "100%", height: "100%" };
 
-const PEDERNALES_FALLBACK: LatLng = { lat: 0.0689, lng: -80.0517 };
-
 const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMapProps & { onRetry: () => void }) => {
   const { isLoaded, loadError } = useJsApiLoader({
     id: "google-map-script",
@@ -76,7 +74,6 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
   const mapRef = useRef<google.maps.Map | null>(null);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
   const userInteractedRef = useRef(false);
-  const hasFitted = useRef(false);
 
   const fitToBoth = (force = false) => {
     if (!mapRef.current) return;
@@ -165,23 +162,25 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
     };
   }, [viajeId]);
 
-  // Initial fitBounds only once when driver coordinates arrive from Supabase.
+  // Center/zoom when driver or passenger coordinates change.
   useEffect(() => {
-    if (!mapRef.current || !driver || hasFitted.current) return;
+    if (!mapRef.current) return;
 
-    const bounds = new google.maps.LatLngBounds();
-    bounds.extend(driver);
-    if (passenger) bounds.extend(passenger);
-
-    mapRef.current.fitBounds(bounds);
-    hasFitted.current = true;
-
-    setTimeout(() => {
-      if (mapRef.current && mapRef.current.getZoom() > 16) {
-        mapRef.current.setZoom(16);
-      }
-    }, 500);
-  }, [driver]);
+    if (driver && passenger) {
+      const bounds = new google.maps.LatLngBounds();
+      bounds.extend(driver);
+      bounds.extend(passenger);
+      mapRef.current.fitBounds(bounds, 80);
+      setTimeout(() => {
+        if (mapRef.current && mapRef.current.getZoom() > 16) {
+          mapRef.current.setZoom(16);
+        }
+      }, 500);
+    } else if (driver) {
+      mapRef.current.setCenter(driver);
+      mapRef.current.setZoom(15);
+    }
+  }, [driver, passenger]);
 
   // Draw route line imperatively to avoid @react-google-maps Polyline setPath crashes.
   useEffect(() => {
@@ -207,8 +206,6 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
       polylineRef.current = null;
     };
   }, [isLoaded, passenger, driver]);
-
-  const center = useMemo(() => passenger ?? driver ?? PEDERNALES_FALLBACK, [passenger, driver]);
 
   // Marker icons (built lazily once Google is loaded)
   // Pasajero → amarillo, Conductor → azul
@@ -257,14 +254,11 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
     <div className={`${className ?? ""} relative`}>
       <GoogleMap
         mapContainerStyle={containerStyle}
-        center={center}
-        zoom={15}
+        center={driver || passenger || { lat: 0.0726, lng: -80.0463 }}
+        zoom={driver ? 15 : 14}
         onLoad={(map) => { mapRef.current = map; }}
         onDragStart={() => { userInteractedRef.current = true; }}
-        onZoomChanged={() => {
-          // Marca interacción solo si ya hicimos el fit inicial (evita falsos positivos durante el fitBounds inicial)
-          if (hasFitted.current) userInteractedRef.current = true;
-        }}
+        onZoomChanged={() => { userInteractedRef.current = true; }}
         options={{
           disableDefaultUI: true,
           zoomControl: true,
