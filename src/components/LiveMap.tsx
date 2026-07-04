@@ -164,9 +164,9 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
     };
   }, [viajeId]);
 
-  // Center/zoom when driver or passenger coordinates change.
+  // Center/zoom only the first time valid driver coordinates arrive.
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || hasFittedRef.current) return;
 
     if (driver && passenger) {
       const bounds = new google.maps.LatLngBounds();
@@ -178,11 +178,14 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
           mapRef.current.setZoom(16);
         }
       }, 500);
+      hasFittedRef.current = true;
     } else if (driver) {
       mapRef.current.setCenter(driver);
       mapRef.current.setZoom(15);
+      hasFittedRef.current = true;
     }
   }, [driver, passenger]);
+
 
   // Draw route line imperatively to avoid @react-google-maps Polyline setPath crashes.
   useEffect(() => {
