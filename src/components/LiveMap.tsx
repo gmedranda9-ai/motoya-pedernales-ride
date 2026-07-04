@@ -84,23 +84,13 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
       const bounds = new google.maps.LatLngBounds();
       bounds.extend(passenger);
       bounds.extend(driver);
-      mapRef.current.fitBounds(bounds, {
-        top: 80,
-        right: 60,
-        bottom: 80,
-        left: 60,
-      });
-      const zoom = mapRef.current.getZoom();
-      if (typeof zoom === "number") {
-        if (zoom > 16) mapRef.current.setZoom(16);
-        if (zoom < 12) mapRef.current.setZoom(12);
-      }
+      mapRef.current.fitBounds(bounds, 80);
     } else if (passenger) {
       mapRef.current.panTo(passenger);
-      mapRef.current.setZoom(15);
+      mapRef.current.setZoom(16);
     } else if (driver) {
       mapRef.current.panTo(driver);
-      mapRef.current.setZoom(15);
+      mapRef.current.setZoom(16);
     }
     if (force) userInteractedRef.current = false;
   };
