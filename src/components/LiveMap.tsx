@@ -76,7 +76,7 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
   const mapRef = useRef<google.maps.Map | null>(null);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
   const userInteractedRef = useRef(false);
-  const didInitialFitRef = useRef(false);
+  const hasFitted = useRef(false);
 
   const fitToBoth = (force = false) => {
     if (!mapRef.current) return;
@@ -165,15 +165,23 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
     };
   }, [viajeId]);
 
-  // Initial fitBounds only once; do not auto-recenter while the user navigates the map.
+  // Initial fitBounds only once when driver coordinates arrive from Supabase.
   useEffect(() => {
-    if (!isLoaded || !mapRef.current) return;
-    if (didInitialFitRef.current) return;
-    if (passenger || driver) {
-      fitToBoth();
-      if (passenger && driver) didInitialFitRef.current = true;
-    }
-  }, [isLoaded, passenger, driver]);
+    if (!mapRef.current || !driver || hasFitted.current) return;
+
+    const bounds = new google.maps.LatLngBounds();
+    bounds.extend(driver);
+    if (passenger) bounds.extend(passenger);
+
+    mapRef.current.fitBounds(bounds);
+    hasFitted.current = true;
+
+    setTimeout(() => {
+      if (mapRef.current && mapRef.current.getZoom() > 16) {
+        mapRef.current.setZoom(16);
+      }
+    }, 500);
+  }, [driver]);
 
   // Draw route line imperatively to avoid @react-google-maps Polyline setPath crashes.
   useEffect(() => {
@@ -255,7 +263,7 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
         onDragStart={() => { userInteractedRef.current = true; }}
         onZoomChanged={() => {
           // Marca interacción solo si ya hicimos el fit inicial (evita falsos positivos durante el fitBounds inicial)
-          if (didInitialFitRef.current) userInteractedRef.current = true;
+          if (hasFitted.current) userInteractedRef.current = true;
         }}
         options={{
           disableDefaultUI: true,
