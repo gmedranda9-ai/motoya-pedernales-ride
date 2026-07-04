@@ -162,23 +162,25 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
     };
   }, [viajeId]);
 
-  // Initial fitBounds only once when driver coordinates arrive from Supabase.
+  // Center/zoom when driver or passenger coordinates change.
   useEffect(() => {
-    if (!mapRef.current || !driver || hasFitted.current) return;
+    if (!mapRef.current) return;
 
-    const bounds = new google.maps.LatLngBounds();
-    bounds.extend(driver);
-    if (passenger) bounds.extend(passenger);
-
-    mapRef.current.fitBounds(bounds);
-    hasFitted.current = true;
-
-    setTimeout(() => {
-      if (mapRef.current && mapRef.current.getZoom() > 16) {
-        mapRef.current.setZoom(16);
-      }
-    }, 500);
-  }, [driver]);
+    if (driver && passenger) {
+      const bounds = new google.maps.LatLngBounds();
+      bounds.extend(driver);
+      bounds.extend(passenger);
+      mapRef.current.fitBounds(bounds, 80);
+      setTimeout(() => {
+        if (mapRef.current && mapRef.current.getZoom() > 16) {
+          mapRef.current.setZoom(16);
+        }
+      }, 500);
+    } else if (driver) {
+      mapRef.current.setCenter(driver);
+      mapRef.current.setZoom(15);
+    }
+  }, [driver, passenger]);
 
   // Draw route line imperatively to avoid @react-google-maps Polyline setPath crashes.
   useEffect(() => {
@@ -204,8 +206,6 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
       polylineRef.current = null;
     };
   }, [isLoaded, passenger, driver]);
-
-  const center = useMemo(() => passenger ?? driver ?? PEDERNALES_FALLBACK, [passenger, driver]);
 
   // Marker icons (built lazily once Google is loaded)
   // Pasajero → amarillo, Conductor → azul
