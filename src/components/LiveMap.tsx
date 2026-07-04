@@ -80,17 +80,24 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
 
   const fitToBoth = (force = false) => {
     if (!mapRef.current) return;
-    if (passenger && driver) {
+    const map = mapRef.current;
+    const passengerPos = passenger;
+    const driverPos = driver;
+
+    if (driverPos && passengerPos) {
       const bounds = new google.maps.LatLngBounds();
-      bounds.extend(passenger);
-      bounds.extend(driver);
-      mapRef.current.fitBounds(bounds, 80);
-    } else if (passenger) {
-      mapRef.current.panTo(passenger);
-      mapRef.current.setZoom(16);
-    } else if (driver) {
-      mapRef.current.panTo(driver);
-      mapRef.current.setZoom(16);
+      bounds.extend(driverPos);
+      bounds.extend(passengerPos);
+      map.fitBounds(bounds);
+      setTimeout(() => {
+        if (map.getZoom() > 16) map.setZoom(16);
+      }, 100);
+    } else if (driverPos) {
+      map.setCenter(driverPos);
+      map.setZoom(15);
+    } else if (passengerPos) {
+      map.setCenter(passengerPos);
+      map.setZoom(15);
     }
     if (force) userInteractedRef.current = false;
   };
