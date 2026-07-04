@@ -63,8 +63,6 @@ interface LiveMapProps {
 
 const containerStyle = { width: "100%", height: "100%" };
 
-const PEDERNALES_FALLBACK: LatLng = { lat: 0.0689, lng: -80.0517 };
-
 const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMapProps & { onRetry: () => void }) => {
   const { isLoaded, loadError } = useJsApiLoader({
     id: "google-map-script",
@@ -76,7 +74,6 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
   const mapRef = useRef<google.maps.Map | null>(null);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
   const userInteractedRef = useRef(false);
-  const hasFitted = useRef(false);
 
   const fitToBoth = (force = false) => {
     if (!mapRef.current) return;
