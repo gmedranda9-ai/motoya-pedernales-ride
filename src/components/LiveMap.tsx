@@ -263,7 +263,7 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
         onDragStart={() => { userInteractedRef.current = true; }}
         onZoomChanged={() => {
           // Marca interacción solo si ya hicimos el fit inicial (evita falsos positivos durante el fitBounds inicial)
-          if (didInitialFitRef.current) userInteractedRef.current = true;
+          if (hasFitted.current) userInteractedRef.current = true;
         }}
         options={{
           disableDefaultUI: true,
