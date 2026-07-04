@@ -876,14 +876,15 @@ const PasajeroHome = () => {
               <button
                 type="button"
                 onClick={() => setDestinationsOpen((v) => !v)}
-                className="flex items-center justify-between w-full text-left py-2"
+                className="flex items-center justify-between w-full text-left py-2.5 px-3 rounded-xl bg-[rgba(26,58,92,0.08)] border border-[rgba(26,58,92,0.2)] hover:bg-[rgba(26,58,92,0.12)] active:scale-[0.98] transition-colors"
                 aria-expanded={destinationsOpen}
               >
-                <span className="text-sm font-bold text-foreground">
-                  📍 Destinos frecuentes
+                <span className="flex items-center gap-2 text-sm font-bold text-[#1a3a5c]">
+                  <Clock className="h-4 w-4 text-[#1a3a5c]" />
+                  Destinos frecuentes
                 </span>
                 <span
-                  className={`text-foreground transition-transform duration-200 ${
+                  className={`text-[#1a3a5c] transition-transform duration-200 ${
                     destinationsOpen ? "rotate-180" : ""
                   }`}
                 >
