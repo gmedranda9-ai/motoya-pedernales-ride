@@ -910,10 +910,10 @@ const PasajeroHome = () => {
                           setDestination(place.name);
                           setDestinationsOpen(false);
                         }}
-                        className="flex items-center gap-2 text-left py-2.5 px-3 rounded-xl bg-muted hover:bg-muted/70 transition-colors"
+                        className="flex items-center gap-2 text-left py-2.5 px-3 rounded-xl bg-[rgba(245,197,24,0.1)] border border-[rgba(245,197,24,0.3)] hover:bg-[rgba(245,197,24,0.2)] transition-colors active:scale-[0.98]"
                       >
-                        <MapPin className="h-4 w-4 text-accent flex-shrink-0" />
-                        <span className="text-xs text-foreground leading-tight flex-1">{place.name}</span>
+                        <MapPin className="h-4 w-4 text-[#f5c518] flex-shrink-0" />
+                        <span className="text-xs text-foreground font-medium leading-tight flex-1">{place.name}</span>
                         {badge && <span className="text-xs flex-shrink-0">{badge}</span>}
                       </button>
                     );
