@@ -254,14 +254,11 @@ const LiveMapInner = ({ viajeId, passengerLocation, className, onRetry }: LiveMa
     <div className={`${className ?? ""} relative`}>
       <GoogleMap
         mapContainerStyle={containerStyle}
-        center={center}
-        zoom={15}
+        center={driver || passenger || { lat: 0.0726, lng: -80.0463 }}
+        zoom={driver ? 15 : 14}
         onLoad={(map) => { mapRef.current = map; }}
         onDragStart={() => { userInteractedRef.current = true; }}
-        onZoomChanged={() => {
-          // Marca interacción solo si ya hicimos el fit inicial (evita falsos positivos durante el fitBounds inicial)
-          if (hasFitted.current) userInteractedRef.current = true;
-        }}
+        onZoomChanged={() => { userInteractedRef.current = true; }}
         options={{
           disableDefaultUI: true,
           zoomControl: true,
